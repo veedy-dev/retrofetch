@@ -282,7 +282,7 @@ Max Concurrent: 6 per wave
 
 ## TODOs
 
-- [ ] 1. Project Bootstrap (pyproject.toml + package scaffold)
+- [x] 1. Project Bootstrap (pyproject.toml + package scaffold)
 
   **What to do**:
   - Create `pyproject.toml` using hatchling or setuptools backend
@@ -367,7 +367,7 @@ Max Concurrent: 6 per wave
   - Files: `pyproject.toml`, `retrofetch/__init__.py`, `retrofetch/*.py` (stubs), `.gitignore`, `README.md`
   - Pre-commit: `uv pip install -e . && retrofetch --version`
 
-- [ ] 2. Console Classification Artifact (consoles.yml - 178 entries)
+- [x] 2. Console Classification Artifact (consoles.yml - 178 entries)
 
   **What to do**:
   - Create `consoles.yml` at repo root with 178 entries, one per folder in `ROMs/`
@@ -460,7 +460,7 @@ Max Concurrent: 6 per wave
   - Files: `consoles.yml`
   - Pre-commit: yaml validation + 178-entry count
 
-- [ ] 3. Config Schemas + YAML Loader + Validator
+- [x] 3. Config Schemas + YAML Loader + Validator
 
   **What to do**:
   - `retrofetch/config.py`: loaders for `config.yml`, `overrides.yml`, `.env`
@@ -559,7 +559,7 @@ Max Concurrent: 6 per wave
   - Message: `feat(config): add YAML config loader with schema validation`
   - Files: `retrofetch/config.py`, `config.yml.example`, `overrides.yml.example`, `.env.example`
 
-- [ ] 4. State Persistence + Logging + Rich Console
+- [x] 4. State Persistence + Logging + Rich Console
 
   **What to do**:
   - `retrofetch/state.py`:
@@ -642,7 +642,7 @@ Max Concurrent: 6 per wave
   - Message: `feat(core): state persistence, logging, rich console wrappers`
   - Files: `retrofetch/state.py`, `retrofetch/logging_setup.py`, `retrofetch/ui.py`
 
-- [ ] 5. Filename Sanitization + Windows Long-Path Utilities
+- [x] 5. Filename Sanitization + Windows Long-Path Utilities
 
   **What to do**:
   - `retrofetch/sanitize.py`:
@@ -714,7 +714,7 @@ Max Concurrent: 6 per wave
   **Commit**: YES (grouped with T4, T6)
   - Files: `retrofetch/sanitize.py`
 
-- [ ] 6. DAT Acquisition + Bundled Snapshot
+- [x] 6. DAT Acquisition + Bundled Snapshot
 
   **What to do**:
   - `retrofetch/dat_fetch.py`:
