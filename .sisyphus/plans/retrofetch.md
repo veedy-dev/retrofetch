@@ -1304,7 +1304,7 @@ Max Concurrent: 6 per wave
   - Message: `feat(cli): typer subcommands download/verify/init/report`
   - Files: `retrofetch/cli.py`, `pyproject.toml` (entry point addition), README usage section
 
-- [ ] 13. Minerva Archive HTTP Adapter
+- [x] 13. Minerva Archive HTTP Adapter
 
   **What to do**:
   - `retrofetch/sources/minerva_http.py`:
@@ -1385,7 +1385,7 @@ Max Concurrent: 6 per wave
   **Commit**: YES (grouped with T14, T15)
   - Files: `retrofetch/sources/minerva_http.py`
 
-- [ ] 14. Minerva Archive Torrent Adapter (libtorrent-python)
+- [x] 14. Minerva Archive Torrent Adapter (libtorrent-python)
 
   **What to do**:
   - `retrofetch/sources/minerva_torrent.py`:
@@ -1471,7 +1471,7 @@ Max Concurrent: 6 per wave
   **Commit**: YES (grouped with T13, T15)
   - Files: `retrofetch/sources/minerva_torrent.py`, CLI flag addition
 
-- [ ] 15. Cloudscraper Scrapers (romsfun + romsretro)
+- [x] 15. Cloudscraper Scrapers (romsfun + romsretro)
 
   **What to do**:
   - `retrofetch/sources/_cloudflare_base.py`:
@@ -1556,7 +1556,7 @@ Max Concurrent: 6 per wave
   - Message: `feat(sources): Minerva HTTP + torrent + cloudscraper scrapers`
   - Files: `retrofetch/sources/_cloudflare_base.py`, `retrofetch/sources/romsfun.py`, `retrofetch/sources/romsretro.py`
 
-- [ ] 16. Source Dispatcher (Fallback Chain per Console Class)
+- [x] 16. Source Dispatcher (Fallback Chain per Console Class)
 
   **What to do**:
   - `retrofetch/dispatcher.py`:
@@ -1634,7 +1634,7 @@ Max Concurrent: 6 per wave
   **Commit**: YES (grouped with T17, T18)
   - Files: `retrofetch/dispatcher.py`
 
-- [ ] 17. Concurrency + Disk Preflight + Multi-Disc Handling
+- [x] 17. Concurrency + Disk Preflight + Multi-Disc Handling
 
   **What to do**:
   - `retrofetch/orchestrator.py`:
@@ -1713,7 +1713,7 @@ Max Concurrent: 6 per wave
   **Commit**: YES (grouped with T16, T18)
   - Files: `retrofetch/orchestrator.py`
 
-- [ ] 18. Signal Handler + Scraper Graceful Degradation
+- [x] 18. Signal Handler + Scraper Graceful Degradation
 
   **What to do**:
   - `retrofetch/signals.py`:

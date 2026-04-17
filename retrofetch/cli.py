@@ -16,7 +16,9 @@ from retrofetch.dat import parse_dat, verify_file
 from retrofetch.dat_fetch import bootstrap_dats, find_dat_for_console
 from retrofetch.igdb import build_wantlist
 from retrofetch.logging_setup import setup_logging
+from retrofetch.orchestrator import run_console
 from retrofetch.report import generate_coverage_report
+from retrofetch.signals import install_signal_handlers
 from retrofetch.state import load_state, save_state, update_game
 from retrofetch.ui import console
 
@@ -218,14 +220,26 @@ def download(
         if dry_run:
             continue
 
-        console.print(
-            f"[yellow]Download not yet wired to dispatcher (T16). "
-            f"Wantlist prepared for {short}.[/yellow]"
+        coordinator = install_signal_handlers()
+        report = run_console(
+            console_entry=entry,
+            wantlist=wantlist,
+            config=config,
+            allow_torrent=not no_torrent,
+            consoles_yml=consoles_yml,
+            stop_event=coordinator.stop_event,
         )
-        state = load_state(short, config.roms_root)
-        for wanted_title in wantlist:
-            update_game(state, wanted_title, status="pending")
-        save_state(state, config.roms_root)
+        if report.error:
+            console.print(f"[red]{short} error:[/red] {report.error}")
+        else:
+            console.print(
+                f"[green]{short}:[/green] attempted={report.attempted} "
+                f"acquired={report.acquired} failed={report.failed} "
+                f"unverified={report.unverified}"
+            )
+        if coordinator.stop_event.is_set():
+            console.print("[yellow]stopped by signal; rerun to resume[/yellow]")
+            break
 
     if not dry_run:
         coverage = generate_coverage_report(
