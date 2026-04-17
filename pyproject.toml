@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "retrofetch"
+version = "0.1.0"
+description = "Automated ROM collection filler for retro console emulation"
+requires-python = ">=3.11,<3.13"
+license = { text = "MIT" }
+readme = "README.md"
+dependencies = [
+    "httpx[http2]>=0.27",
+    "selectolax>=0.3",
+    "cloudscraper>=1.2.71",
+    "curl-cffi>=0.7",
+    "internetarchive>=5.0",
+    "py7zr>=0.21",
+    "rarfile>=4.0",
+    "rich>=13.0",
+    "typer>=0.12",
+    "PyYAML>=6.0",
+    "tenacity>=8.2",
+    "pydantic>=2.0",
+]
+
+[project.scripts]
+retrofetch = "retrofetch.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["retrofetch"]
