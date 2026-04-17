@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!DOCTYPE datafile PUBLIC "-//Logiqx//DTD ROM Management Datafile//EN" "http://www.logiqx.com/Dats/datafile.dtd">
+<datafile>
+    <header>
+        <name>Nintendo - Nintendo Entertainment System</name>
+        <description>Nintendo - Nintendo Entertainment System</description>
+        <version>Retrofetch Stub 2026-04-17</version>
+        <author>retrofetch-stub</author>
+    </header>
+    <game name="Super Mario Bros. (World)">
+        <description>Super Mario Bros. (World)</description>
+        <rom name="Super Mario Bros. (World).nes" size="40976" crc="3337ec46" md5="811b027eaf99c2def7b933c5208636de" sha1="ea343f4e445a9050d4b4fbac2c77d0693b1d0922"/>
+    </game>
+    <game name="The Legend of Zelda (USA)">
+        <description>The Legend of Zelda (USA)</description>
+        <rom name="The Legend of Zelda (USA).nes" size="131088" crc="a0a095b4" md5="337bd6f1a1163df31bf2633665589ab0" sha1="f02f3f8a4c65d7aae75f46fd55ff1239f44b41d1"/>
+    </game>
+    <game name="Metroid (USA)">
+        <description>Metroid (USA)</description>
+        <rom name="Metroid (USA).nes" size="131088" crc="70080810" md5="ca78502b4cd22d5f8f8bae4a6b4a9a8e" sha1="a1b2c3d4e5f6789012345678901234567890abcd"/>
+    </game>
+</datafile>

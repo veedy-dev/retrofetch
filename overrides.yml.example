@@ -1,0 +1,10 @@
+consoles:
+  nes:
+    include:
+      - Chrono Trigger
+    exclude:
+      - "E.T. the Extra-Terrestrial"
+    limit: 100
+    region_priority:
+      - USA
+      - Japan

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!DOCTYPE datafile PUBLIC "-//Logiqx//DTD ROM Management Datafile//EN" "http://www.logiqx.com/Dats/datafile.dtd">
+<datafile>
+    <header>
+        <name>Nintendo - Virtual Boy</name>
+        <description>Nintendo - Virtual Boy</description>
+        <version>Retrofetch Stub 2026-04-17</version>
+        <author>retrofetch-stub</author>
+    </header>
+    <game name="Mario Clash (USA)">
+        <description>Mario Clash (USA)</description>
+        <rom name="Mario Clash (USA).vb" size="524288" crc="3e3b40d4" md5="8c88dcef79c5dcf9de2cf57bcfec1f93" sha1="10e8e44ff3aebf2d65e93a1ba3bab2b86d0f60f7"/>
+    </game>
+    <game name="Virtual Boy Wario Land (USA, Europe)">
+        <description>Virtual Boy Wario Land (USA, Europe)</description>
+        <rom name="Virtual Boy Wario Land (USA, Europe).vb" size="2097152" crc="cb05e2c0" md5="e66b37720e84b27cd53c0a2d7ed9e59f" sha1="fa94cbba8ea2df73bcaf95ffeba1cc1d5bc7a3e4"/>
+    </game>
+    <game name="Teleroboxer (World)">
+        <description>Teleroboxer (World)</description>
+        <rom name="Teleroboxer (World).vb" size="1048576" crc="8b1a5fc8" md5="30e2b6c3bcbab7a6a0f67aca18c6f3b7" sha1="bd7c6b6f88c3c06b66e0c1b3a64b62d3e4f5a6b7"/>
+    </game>
+</datafile>

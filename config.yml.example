@@ -1,0 +1,22 @@
+roms_root: "D:/Projects/retrofetch/ROMs"
+cache_dir: ".cache"
+log_file: "retrofetch.log"
+default_limit: 75
+region_priority:
+  - USA
+  - World
+  - Europe
+  - Japan
+exclude_keywords:
+  - "(Beta)"
+  - "(Proto)"
+  - "(Demo)"
+  - "(Sample)"
+  - "(Kiosk)"
+  - "(Trade Demo)"
+max_game_size_gb: null
+max_concurrent_downloads: 3
+source_fallback_by_class:
+  A: [archive_org, minerva_http, minerva_torrent, romsfun]
+  B: [minerva_torrent, minerva_http, archive_org, romsretro]
+  C: [romsfun, romsretro, archive_org]
