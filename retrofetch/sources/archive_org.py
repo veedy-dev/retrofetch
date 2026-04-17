@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import logging
 import os
 from pathlib import Path
@@ -22,15 +23,19 @@ class ArchiveOrgSource:
         self.identifier = console_entry.get("archive_org_identifier")
         self.extensions = tuple(console_entry.get("extensions") or [])
 
-    def find_url_for_game(
-        self, title: str, region_priority: list[str] | None = None
-    ) -> DownloadCandidate | None:
+    @staticmethod
+    def _internetarchive() -> Any:
         try:
-            import internetarchive as ia
+            return importlib.import_module("internetarchive")
         except ImportError as exc:
             raise SourceUnavailable(
                 f"internetarchive library not installed: {exc}"
             ) from exc
+
+    def find_url_for_game(
+        self, title: str, region_priority: list[str] | None = None
+    ) -> DownloadCandidate | None:
+        ia = self._internetarchive()
         if not self.identifier:
             return None
         try:
@@ -85,18 +90,39 @@ class ArchiveOrgSource:
                 return i
         return len(region_priority) + 1
 
+    def list_popular(
+        self, limit: int, region_priority: list[str] | None = None
+    ) -> list[str]:
+        if not self.identifier:
+            return []
+        try:
+            search = self._internetarchive().search_items(
+                f"collection:{self.identifier}",
+                fields=["title"],
+                sorts=["downloads desc"],
+                params={"rows": max(limit * 2, 50)},
+            )
+        except Exception as exc:
+            raise SourceUnavailable(
+                f"archive.org search failed for {self.identifier}: {exc}"
+            ) from exc
+
+        titles: list[str] = []
+        for item in search:
+            title = item.get("title") if isinstance(item, dict) else None
+            if title and title not in titles:
+                titles.append(title)
+            if len(titles) >= limit:
+                break
+        return titles
+
     def download(
         self,
         candidate: DownloadCandidate,
         dest_dir: Path,
         progress_cb: ProgressCallback | None = None,
     ) -> Path:
-        try:
-            import internetarchive as ia
-        except ImportError as exc:
-            raise SourceUnavailable(
-                f"internetarchive library not installed: {exc}"
-            ) from exc
+        ia = self._internetarchive()
         identifier = (candidate.extra or {}).get("identifier", self.identifier)
         if not identifier:
             raise SourceUnavailable("archive.org candidate missing identifier")

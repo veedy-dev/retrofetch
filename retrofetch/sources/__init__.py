@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
+from pathlib import Path
+from typing import Callable, Protocol, runtime_checkable
 
 
 class SourceUnavailable(Exception):
@@ -22,3 +23,23 @@ class DownloadCandidate:
 
 
 ProgressCallback = Callable[[int, int], None]
+
+
+@runtime_checkable
+class SourceAdapter(Protocol):
+    name: str
+
+    def find_url_for_game(
+        self, title: str, region_priority: list[str] | None = None
+    ) -> DownloadCandidate | None: ...
+
+    def download(
+        self,
+        candidate: DownloadCandidate,
+        dest_dir: Path,
+        progress_cb: ProgressCallback | None = None,
+    ) -> Path: ...
+
+    def list_popular(
+        self, limit: int, region_priority: list[str] | None = None
+    ) -> list[str]: ...

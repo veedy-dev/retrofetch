@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import yaml
@@ -40,6 +39,13 @@ class Config(BaseModel):
             "C": ["romsfun", "romsretro", "archive_org"],
         }
     )
+    ranking_sources_by_class: dict[str, list[str]] = Field(
+        default_factory=lambda: {
+            "A": ["romsfun", "romsretro", "archive_org"],
+            "B": ["archive_org", "romsretro"],
+            "C": ["romsfun", "romsretro"],
+        }
+    )
 
 
 class ConsoleOverride(BaseModel):
@@ -47,11 +53,6 @@ class ConsoleOverride(BaseModel):
     exclude: list[str] = Field(default_factory=list)
     limit: int | None = None
     region_priority: list[str] | None = None
-
-
-class IgdbCreds(BaseModel):
-    client_id: str
-    client_secret: str
 
 
 def load_config(path: Path = Path("config.yml")) -> Config:
@@ -111,14 +112,3 @@ def load_overrides(path: Path = Path("overrides.yml")) -> dict[str, ConsoleOverr
                 f"Override validation failed for console '{shortname}' in {path}: {errors}"
             ) from exc
     return result
-
-
-def load_env() -> IgdbCreds:
-    cid = os.environ.get("IGDB_CLIENT_ID")
-    csec = os.environ.get("IGDB_CLIENT_SECRET")
-    if not cid or not csec:
-        raise ConfigError(
-            "IGDB credentials missing. Set IGDB_CLIENT_ID and IGDB_CLIENT_SECRET "
-            "environment variables. Get them at https://dev.twitch.tv/console/apps"
-        )
-    return IgdbCreds(client_id=cid, client_secret=csec)

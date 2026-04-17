@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import importlib
 import logging
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urljoin
 
 import httpx
-from selectolax.parser import HTMLParser
 
 from retrofetch.sources import DownloadCandidate, ProgressCallback, SourceUnavailable
 
@@ -33,6 +33,14 @@ class MinervaHttpSource:
         self.base_url = base_url.rstrip("/") + "/"
         self.timeout = timeout
 
+    @staticmethod
+    def _html_parser(body: str) -> Any:
+        try:
+            parser_mod = importlib.import_module("selectolax.parser")
+        except ImportError as exc:
+            raise SourceUnavailable(f"selectolax not installed: {exc}") from exc
+        return parser_mod.HTMLParser(body)
+
     def _build_index_url(self) -> str | None:
         if not self.minerva_path:
             return None
@@ -51,7 +59,7 @@ class MinervaHttpSource:
             raise SourceUnavailable(f"minerva server error {resp.status_code}")
         if resp.status_code != 200:
             raise SourceUnavailable(f"minerva unexpected status {resp.status_code}")
-        parser = HTMLParser(resp.text)
+        parser = self._html_parser(resp.text)
         entries: list[tuple[str, str]] = []
         for link in parser.css("a"):
             href = link.attributes.get("href")
@@ -100,6 +108,11 @@ class MinervaHttpSource:
             if region.lower() in name_lc:
                 return i
         return len(region_priority) + 1
+
+    def list_popular(
+        self, limit: int, region_priority: list[str] | None = None
+    ) -> list[str]:
+        return []
 
     def download(
         self,

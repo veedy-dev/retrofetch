@@ -11,12 +11,12 @@ import typer
 import yaml
 
 from retrofetch import __version__
-from retrofetch.config import ConfigError, Config, load_config, load_env, load_overrides
+from retrofetch.config import ConfigError, Config, load_config, load_overrides
 from retrofetch.dat import parse_dat, verify_file
 from retrofetch.dat_fetch import bootstrap_dats, find_dat_for_console
-from retrofetch.igdb import build_wantlist
 from retrofetch.logging_setup import setup_logging
 from retrofetch.orchestrator import run_console
+from retrofetch.ranker import get_wantlist
 from retrofetch.report import generate_coverage_report
 from retrofetch.signals import install_signal_handlers
 from retrofetch.state import load_state, save_state, update_game
@@ -158,15 +158,6 @@ def download(
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(2) from exc
 
-    creds = None
-    try:
-        creds = load_env()
-    except ConfigError as exc:
-        if not dry_run:
-            console.print(f"[red]{exc}[/red]")
-            raise typer.Exit(2) from exc
-        console.print(f"[yellow]warn[/yellow] {exc} (continuing in dry-run)")
-
     entries: list[dict[str, Any]]
     if console_name:
         entry = _resolve_console_entry(consoles_yml, console_name)
@@ -194,19 +185,11 @@ def download(
         if per_limit is None:
             per_limit = config.default_limit
 
-        include = list(override.include) if override is not None else []
-        exclude = list(override.exclude) if override is not None else []
-
-        platform_id_raw = entry.get("igdb_platform_id")
-        platform_id = int(platform_id_raw) if isinstance(platform_id_raw, int) else None
-
-        wantlist = build_wantlist(
-            platform_id=platform_id,
-            creds=creds,
-            include=include,
-            exclude=exclude,
+        wantlist = get_wantlist(
+            console_entry=entry,
+            overrides=override,
+            config=config,
             limit=per_limit,
-            cache_dir=config.cache_dir,
         )
 
         console.print(

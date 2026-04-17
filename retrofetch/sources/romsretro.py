@@ -18,4 +18,6 @@ class RomsretroSource(RomsfunSource):
 
     def __init__(self, console_entry: dict[str, Any]):
         super().__init__(console_entry, base_url=_BASE_URL)
-        self.slug = console_entry.get("romsretro_slug")
+        self.slug = console_entry.get("romsretro_slug") or console_entry.get(
+            "romsfun_slug"
+        )

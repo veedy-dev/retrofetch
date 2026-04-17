@@ -20,3 +20,7 @@ source_fallback_by_class:
   A: [archive_org, minerva_http, minerva_torrent, romsfun]
   B: [minerva_torrent, minerva_http, archive_org, romsretro]
   C: [romsfun, romsretro, archive_org]
+ranking_sources_by_class:
+  A: [romsfun, romsretro, archive_org]
+  B: [archive_org, romsretro]
+  C: [romsfun, romsretro]

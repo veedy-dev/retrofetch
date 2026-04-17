@@ -12,3 +12,5 @@ coverage.md
 .sisyphus/evidence/
 .sisyphus/boulder.json
 .sisyphus/notepads/
+.serena/
+.ruff_cache/

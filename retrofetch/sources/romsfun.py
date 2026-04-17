@@ -105,6 +105,30 @@ class RomsfunSource:
             extra={"game_page": game_url},
         )
 
+    def list_popular(
+        self, limit: int, region_priority: list[str] | None = None
+    ) -> list[str]:
+        if not self.slug:
+            return []
+        index_url = urljoin(self.base_url, f"{self.slug}/")
+        body = self._get(index_url)
+        slug_re = re.escape(str(self.slug))
+        link_pattern = re.compile(
+            rf"<a[^>]+href=\"([^\"]*/{slug_re}/([^\"/]+))\"[^>]*>([^<]+)</a>",
+            re.IGNORECASE,
+        )
+        titles: list[str] = []
+        seen: set[str] = set()
+        for match in link_pattern.finditer(body):
+            title = match.group(3).strip()
+            if not title or title.lower() in seen:
+                continue
+            seen.add(title.lower())
+            titles.append(title)
+            if len(titles) >= limit:
+                break
+        return titles
+
     def download(
         self,
         candidate: DownloadCandidate,

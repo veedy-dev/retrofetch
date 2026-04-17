@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import logging
 from pathlib import Path
 from typing import Any
@@ -29,13 +30,18 @@ class MinervaTorrentSource:
         if not self.enabled:
             return None
         try:
-            import libtorrent  # noqa: F401
+            importlib.import_module("libtorrent")
         except ImportError as exc:
             raise SourceUnavailable(
                 "libtorrent not installed. Install via 'uv pip install libtorrent' or "
                 "disable torrent sources via --no-torrent"
             ) from exc
         return None
+
+    def list_popular(
+        self, limit: int, region_priority: list[str] | None = None
+    ) -> list[str]:
+        return []
 
     def download(
         self,

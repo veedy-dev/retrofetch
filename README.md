@@ -6,13 +6,15 @@ Automated ROM collection filler for retro console emulation frontends (RetroBat,
 
 _To be expanded._
 
+## How It Works
+
+retrofetch picks the most-popular N games per console by reading the source sites' own
+rankings — archive.org's download-count sort, and romsfun/romsretro's default popularity
+ordering. No account signup, no API key, no credentials of any kind.
+
 ## Install
 
 _To be expanded in T12._
-
-## IGDB Setup
-
-_To be expanded in T8._
 
 ## Usage
 
