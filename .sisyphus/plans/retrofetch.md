@@ -782,7 +782,7 @@ Max Concurrent: 6 per wave
   **Commit**: YES (grouped with T4, T5)
   - Files: `retrofetch/dat_fetch.py`, `dats/` directory, `dats/MANIFEST.md`
 
-- [ ] 7. DAT Parser (Logiqx XML) + Hash Verifier
+- [x] 7. DAT Parser (Logiqx XML) + Hash Verifier
 
   **What to do**:
   - `retrofetch/dat.py`:
@@ -870,7 +870,7 @@ Max Concurrent: 6 per wave
   **Commit**: YES (grouped with T8)
   - Files: `retrofetch/dat.py`
 
-- [ ] 8. IGDB OAuth + Wantlist Generator
+- [x] 8. IGDB OAuth + Wantlist Generator
 
   **What to do**:
   - `retrofetch/igdb.py`:
