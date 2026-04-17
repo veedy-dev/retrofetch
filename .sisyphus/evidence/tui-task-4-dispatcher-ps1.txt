@@ -1,0 +1,4 @@
+COMMAND: .\.sisyphus\qa\run-qa.ps1 1 sample version-check
+EXIT: 0
+OUTPUT:
+sample version-check: OK
