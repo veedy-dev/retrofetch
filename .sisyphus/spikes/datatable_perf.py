@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import asyncio
 import time
+from importlib import import_module
 from string import ascii_lowercase
 
-from textual.app import App, ComposeResult
-from textual.widgets import DataTable, Input
+textual_app = import_module("textual.app")
+textual_widgets = import_module("textual.widgets")
+App = textual_app.App
+ComposeResult = textual_app.ComposeResult
+DataTable = textual_widgets.DataTable
+Input = textual_widgets.Input
 
 TOTAL_ROWS = 5000
 COLUMNS = ("title", "region", "status", "size", "source")
