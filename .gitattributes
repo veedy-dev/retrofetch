@@ -1,0 +1,2 @@
+.sisyphus/fixtures/*.yml text eol=lf
+.sisyphus/fixtures/*.yaml text eol=lf

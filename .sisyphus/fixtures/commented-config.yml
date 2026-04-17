@@ -15,7 +15,6 @@ exclude_keywords:
   - "(Sample)"
   - "(Kiosk)"
   - "(Trade Demo)"
-max_game_size_gb: null  # unlimited by default
 max_concurrent_downloads: 3  # keep parallel downloads bounded
 source_fallback_by_class:
   A: [archive_org, minerva_http, minerva_torrent, romsfun]
