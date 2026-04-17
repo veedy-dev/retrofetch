@@ -13,7 +13,6 @@ _log = logging.getLogger(__name__)
 _CF_CHALLENGE_MARKERS = (
     "Just a moment",
     "cf-browser-verification",
-    "challenge-platform",
     "cf_chl_opt",
 )
 
