@@ -964,7 +964,7 @@ Max Concurrent: 6 per wave
   - Message: `feat(data): DAT parser and IGDB wantlist generation`
   - Files: `retrofetch/igdb.py`
 
-- [ ] 9. Archive.org Source Adapter
+- [x] 9. Archive.org Source Adapter
 
   **What to do**:
   - `retrofetch/sources/archive_org.py`:
