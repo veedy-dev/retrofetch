@@ -1794,19 +1794,19 @@ Max Concurrent: 6 per wave
 > **Do NOT auto-proceed after verification. Wait for user's explicit approval before marking work complete.**
 > **Never mark F1-F4 as checked before getting user's okay.**
 
-- [ ] F1. **Plan Compliance Audit** — `oracle`
+- [x] F1. **Plan Compliance Audit** — `oracle`
   Read plan end-to-end. For each "Must Have": verify implementation exists (read file, run `retrofetch` subcommand, check output). For each "Must NOT Have": search codebase for forbidden patterns (Pydantic internal models, ABC classes, async file I/O, pytest files, CHD code, etc.) — reject with file:line if found. Check evidence files exist in `.sisyphus/evidence/` for all 18 QA scenarios. Compare deliverables list against actual files in repo.
   Output: `Must Have [N/18] | Must NOT Have violations [N] | QA evidence [N/18] | VERDICT: APPROVE/REJECT`
 
-- [ ] F2. **Code Quality Review** — `unspecified-high`
+- [x] F2. **Code Quality Review** — `unspecified-high`
   Run `uv pip install -e .` fresh; run `ruff check .` (if installed); review all changed files for: `as any`/`# type: ignore` abuse, empty except, print() in prod code (should be rich.console), commented-out code, unused imports. Check AI slop: excessive comments (user rule: NO comments unless requested), over-abstraction, generic names (`data`, `result`, `item`, `temp`), ABC hierarchies, unused "for future" adapters.
   Output: `Install [PASS/FAIL] | Ruff [N issues] | Files [N clean/N issues] | AI-slop flags [N] | VERDICT`
 
-- [ ] F3. **Real Manual QA** — `unspecified-high`
+- [x] F3. **Real Manual QA** — `unspecified-high`
   Start from clean state: delete `.retrofetch-state.json`, clear `.cache/`, fresh venv. Execute ALL 18 QA scenarios (QA-1 through QA-18) from the plan — follow exact steps, capture evidence to `.sisyphus/evidence/final-qa/`. Test cross-task integration: full `retrofetch download --console virtualboy --limit 5` end-to-end with real Archive.org. Test edge cases: missing IGDB creds, corrupted archive, network interruption mid-download. Verify state file integrity after Ctrl+C.
   Output: `QA scenarios [N/18 pass] | E2E [PASS/FAIL] | Edge cases [N tested/N pass] | VERDICT`
 
-- [ ] F4. **Scope Fidelity Check** — `deep`
+- [x] F4. **Scope Fidelity Check** — `deep`
   For each task T1-T18: read "What to do", read actual diff (git log/diff or file inspection). Verify 1:1 — everything in task spec was built (no missing), nothing beyond spec was built (no creep). Check "Must NOT do" compliance PER TASK. Detect cross-task contamination: Task N touching Task M's files. Flag unaccounted changes. Specifically hunt for: unit test files, CHD conversion code, gamelist.xml generation, BIOS logic, Vimm's adapter, web server/daemon code, clean-arch layer directories, Pydantic internal models, ABC classes.
   Output: `Tasks [N/18 compliant] | Contamination [CLEAN/N issues] | Scope creep [CLEAN/N items] | VERDICT`
 
