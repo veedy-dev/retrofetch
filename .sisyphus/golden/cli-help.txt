@@ -1,0 +1,20 @@
+# retrofetch golden baseline: retrofetch --help
+# captured: 2026-04-17T23:38:38.3727646Z
+# commit: d490d30
+# ---
+                                                                               
+ Usage: python -m retrofetch [OPTIONS] COMMAND [ARGS]...                       
+                                                                               
++- Options -------------------------------------------------------------------+
+| --version          Show version                                             |
+| --help             Show this message and exit.                              |
++-----------------------------------------------------------------------------+
++- Commands ------------------------------------------------------------------+
+| init      Create config.yml, overrides.yml, .env.example, and bootstrap     |
+|           dats/ layout.                                                     |
+| download  Download ROMs for one or all consoles.                            |
+| verify    Rescan existing ROM files and update state with verification      |
+|           results.                                                          |
+| report    Generate the coverage.md report from state files.                 |
++-----------------------------------------------------------------------------+
+

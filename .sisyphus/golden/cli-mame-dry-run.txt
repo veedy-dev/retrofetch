@@ -1,0 +1,5 @@
+# retrofetch golden baseline: retrofetch download --console mame --dry-run
+# captured: 2026-04-17T23:38:38.3727646Z
+# commit: d490d30
+# ---
+SKIPPED: mame (Class D: Arcade romset-versioning model out of scope for v1)

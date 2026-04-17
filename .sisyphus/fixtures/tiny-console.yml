@@ -1,0 +1,52 @@
+consoles:
+  - shortname: nes
+    display_name: Nintendo Entertainment System
+    class: A
+    igdb_platform_id: 18
+    dat_system: Nintendo - Nintendo Entertainment System
+    minerva_path: No-Intro/Nintendo - Nintendo Entertainment System
+    archive_org_identifier: null
+    romsfun_slug: nes
+    romsretro_slug: nes
+    extensions:
+      - .nes
+      - .unf
+      - .unif
+    cd_based: false
+    region_alias_of: null
+    region_filter: null
+    skip_reason: null
+  - shortname: snes
+    display_name: Nintendo SNES (Super Nintendo)
+    class: A
+    igdb_platform_id: 19
+    dat_system: Nintendo - Super Nintendo Entertainment System
+    minerva_path: No-Intro/Nintendo - Super Nintendo Entertainment System
+    archive_org_identifier: null
+    romsfun_slug: snes
+    romsretro_slug: snes
+    extensions:
+      - .sfc
+      - .smc
+      - .swc
+      - .fig
+    cd_based: false
+    region_alias_of: null
+    region_filter: null
+    skip_reason: null
+  - shortname: virtualboy
+    display_name: Nintendo Virtual Boy
+    class: A
+    igdb_platform_id: 87
+    dat_system: Nintendo - Virtual Boy
+    minerva_path: No-Intro/Nintendo - Virtual Boy
+    archive_org_identifier: null
+    romsfun_slug: virtual-boy
+    romsretro_slug: virtual-boy
+    extensions:
+      - .vb
+      - .vboy
+    cd_based: false
+    region_alias_of: null
+    region_filter: null
+    skip_reason: null
