@@ -1,10 +1,31 @@
-"""Typer CLI entrypoint. Full subcommands added in T12."""
+"""Typer CLI entrypoint."""
+
+from __future__ import annotations
+
+import logging
+import shutil
+from pathlib import Path
+from typing import Any, Optional
 
 import typer
+import yaml
 
 from retrofetch import __version__
+from retrofetch.config import ConfigError, Config, load_config, load_env, load_overrides
+from retrofetch.dat import parse_dat, verify_file
+from retrofetch.dat_fetch import bootstrap_dats, find_dat_for_console
+from retrofetch.igdb import build_wantlist
+from retrofetch.logging_setup import setup_logging
+from retrofetch.report import generate_coverage_report
+from retrofetch.state import load_state, save_state, update_game
+from retrofetch.ui import console
+
+_log = logging.getLogger(__name__)
 
 app = typer.Typer(name="retrofetch", add_completion=False)
+
+_PACKAGE_DIR = Path(__file__).resolve().parent
+_REPO_DIR = _PACKAGE_DIR.parent
 
 
 def _version_callback(value: bool) -> None:
@@ -15,6 +36,7 @@ def _version_callback(value: bool) -> None:
 
 @app.callback(invoke_without_command=True)
 def main(
+    ctx: typer.Context,
     version: bool = typer.Option(
         False,
         "--version",
@@ -23,4 +45,276 @@ def main(
         help="Show version",
     ),
 ) -> None:
-    pass
+    if ctx.invoked_subcommand is None and not version:
+        typer.echo(ctx.get_help())
+        raise typer.Exit(0)
+
+
+def _load_consoles(consoles_path: Path) -> dict[str, Any]:
+    if not consoles_path.exists():
+        raise ConfigError(
+            f"consoles.yml not found at {consoles_path}. "
+            "Ensure you are running from the retrofetch project root or run 'retrofetch init'."
+        )
+    data = yaml.safe_load(consoles_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ConfigError(
+            f"consoles.yml root must be a mapping, got {type(data).__name__}"
+        )
+    return data
+
+
+def _resolve_config(config_path: Path) -> Config:
+    try:
+        return load_config(config_path)
+    except ConfigError as exc:
+        console.print(f"[red]Config error:[/red] {exc}")
+        raise typer.Exit(2) from exc
+
+
+def _resolve_console_entry(
+    consoles: dict[str, Any], shortname: str
+) -> dict[str, Any] | None:
+    entries: list[dict[str, Any]] = consoles.get("consoles", []) or []
+    for entry in entries:
+        if entry.get("shortname") == shortname:
+            return entry
+    return None
+
+
+@app.command()
+def init(
+    force: bool = typer.Option(False, "--force", help="Overwrite existing files"),
+) -> None:
+    """Create config.yml, overrides.yml, .env.example, and bootstrap dats/ layout."""
+
+    targets = {
+        "config.yml": _REPO_DIR / "config.yml.example",
+        "overrides.yml": _REPO_DIR / "overrides.yml.example",
+        ".env.example": _REPO_DIR / ".env.example",
+    }
+    for dest_name, example_path in targets.items():
+        dest = Path.cwd() / dest_name
+        if dest.exists() and not force:
+            console.print(f"[yellow]skip[/yellow] {dest_name} already exists")
+            continue
+        if not example_path.exists():
+            console.print(
+                f"[yellow]warn[/yellow] {example_path} not found; skipping {dest_name}"
+            )
+            continue
+        shutil.copyfile(example_path, dest)
+        console.print(f"[green]created[/green] {dest_name}")
+
+    dats_dir = Path.cwd() / "dats"
+    bootstrap_dats(dats_dir)
+    console.print(f"[green]ensured[/green] {dats_dir}/ structure")
+
+    consoles_src = _REPO_DIR / "consoles.yml"
+    consoles_dst = Path.cwd() / "consoles.yml"
+    if consoles_src.exists() and not consoles_dst.exists():
+        shutil.copyfile(consoles_src, consoles_dst)
+        console.print("[green]created[/green] consoles.yml")
+
+
+@app.command()
+def download(
+    console_name: Optional[str] = typer.Option(
+        None,
+        "--console",
+        help="Single console shortname (e.g. virtualboy). Omit to process all.",
+    ),
+    limit: Optional[int] = typer.Option(
+        None, "--limit", help="Max games per console (overrides config.default_limit)"
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Print wantlist without downloading"
+    ),
+    no_torrent: bool = typer.Option(
+        False, "--no-torrent", help="Skip torrent-based sources"
+    ),
+    config_path: Path = typer.Option(
+        Path("config.yml"), "--config", help="Path to config.yml"
+    ),
+) -> None:
+    """Download ROMs for one or all consoles."""
+
+    config = _resolve_config(config_path)
+    setup_logging(config.log_file)
+    consoles_yml_path = Path.cwd() / "consoles.yml"
+    if not consoles_yml_path.exists():
+        consoles_yml_path = _REPO_DIR / "consoles.yml"
+    try:
+        consoles_yml = _load_consoles(consoles_yml_path)
+    except ConfigError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    try:
+        overrides = load_overrides(Path("overrides.yml"))
+    except ConfigError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    creds = None
+    try:
+        creds = load_env()
+    except ConfigError as exc:
+        if not dry_run:
+            console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(2) from exc
+        console.print(f"[yellow]warn[/yellow] {exc} (continuing in dry-run)")
+
+    entries: list[dict[str, Any]]
+    if console_name:
+        entry = _resolve_console_entry(consoles_yml, console_name)
+        if entry is None:
+            console.print(f"[red]Unknown console: {console_name}[/red]")
+            raise typer.Exit(2)
+        entries = [entry]
+    else:
+        entries = list(consoles_yml.get("consoles", []) or [])
+
+    for entry in entries:
+        short: str = str(entry.get("shortname", "?"))
+        klass: str = str(entry.get("class", "?"))
+        if klass in ("D", "E", "F"):
+            console.print(
+                f"[dim]SKIPPED: {short} (Class {klass}: "
+                f"{entry.get('skip_reason') or 'out of scope'})[/dim]"
+            )
+            continue
+
+        override = overrides.get(short)
+        per_limit = limit
+        if per_limit is None and override is not None and override.limit is not None:
+            per_limit = override.limit
+        if per_limit is None:
+            per_limit = config.default_limit
+
+        include = list(override.include) if override is not None else []
+        exclude = list(override.exclude) if override is not None else []
+
+        platform_id_raw = entry.get("igdb_platform_id")
+        platform_id = int(platform_id_raw) if isinstance(platform_id_raw, int) else None
+
+        wantlist = build_wantlist(
+            platform_id=platform_id,
+            creds=creds,
+            include=include,
+            exclude=exclude,
+            limit=per_limit,
+            cache_dir=config.cache_dir,
+        )
+
+        console.print(
+            f"[cyan]Console:[/cyan] {short} (Class {klass}) - wantlist: {len(wantlist)} games"
+        )
+        for title in wantlist[:5]:
+            console.print(f"  - {title}")
+        if len(wantlist) > 5:
+            console.print(f"  ... and {len(wantlist) - 5} more")
+
+        if dry_run:
+            continue
+
+        console.print(
+            f"[yellow]Download not yet wired to dispatcher (T16). "
+            f"Wantlist prepared for {short}.[/yellow]"
+        )
+        state = load_state(short, config.roms_root)
+        for wanted_title in wantlist:
+            update_game(state, wanted_title, status="pending")
+        save_state(state, config.roms_root)
+
+    if not dry_run:
+        coverage = generate_coverage_report(
+            consoles_yml_path, config.roms_root, Path.cwd() / "coverage.md"
+        )
+        console.print(f"[green]Report:[/green] {coverage}")
+
+
+@app.command()
+def verify(
+    console_name: Optional[str] = typer.Option(
+        None, "--console", help="Single console shortname"
+    ),
+    config_path: Path = typer.Option(Path("config.yml"), "--config"),
+) -> None:
+    """Rescan existing ROM files and update state with verification results."""
+
+    config = _resolve_config(config_path)
+    setup_logging(config.log_file)
+    consoles_yml_path = Path.cwd() / "consoles.yml"
+    if not consoles_yml_path.exists():
+        consoles_yml_path = _REPO_DIR / "consoles.yml"
+    consoles_yml = _load_consoles(consoles_yml_path)
+    dats_dir = Path.cwd() / "dats"
+    if not dats_dir.exists():
+        dats_dir = _REPO_DIR / "dats"
+
+    verify_entries: list[dict[str, Any]] = list(consoles_yml.get("consoles", []) or [])
+    if console_name:
+        verify_entries = [
+            c for c in verify_entries if c.get("shortname") == console_name
+        ]
+
+    for entry in verify_entries:
+        short = str(entry.get("shortname", "?"))
+        if entry.get("class") in ("D", "E", "F"):
+            continue
+        target_dir = Path(config.roms_root) / short
+        if not target_dir.exists():
+            continue
+        dat_path = find_dat_for_console(short, consoles_yml, dats_dir)
+        if dat_path is None:
+            console.print(f"[dim]{short}: no DAT available, skipping verify[/dim]")
+            continue
+        dat = parse_dat(dat_path)
+        index = {rom.name: rom for game in dat.games for rom in game.roms}
+        state = load_state(short, config.roms_root)
+        verified = 0
+        mismatched = 0
+        for file in target_dir.iterdir():
+            if not file.is_file() or file.name.startswith("."):
+                continue
+            rom = index.get(file.name)
+            if rom is None or not (rom.sha1 or rom.crc32):
+                continue
+            result = verify_file(file, rom)
+            if result.matched:
+                verified += 1
+                update_game(
+                    state,
+                    rom.name,
+                    status="acquired",
+                    filename=file.name,
+                    sha1=rom.sha1,
+                )
+            else:
+                mismatched += 1
+                update_game(
+                    state,
+                    rom.name,
+                    status="unverified",
+                    filename=file.name,
+                )
+        save_state(state, config.roms_root)
+        console.print(
+            f"[cyan]{short}:[/cyan] verified {verified}, mismatched {mismatched}"
+        )
+
+
+@app.command()
+def report(
+    config_path: Path = typer.Option(Path("config.yml"), "--config"),
+    output: Path = typer.Option(Path("coverage.md"), "--output"),
+) -> None:
+    """Generate the coverage.md report from state files."""
+
+    config = _resolve_config(config_path)
+    consoles_yml_path = Path.cwd() / "consoles.yml"
+    if not consoles_yml_path.exists():
+        consoles_yml_path = _REPO_DIR / "consoles.yml"
+    path = generate_coverage_report(consoles_yml_path, config.roms_root, output)
+    console.print(f"[green]Report written:[/green] {path}")

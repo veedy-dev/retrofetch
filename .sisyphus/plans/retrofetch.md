@@ -1041,7 +1041,7 @@ Max Concurrent: 6 per wave
   **Commit**: YES (grouped with T10, T11)
   - Files: `retrofetch/sources/archive_org.py`
 
-- [ ] 10. Download Orchestrator (Resume, .part, Extraction)
+- [x] 10. Download Orchestrator (Resume, .part, Extraction)
 
   **What to do**:
   - `retrofetch/downloader.py`:
@@ -1124,7 +1124,7 @@ Max Concurrent: 6 per wave
   **Commit**: YES (grouped with T9, T11)
   - Files: `retrofetch/downloader.py`, `retrofetch/extractor.py`
 
-- [ ] 11. Organizer + Coverage Report Generator
+- [x] 11. Organizer + Coverage Report Generator
 
   **What to do**:
   - `retrofetch/organizer.py`:
@@ -1206,7 +1206,7 @@ Max Concurrent: 6 per wave
   **Commit**: YES (grouped with T9, T10)
   - Files: `retrofetch/organizer.py`, `retrofetch/report.py`
 
-- [ ] 12. CLI Entry (typer subcommands)
+- [x] 12. CLI Entry (typer subcommands)
 
   **What to do**:
   - `retrofetch/cli.py`:
