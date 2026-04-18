@@ -3,9 +3,10 @@ from __future__ import annotations
 import logging
 import shutil
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import typer
+from rich.console import Console
 
 from retrofetch import __version__
 from retrofetch.config import (
@@ -17,6 +18,20 @@ from retrofetch.config import (
 )
 from retrofetch.dat import parse_dat, verify_file
 from retrofetch.dat_fetch import bootstrap_dats, find_dat_for_console
+from retrofetch.events import (
+    CloudflareBlockEvent,
+    DatLoadDoneEvent,
+    DatLoadStartEvent,
+    EventBus,
+    ExtractionDoneEvent,
+    ExtractionStartEvent,
+    GameDoneEvent,
+    GameFailedEvent,
+    GameStartEvent,
+    ProgressEvent,
+    RateLimitEvent,
+    SourceDeadEvent,
+)
 from retrofetch.logging_setup import setup_logging
 from retrofetch.orchestrator import run_console
 from retrofetch.ranker import get_wantlist
@@ -87,6 +102,53 @@ def _resolve_console_entry(
     return None
 
 
+def _verbose_formatter(cons: Console) -> Callable[[ProgressEvent], None]:
+    def _on(event: ProgressEvent) -> None:
+        if isinstance(event, GameStartEvent):
+            cons.print(
+                f"[cyan]-> Starting {event.game} from {event.source}[/cyan]"
+            )
+        elif isinstance(event, GameDoneEvent):
+            sha1_str = f"{event.sha1[:8]}..." if event.sha1 else "sha1=?"
+            cons.print(
+                f"[green][OK] Acquired {event.game} "
+                f"({event.size} bytes, {sha1_str})[/green]"
+            )
+        elif isinstance(event, GameFailedEvent):
+            cons.print(f"[red][X] Failed {event.game}: {event.reason}[/red]")
+        elif isinstance(event, SourceDeadEvent):
+            cons.print(
+                f"[yellow]! Source {event.source} dead: {event.reason}[/yellow]"
+            )
+        elif isinstance(event, RateLimitEvent):
+            cons.print(
+                f"[yellow]! Rate-limited on {event.source}, "
+                f"retry in {event.retry_after}s[/yellow]"
+            )
+        elif isinstance(event, CloudflareBlockEvent):
+            cons.print(
+                f"[yellow]! Cloudflare blocked {event.source} "
+                f"(status={event.status})[/yellow]"
+            )
+        elif isinstance(event, DatLoadStartEvent):
+            cons.print(
+                f"[dim]... Loading DAT for {event.console}: {event.dat_name}[/dim]"
+            )
+        elif isinstance(event, DatLoadDoneEvent):
+            cons.print(
+                f"[dim]... DAT loaded for {event.console}: "
+                f"{event.games_loaded} games[/dim]"
+            )
+        elif isinstance(event, ExtractionStartEvent):
+            cons.print(
+                f"[dim]... Extracting {event.filename} ({event.format})[/dim]"
+            )
+        elif isinstance(event, ExtractionDoneEvent):
+            cons.print(f"[dim]... Extracted to {event.extracted_to}[/dim]")
+
+    return _on
+
+
 @app.command()
 def init(
     force: bool = typer.Option(False, "--force", help="Overwrite existing files"),
@@ -138,6 +200,12 @@ def download(
     no_torrent: bool = typer.Option(
         False, "--no-torrent", help="Skip torrent-based sources"
     ),
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        "-v",
+        help="Print per-game event lines during download (uses event bus).",
+    ),
     config_path: Path = typer.Option(
         Path("config.yml"), "--config", help="Path to config.yml"
     ),
@@ -171,6 +239,11 @@ def download(
         entries = [entry]
     else:
         entries = list(consoles_yml.get("consoles", []) or [])
+
+    bus: EventBus | None = None
+    if verbose:
+        bus = EventBus()
+        bus.subscribe(_verbose_formatter(console))
 
     for entry in entries:
         short: str = str(entry.get("shortname", "?"))
@@ -212,6 +285,7 @@ def download(
             allow_torrent=not no_torrent,
             consoles_yml=consoles_yml,
             stop_event=coordinator.stop_event,
+            event_bus=bus,
             dry_run=config.dry_run,
         )
         if not dry_run:
