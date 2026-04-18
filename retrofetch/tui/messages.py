@@ -1,1 +1,155 @@
-"""EventBus → Textual Message translation layer (T13 fills)."""
+from __future__ import annotations
+
+from textual.app import App  # pyright: ignore[reportMissingImports]
+from textual.message import Message  # pyright: ignore[reportMissingImports]
+
+from retrofetch.events import (
+    CloudflareBlockEvent,
+    DatLoadDoneEvent,
+    DatLoadStartEvent,
+    EventBus,
+    ExtractionDoneEvent,
+    ExtractionStartEvent,
+    GameBytesEvent,
+    GameDoneEvent,
+    GameFailedEvent,
+    GameStartEvent,
+    ProgressEvent,
+    RateLimitEvent,
+    SourceDeadEvent,
+    SubscriptionHandle,
+)
+
+
+class GameStart(Message):
+    def __init__(self, game: str, source: str, console: str) -> None:
+        self.game = game
+        self.source = source
+        self.console = console
+        super().__init__()
+
+
+class GameBytes(Message):
+    def __init__(self, game: str, downloaded: int, total: int) -> None:
+        self.game = game
+        self.downloaded = downloaded
+        self.total = total
+        super().__init__()
+
+
+class GameDone(Message):
+    def __init__(self, game: str, source: str, size: int, sha1: str | None) -> None:
+        self.game = game
+        self.source = source
+        self.size = size
+        self.sha1 = sha1
+        super().__init__()
+
+
+class GameFailed(Message):
+    def __init__(self, game: str, reason: str) -> None:
+        self.game = game
+        self.reason = reason
+        super().__init__()
+
+
+class SourceDead(Message):
+    def __init__(self, source: str, reason: str) -> None:
+        self.source = source
+        self.reason = reason
+        super().__init__()
+
+
+class RateLimit(Message):
+    def __init__(self, source: str, retry_after: float) -> None:
+        self.source = source
+        self.retry_after = retry_after
+        super().__init__()
+
+
+class CloudflareBlock(Message):
+    def __init__(self, source: str, status: int) -> None:
+        self.source = source
+        self.status = status
+        super().__init__()
+
+
+class DatLoadStart(Message):
+    def __init__(self, console: str, dat_name: str) -> None:
+        self.console = console
+        self.dat_name = dat_name
+        super().__init__()
+
+
+class DatLoadDone(Message):
+    def __init__(self, console: str, games_loaded: int) -> None:
+        self.console = console
+        self.games_loaded = games_loaded
+        super().__init__()
+
+
+class ExtractionStart(Message):
+    def __init__(self, filename: str, format: str) -> None:
+        self.filename = filename
+        self.format = format
+        super().__init__()
+
+
+class ExtractionDone(Message):
+    def __init__(self, filename: str, extracted_to: str) -> None:
+        self.filename = filename
+        self.extracted_to = extracted_to
+        super().__init__()
+
+
+class EventBusBridge:
+    """Translates EventBus ProgressEvents into Textual Messages.
+
+    Thread-safe by construction: uses ``App.post_message()`` exclusively.
+    """
+
+    _TRANSLATIONS: list[tuple[type[ProgressEvent], type[Message]]] = [
+        (GameStartEvent, GameStart),
+        (GameBytesEvent, GameBytes),
+        (GameDoneEvent, GameDone),
+        (GameFailedEvent, GameFailed),
+        (SourceDeadEvent, SourceDead),
+        (RateLimitEvent, RateLimit),
+        (CloudflareBlockEvent, CloudflareBlock),
+        (DatLoadStartEvent, DatLoadStart),
+        (DatLoadDoneEvent, DatLoadDone),
+        (ExtractionStartEvent, ExtractionStart),
+        (ExtractionDoneEvent, ExtractionDone),
+    ]
+
+    def __init__(self, app: App, bus: EventBus) -> None:
+        self._app = app
+        self._bus = bus
+        self._handle: SubscriptionHandle | None = None
+
+    def start(self) -> None:
+        """Subscribe to the event bus. Safe to call once per bridge instance."""
+        self._handle = self._bus.subscribe(self._on_event)
+
+    def stop(self) -> None:
+        """Unsubscribe. Idempotent."""
+        if self._handle is not None:
+            self._bus.unsubscribe(self._handle)
+            self._handle = None
+
+    def _on_event(self, event: ProgressEvent) -> None:
+        for event_cls, msg_cls in self._TRANSLATIONS:
+            if isinstance(event, event_cls):
+                kwargs = {name: getattr(event, name) for name in event_cls.__dataclass_fields__}
+                try:
+                    self._app.post_message(msg_cls(**kwargs))
+                except Exception:
+                    pass
+                return
+
+
+def wire_event_bus(app: App, bus: EventBus) -> EventBusBridge:
+    """Create and start an EventBusBridge."""
+    bridge = EventBusBridge(app, bus)
+    bridge.start()
+    return bridge
