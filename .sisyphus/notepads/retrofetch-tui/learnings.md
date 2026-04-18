@@ -171,3 +171,10 @@ T8 save_config must handle this. Simple approach: save always writes LF (ruamel'
 ## T18: Download Screen
 - Textual's Checkbox consumes the enter key by default. If a screen binding uses enter, it won't trigger if the Checkbox has focus. In QA scripts, we can bypass this by calling the action method directly (e.g., screen.action_start()) instead of simulating key presses if focus management is tricky.
 - When a worker posts a message to self.app, it is handled by the app and does not bubble down to the active screen. To have the screen handle the message, the worker should be initialized with self (the screen) instead of self.app, so it posts directly to the screen.
+
+## T19: State Browser Screen
+- StateScreen renders `.retrofetch-state.json` rows (Title, Status, Source, Size, SHA1) with Esc=back / r=refresh bindings.
+- Status class pattern: dynamically mount `Label(classes="status-cell status-{name}")` into `#main-panel` for every status with a non-zero count, set `display=False` so they never affect layout. Clear previous ones each refresh via `main.query(".status-cell")`. Keeps the DOM honest about which statuses are present without rendering ghosts.
+- Textual quirk (worth writing down): `app.query(".status-cell")` does NOT traverse a screen pushed via `app.push_screen(...)` in `run_test()` harnesses. Use `screen.query(".status-cell")` or `app.screen.query(...)`. T19 QA originally used `app.query` and saw `classes_seen=set()` even though three labels existed under the screen. Fixed by querying from the screen directly.
+- Read-only semantics: StateScreen never calls `save_state`; all writes go through dispatcher / orchestrator.
+- HomeScreen binding already added: `s` dispatches to StateScreen for Class A/B/C rows; Class D/E/F noop to match wantlist/download pattern.
