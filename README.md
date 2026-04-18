@@ -147,9 +147,6 @@ A real terminal is required. The TUI will fail to launch on MSYS2, PowerShell IS
 - **Comment Preservation**: Wantlist overrides are saved to `overrides.yml` using `ruamel.yaml` to preserve your existing comments.
 - **Async Workers**: Coverage computation and downloads run in background workers to keep the UI responsive.
 
-![](docs/tui-home.png)
-*Note: Screenshot placeholder. No image ships in the repository yet.*
-
 
 ## Configuration
 
