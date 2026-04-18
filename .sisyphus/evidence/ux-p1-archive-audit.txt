@@ -1,0 +1,38 @@
+shortname|display_name|class|old_identifier|new_identifier|verification_status|expected_title_count_if_known
+arcadia|Emerson Arcadia 2001|A|null|emerson_arcadia_library|verified|58
+astrocde|Bally Astrocade|A|null|bally_astrocade_library|verified|20
+atari2600|Atari 2600|A|null|atari_2600_library|verified|3005
+atari5200|Atari 5200|A|null|atari_5200_library|verified|213
+atari7800|Atari 7800 ProSystem|A|null|atari_7800_library|verified|715
+atari800|Atari 800|A|null|atari_8bit_library_games|verified|4729
+atarilynx|Atari Lynx|A|null|lynx-library|verified|95
+atarixe|Atari XE|A|null|atari_8bit_library_games|verified|4729
+c64|Commodore 64|A|null|softwarelibrary_c64_games|verified|17941
+channelf|Fairchild Channel F|A|null|channelf_library|verified|45
+colecovision|Coleco ColecoVision|A|null|coleco_colecovision_library|verified|245
+crvision|VTech CreatiVision|A|null|vtech_creativision_library|verified|16
+gamecom|Tiger Electronics Game.com|A|null|softwarelibrary_gamecom|verified|47
+gamegear|Sega Game Gear|A|null|gamegear_library|verified|429
+genesis|Sega Genesis|A|null|sega_genesis_library|verified|12385
+intellivision|Mattel Electronics Intellivision|A|null|intellivision|verified|183
+mastersystem|Sega Master System|A|null|sega_sms_library|verified|561
+megadrive|Sega Mega Drive|A|null|sega_genesis_library|verified|12385
+megadrivejp|Sega Mega Drive|A|null|sega_genesis_library|verified|12385
+megaduck|Creatronic Mega Duck|A|null|megaduck_library|verified|9
+ngp|SNK Neo Geo Pocket|A|null|ngp_library|verified|236
+ngpc|SNK Neo Geo Pocket Color|A|null|ngp_library|verified|236
+odyssey2|Magnavox Odyssey 2|A|null|library_magnavox_odyssey2|verified|132
+pcengine|NEC PC Engine|A|null|tg16_library|verified|309
+psx|Sony PlayStation|B|null|psxgames|verified|2658
+scv|Epoch Super Cassette Vision|A|null|supercassettevision_library|verified|33
+sega32x|Sega Mega Drive 32X|A|null|sega_genesis_library|verified|12385
+sega32xjp|Sega Super 32X|A|null|sega_genesis_library|verified|12385
+sega32xna|Sega Genesis 32X|A|null|sega_genesis_library|verified|12385
+sg-1000|Sega SG-1000|A|null|sg_1000_library|verified|109
+supervision|Watara Supervision|A|null|supervision_library|verified|44
+supracan|Funtech Super A'Can|A|null|superacan_library|verified|9
+tg16|NEC TurboGrafx-16|A|null|tg16_library|verified|309
+vectrex|GCE Vectrex|A|null|vectrex|verified|157
+videopac|Philips Videopac G7000|A|null|library_magnavox_odyssey2|verified|132
+wonderswan|Bandai WonderSwan|A|null|wonderswan-library|verified|304
+wonderswancolor|Bandai WonderSwan Color|A|null|wonderswan-library|verified|304

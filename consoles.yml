@@ -192,7 +192,7 @@ consoles:
     igdb_platform_id: 94
     dat_system: Emerson - Arcadia 2001
     minerva_path: No-Intro/Emerson - Arcadia 2001
-    archive_org_identifier:
+    archive_org_identifier: emerson_arcadia_library
     romsfun_slug: arcadia-2001
     romsretro_slug: arcadia-2001
     extensions:
@@ -237,7 +237,7 @@ consoles:
     igdb_platform_id: 91
     dat_system: Bally - Astrocade
     minerva_path: No-Intro/Bally - Astrocade
-    archive_org_identifier:
+    archive_org_identifier: bally_astrocade_library
     romsfun_slug: astrocade
     romsretro_slug: astrocade
     extensions:
@@ -252,7 +252,7 @@ consoles:
     igdb_platform_id: 59
     dat_system: Atari - 2600
     minerva_path: No-Intro/Atari - 2600
-    archive_org_identifier:
+    archive_org_identifier: atari_2600_library
     romsfun_slug: atari-2600
     romsretro_slug: atari-2600
     extensions:
@@ -268,7 +268,7 @@ consoles:
     igdb_platform_id: 66
     dat_system: Atari - 5200
     minerva_path: No-Intro/Atari - 5200
-    archive_org_identifier:
+    archive_org_identifier: atari_5200_library
     romsfun_slug: atari-5200
     romsretro_slug: atari-5200
     extensions:
@@ -284,7 +284,7 @@ consoles:
     igdb_platform_id: 60
     dat_system: Atari - 7800
     minerva_path: No-Intro/Atari - 7800
-    archive_org_identifier:
+    archive_org_identifier: atari_7800_library
     romsfun_slug: atari-7800
     romsretro_slug: atari-7800
     extensions:
@@ -300,7 +300,7 @@ consoles:
     igdb_platform_id: 65
     dat_system: Atari - 8-bit Family
     minerva_path: No-Intro/Atari - 8-bit Family
-    archive_org_identifier:
+    archive_org_identifier: atari_8bit_library_games
     romsfun_slug: atari-800
     romsretro_slug: atari-800
     extensions:
@@ -333,7 +333,7 @@ consoles:
     igdb_platform_id: 61
     dat_system: Atari - Lynx
     minerva_path: No-Intro/Atari - Lynx
-    archive_org_identifier:
+    archive_org_identifier: lynx-library
     romsfun_slug: atari-lynx
     romsretro_slug: atari-lynx
     extensions:
@@ -364,7 +364,7 @@ consoles:
     igdb_platform_id:
     dat_system: Atari - 8-bit Family
     minerva_path: No-Intro/Atari - 8-bit Family
-    archive_org_identifier:
+    archive_org_identifier: atari_8bit_library_games
     romsfun_slug: atari-8bit
     romsretro_slug: atari-8bit
     extensions:
@@ -411,7 +411,7 @@ consoles:
     igdb_platform_id: 15
     dat_system: Commodore - Commodore 64
     minerva_path: No-Intro/Commodore - Commodore 64
-    archive_org_identifier:
+    archive_org_identifier: softwarelibrary_c64_games
     romsfun_slug: commodore-64
     romsretro_slug: commodore-64
     extensions:
@@ -481,7 +481,7 @@ consoles:
     igdb_platform_id: 127
     dat_system: Fairchild - Channel F
     minerva_path: No-Intro/Fairchild - Channel F
-    archive_org_identifier:
+    archive_org_identifier: channelf_library
     romsfun_slug: channel-f
     romsretro_slug: channel-f
     extensions:
@@ -511,7 +511,7 @@ consoles:
     igdb_platform_id: 68
     dat_system: Coleco - ColecoVision
     minerva_path: No-Intro/Coleco - ColecoVision
-    archive_org_identifier:
+    archive_org_identifier: coleco_colecovision_library
     romsfun_slug: colecovision
     romsretro_slug: colecovision
     extensions:
@@ -607,7 +607,7 @@ consoles:
     igdb_platform_id:
     dat_system: VTech - CreatiVision
     minerva_path: No-Intro/VTech - CreatiVision
-    archive_org_identifier:
+    archive_org_identifier: vtech_creativision_library
     romsfun_slug: creativision
     romsretro_slug: creativision
     extensions:
@@ -900,7 +900,7 @@ consoles:
     igdb_platform_id:
     dat_system: Tiger - Game.com
     minerva_path: No-Intro/Tiger - Game.com
-    archive_org_identifier:
+    archive_org_identifier: softwarelibrary_gamecom
     romsfun_slug: game-com
     romsretro_slug: game-com
     extensions:
@@ -916,7 +916,7 @@ consoles:
     igdb_platform_id: 35
     dat_system: Sega - Game Gear
     minerva_path: No-Intro/Sega - Game Gear
-    archive_org_identifier:
+    archive_org_identifier: gamegear_library
     romsfun_slug: sega-game-gear
     romsretro_slug: sega-game-gear
     extensions:
@@ -995,7 +995,7 @@ consoles:
     igdb_platform_id: 29
     dat_system: Sega - Mega Drive - Genesis
     minerva_path: No-Intro/Sega - Mega Drive - Genesis
-    archive_org_identifier:
+    archive_org_identifier: sega_genesis_library
     romsfun_slug: sega-genesis
     romsretro_slug: sega-genesis
     extensions:
@@ -1043,7 +1043,7 @@ consoles:
     igdb_platform_id: 67
     dat_system: Mattel - Intellivision
     minerva_path: No-Intro/Mattel - Intellivision
-    archive_org_identifier:
+    archive_org_identifier: intellivision
     romsfun_slug: intellivision
     romsretro_slug: intellivision
     extensions:
@@ -1181,7 +1181,7 @@ consoles:
     igdb_platform_id: 64
     dat_system: Sega - Master System - Mark III
     minerva_path: No-Intro/Sega - Master System - Mark III
-    archive_org_identifier:
+    archive_org_identifier: sega_sms_library
     romsfun_slug: sega-master-system
     romsretro_slug: sega-master-system
     extensions:
@@ -1234,7 +1234,7 @@ consoles:
     igdb_platform_id: 29
     dat_system: Sega - Mega Drive - Genesis
     minerva_path: No-Intro/Sega - Mega Drive - Genesis
-    archive_org_identifier:
+    archive_org_identifier: sega_genesis_library
     romsfun_slug: sega-genesis
     romsretro_slug: sega-genesis
     extensions:
@@ -1252,7 +1252,7 @@ consoles:
     igdb_platform_id:
     dat_system:
     minerva_path:
-    archive_org_identifier:
+    archive_org_identifier: sega_genesis_library
     romsfun_slug: sega-genesis
     romsretro_slug: sega-genesis
     extensions:
@@ -1272,7 +1272,7 @@ consoles:
     igdb_platform_id:
     dat_system: Creatronic - Mega Duck
     minerva_path: No-Intro/Creatronic - Mega Duck
-    archive_org_identifier:
+    archive_org_identifier: megaduck_library
     romsfun_slug: mega-duck
     romsretro_slug: mega-duck
     extensions:
@@ -1623,7 +1623,7 @@ consoles:
     igdb_platform_id: 119
     dat_system: SNK - Neo Geo Pocket
     minerva_path: No-Intro/SNK - Neo Geo Pocket
-    archive_org_identifier:
+    archive_org_identifier: ngp_library
     romsfun_slug: neo-geo-pocket
     romsretro_slug: neo-geo-pocket
     extensions:
@@ -1638,7 +1638,7 @@ consoles:
     igdb_platform_id: 120
     dat_system: SNK - Neo Geo Pocket Color
     minerva_path: No-Intro/SNK - Neo Geo Pocket Color
-    archive_org_identifier:
+    archive_org_identifier: ngp_library
     romsfun_slug: snk-neo-geo-pocket-color
     romsretro_slug: neo-geo-pocket-color
     extensions:
@@ -1654,7 +1654,7 @@ consoles:
     igdb_platform_id: 133
     dat_system: Magnavox - Odyssey 2
     minerva_path: No-Intro/Magnavox - Odyssey 2
-    archive_org_identifier:
+    archive_org_identifier: library_magnavox_odyssey2
     romsfun_slug: odyssey-2
     romsretro_slug: odyssey-2
     extensions:
@@ -1775,7 +1775,7 @@ consoles:
     igdb_platform_id: 86
     dat_system: NEC - PC Engine - TurboGrafx 16
     minerva_path: No-Intro/NEC - PC Engine - TurboGrafx 16
-    archive_org_identifier:
+    archive_org_identifier: tg16_library
     romsfun_slug: pc-engine
     romsretro_slug: pc-engine
     extensions:
@@ -1955,7 +1955,7 @@ consoles:
     igdb_platform_id: 7
     dat_system: Sony - PlayStation
     minerva_path: Redump/Sony - PlayStation
-    archive_org_identifier:
+    archive_org_identifier: psxgames
     romsfun_slug: playstation
     romsretro_slug: playstation
     extensions:
@@ -2088,7 +2088,7 @@ consoles:
     igdb_platform_id:
     dat_system: Epoch - Super Cassette Vision
     minerva_path: No-Intro/Epoch - Super Cassette Vision
-    archive_org_identifier:
+    archive_org_identifier: supercassettevision_library
     romsfun_slug: super-cassette-vision
     romsretro_slug: super-cassette-vision
     extensions:
@@ -2103,7 +2103,7 @@ consoles:
     igdb_platform_id: 30
     dat_system: Sega - 32X
     minerva_path: No-Intro/Sega - 32X
-    archive_org_identifier:
+    archive_org_identifier: sega_genesis_library
     romsfun_slug: 32x
     romsretro_slug: sega-32x
     extensions:
@@ -2119,7 +2119,7 @@ consoles:
     igdb_platform_id:
     dat_system:
     minerva_path:
-    archive_org_identifier:
+    archive_org_identifier: sega_genesis_library
     romsfun_slug: 32x
     romsretro_slug: sega-32x
     extensions:
@@ -2137,7 +2137,7 @@ consoles:
     igdb_platform_id:
     dat_system:
     minerva_path:
-    archive_org_identifier:
+    archive_org_identifier: sega_genesis_library
     romsfun_slug: 32x
     romsretro_slug: sega-32x
     extensions:
@@ -2189,7 +2189,7 @@ consoles:
     igdb_platform_id: 84
     dat_system: Sega - SG-1000
     minerva_path: No-Intro/Sega - SG-1000
-    archive_org_identifier:
+    archive_org_identifier: sg_1000_library
     romsfun_slug: sega-sg-1000
     romsretro_slug: sg-1000
     extensions:
@@ -2335,7 +2335,7 @@ consoles:
     igdb_platform_id:
     dat_system: Watara - Supervision
     minerva_path: No-Intro/Watara - Supervision
-    archive_org_identifier:
+    archive_org_identifier: supervision_library
     romsfun_slug: supervision
     romsretro_slug: supervision
     extensions:
@@ -2351,7 +2351,7 @@ consoles:
     igdb_platform_id:
     dat_system: Funtech - Super Acan
     minerva_path: No-Intro/Funtech - Super Acan
-    archive_org_identifier:
+    archive_org_identifier: superacan_library
     romsfun_slug: super-acan
     romsretro_slug: super-acan
     extensions:
@@ -2430,7 +2430,7 @@ consoles:
     igdb_platform_id: 86
     dat_system: NEC - PC Engine - TurboGrafx 16
     minerva_path: No-Intro/NEC - PC Engine - TurboGrafx 16
-    archive_org_identifier:
+    archive_org_identifier: tg16_library
     romsfun_slug: turbografx
     romsretro_slug: turbografx-16
     extensions:
@@ -2521,7 +2521,7 @@ consoles:
     igdb_platform_id: 70
     dat_system: GCE - Vectrex
     minerva_path: No-Intro/GCE - Vectrex
-    archive_org_identifier:
+    archive_org_identifier: vectrex
     romsfun_slug: vectrex
     romsretro_slug: vectrex
     extensions:
@@ -2554,7 +2554,7 @@ consoles:
     igdb_platform_id: 133
     dat_system: Magnavox - Odyssey 2
     minerva_path: No-Intro/Magnavox - Odyssey 2
-    archive_org_identifier:
+    archive_org_identifier: library_magnavox_odyssey2
     romsfun_slug: videopac
     romsretro_slug: videopac
     extensions:
@@ -2727,7 +2727,7 @@ consoles:
     igdb_platform_id: 57
     dat_system: Bandai - WonderSwan
     minerva_path: No-Intro/Bandai - WonderSwan
-    archive_org_identifier:
+    archive_org_identifier: wonderswan-library
     romsfun_slug: wonderswan
     romsretro_slug: wonderswan
     extensions:
@@ -2742,7 +2742,7 @@ consoles:
     igdb_platform_id: 123
     dat_system: Bandai - WonderSwan Color
     minerva_path: No-Intro/Bandai - WonderSwan Color
-    archive_org_identifier:
+    archive_org_identifier: wonderswan-library
     romsfun_slug: wonderswan-color
     romsretro_slug: wonderswan-color
     extensions:
