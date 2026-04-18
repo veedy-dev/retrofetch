@@ -1,1 +1,55 @@
-/* retrofetch TUI styles - T16 will fill */
+/* retrofetch TUI styles - dark theme, ASCII-safe (no emoji, no box-drawing).
+ * Colors come from Textual's built-in theme variables so they adapt if a user
+ * switches between dark/light variants. Only structural rules here.
+ */
+
+Screen {
+    background: $surface;
+}
+
+#sidebar {
+    width: 32;
+    border-right: vkey $primary;
+    background: $surface-darken-1;
+}
+
+#console-list {
+    height: 1fr;
+    background: $surface-darken-1;
+}
+
+Input#filter {
+    dock: top;
+    border: round $primary;
+    background: $surface;
+    margin: 0;
+}
+
+/* Class-tier colors. Stock Textual provides $success (green), $primary (blue/cyan),
+ * $warning (yellow/orange). We use $text-muted for skipped classes.
+ */
+.class-a { color: $success; }
+.class-b { color: $primary; }
+.class-c { color: $warning; }
+.class-def { color: $text-muted; text-style: italic; }
+
+/* Status colors for downstream screens (state browser, download progress, etc.). */
+.status-acquired  { color: $success; }
+.status-unverified { color: $warning; }
+.status-failed    { color: $error; }
+.status-pending   { color: $text-muted; }
+
+/* Main content panel. */
+#main-panel {
+    background: $surface;
+    padding: 1 2;
+    width: 1fr;
+}
+
+/* Ensure list rows have some breathing room and a highlight on focus. */
+.console-row {
+    padding: 0 1;
+}
+ListView > ListItem.--highlight {
+    background: $accent 50%;
+}
