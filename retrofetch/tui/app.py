@@ -25,6 +25,7 @@ class RetrofetchApp(App[int]):
 
     BINDINGS = [
         ("q", "quit", "Quit"),
+        ("question_mark", "help", "Help"),
     ]
 
     def __init__(
@@ -44,3 +45,20 @@ class RetrofetchApp(App[int]):
     def on_mount(self) -> None:
         from retrofetch.tui.screens.home import HomeScreen
         self.push_screen(HomeScreen())
+
+    def action_help(self) -> None:
+        from retrofetch.tui.screens.help import HelpScreen
+        self.push_screen(HelpScreen())
+
+    def show_toast(self, message: str, severity: str = "info") -> None:
+        """Display a non-blocking toast at the bottom-right for 3s.
+
+        Called from any screen/handler. Severity: 'info' | 'warning' | 'error'.
+        """
+        from retrofetch.tui.widgets.toast import Toast, Severity
+        sev: Severity = severity if severity in ("info", "warning", "error") else "info"  # type: ignore[assignment]
+        try:
+            toast = Toast(message, severity=sev)
+            self.mount(toast)
+        except Exception:
+            pass
