@@ -32,7 +32,7 @@ from typing import Any
 
 from textual.app import App  # pyright: ignore[reportMissingImports]
 
-from retrofetch.config import Config, ConsoleOverride
+from retrofetch.config import Config, ConfigError, ConsoleOverride, load_config, load_overrides
 
 
 class RetrofetchApp(App[int]):
@@ -50,16 +50,39 @@ class RetrofetchApp(App[int]):
         config_path: Path,
         consoles_yml: dict[str, Any],
         overrides: dict[str, ConsoleOverride],
+        first_run: bool = False,
     ) -> None:
         super().__init__()
         self.config = config
         self.config_path = config_path
         self.consoles_yml = consoles_yml
         self.overrides = overrides
+        self._first_run = first_run
 
     def on_mount(self) -> None:
-        from retrofetch.tui.screens.home import HomeScreen
-        self.push_screen(HomeScreen())
+        if self._first_run:
+            from retrofetch.tui.screens.setup import SetupScreen
+
+            def _on_setup_done(result: bool | None) -> None:
+                if not result:
+                    self.exit(2)
+                    return
+                try:
+                    self.config = load_config(self.config_path)
+                except ConfigError:
+                    self.exit(2)
+                    return
+                try:
+                    self.overrides = load_overrides(Path("overrides.yml"))
+                except ConfigError:
+                    self.overrides = {}
+                from retrofetch.tui.screens.home import HomeScreen
+                self.push_screen(HomeScreen())
+
+            self.push_screen(SetupScreen(), _on_setup_done)
+        else:
+            from retrofetch.tui.screens.home import HomeScreen
+            self.push_screen(HomeScreen())
 
     def action_help(self) -> None:
         from retrofetch.tui.screens.help import HelpScreen

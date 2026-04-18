@@ -92,6 +92,16 @@ def _resolve_config(config_path: Path) -> Config:
         raise typer.Exit(2) from exc
 
 
+def _try_load_config(config_path: Path) -> Config | None:
+    """Return Config if loadable, else None (caller decides wizard)."""
+    if not config_path.exists():
+        return None
+    try:
+        return load_config(config_path)
+    except ConfigError:
+        return None
+
+
 def _resolve_console_entry(
     consoles: dict[str, Any], shortname: str
 ) -> dict[str, Any] | None:
@@ -418,7 +428,6 @@ def tui(
         )
         raise typer.Exit(2)
 
-    config = _resolve_config(config_path)
     consoles_yml_path = Path.cwd() / "consoles.yml"
     if not consoles_yml_path.exists():
         consoles_yml_path = _REPO_DIR / "consoles.yml"
@@ -438,13 +447,23 @@ def tui(
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(2) from exc
 
+    existing = _try_load_config(config_path)
+    first_run = existing is None
+    if first_run:
+        minimal_config = Config(roms_root=Path.cwd() / "ROMs")
+    else:
+        minimal_config = existing
+
     from retrofetch.tui.app import RetrofetchApp
 
     tui_app = RetrofetchApp(
-        config=config,
+        config=minimal_config,
         config_path=config_path,
         consoles_yml=consoles_yml,
         overrides=overrides,
+        first_run=first_run,
     )
     return_code = tui_app.run()
+    if return_code == 2 and first_run:
+        console.print("Setup cancelled. Run `retrofetch tui` again when ready.")
     raise typer.Exit(return_code if return_code is not None else 0)
