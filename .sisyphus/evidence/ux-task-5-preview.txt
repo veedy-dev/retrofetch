@@ -1,0 +1,2 @@
+status=PASS
+modes=IDLE,LOADING,READY(cached),READY(fresh,truncated),FAILED,IDLE
