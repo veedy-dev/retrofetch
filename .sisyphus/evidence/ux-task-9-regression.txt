@@ -1,0 +1,48 @@
+total=47 passed=47 failed=0
+[PASS] rc=0 wave1-task5-deps.py :: T5 deps: OK
+[PASS] rc=0 wave1-task6-goldens.py :: goldens ok
+[PASS] rc=0 wave1-task7-events-unsub.py :: T7 unsubscribe-mid-dispatch: OK
+[PASS] rc=0 wave1-task7-events.py :: T7 events thread-safety: OK (1000 events)
+[PASS] rc=0 wave2-task10-events.py :: T10 events ordering: OK (2 events)
+[PASS] rc=0 wave2-task10-grep.py :: T10 grep: no progress_cb in production code
+[PASS] rc=0 wave2-task10-regression.py :: T10 regression: all goldens match
+[PASS] rc=0 wave2-task11-verbose.py ::   verbose nes:        7 event lines, no emoji
+[PASS] rc=0 wave2-task8-regression.py :: T8 regression: all goldens match
+[PASS] rc=0 wave2-task8-roundtrip.py :: T8 roundtrip: OK
+[PASS] rc=0 wave2-task9-compute.py :: T9 compute_coverage: OK (178 consoles)
+[PASS] rc=0 wave2-task9-report-regression.py :: T9 report regression: OK
+[PASS] rc=0 wave3-task12-launch.py :: T12 launch: OK (HomeScreen pushed, 178 items, return_code=0)
+[PASS] rc=0 wave3-task12-msys2.py :: T12 msys2-refusal: OK (exit 2, msg='retrofetch tui requires an interactive terminal\n')
+[PASS] rc=0 wave3-task12-noconfig.py :: T12 noconfig: OK (exit 2)
+[PASS] rc=0 wave3-task13-bridge.py :: T13 bridge: OK (3 messages delivered cross-thread)
+[PASS] rc=0 wave3-task14-cancel.py :: T14 cancel: OK (cancelled after 0/100 entries)
+[PASS] rc=0 wave3-task14-worker.py :: T14 worker: OK (DownloadComplete for virtualboy, attempted=2)
+[PASS] rc=0 wave3-task15-sidebar.py :: T15 sidebar: OK (178 items, nintendo-filter yields valid subset)
+[PASS] rc=0 wave3-task15-skip-class-def.py :: T15 skip-class-def: OK (class D/E/F items don't emit ConsoleSelected)
+[PASS] rc=0 wave3-task16-tcss.py :: T16 tcss: OK (sidebar width=32, class-tier rules loaded, no emoji)
+[PASS] rc=0 wave4-task17-wantlist.py :: T17 wantlist: OK (saved 125 bytes to overrides.yml)
+[PASS] rc=0 wave4-task18-cancel.py :: T18 cancel: OK (summary='Cancelled. Press esc to return.')
+[PASS] rc=0 wave4-task18-download.py :: T18 download: OK (summary='Done. attempted=2 acquired=0 failed=0 unverified=0. Press esc to return.')
+[PASS] rc=0 wave4-task19-state.py :: T19 state: OK (3 rows, status classes applied)
+[PASS] rc=0 wave4-task20-coverage.py :: T20 coverage: OK (178 rows, export OK)
+[PASS] rc=0 wave4-task21-config-save.py :: T21 config-save: OK (default_limit=50, comments preserved)
+[PASS] rc=0 wave4-task21-overrides.py :: T21 overrides: OK (include updated, comments preserved)
+[PASS] rc=0 wave4-task22-help.py :: T22 help: OK (modal open + dismiss)
+[PASS] rc=0 wave4-task22-toast.py :: T22 toast: OK (mount + auto-dismiss)
+[PASS] rc=0 wave4-task23-exit0.py :: T23 exit0: OK (return_code=0)
+[PASS] rc=0 wave4-task23-exit1.py :: T23 exit1: OK (rc=1)
+[PASS] rc=0 wave4-task23-exit130.py :: T23 exit130: OK (rc=2, platform=Windows)
+[PASS] rc=0 wave4-task23-exit2-msys2.py :: T23 exit2-msys2: OK (exit 2)
+[PASS] rc=0 wave4-task23-exit2-noconfig.py :: T23 exit2-noconfig: OK (exit 2)
+[PASS] rc=0 wave5-task1-cache-expired.py :: OK: expired cache falls back to fetch
+[PASS] rc=0 wave5-task1-cache-malformed.py :: OK: malformed cache falls back to fetch
+[PASS] rc=0 wave5-task1-cache.py :: OK: cache cold miss, warm hit, invalidate re-fetch
+[PASS] rc=0 wave5-task2-messages.py :: ux-task-2 messages OK
+[PASS] rc=0 wave5-task4-setup-cancel.py :: OK: wave5-task4-setup-cancel
+[PASS] rc=0 wave5-task4-setup-invalid.py :: OK: wave5-task4-setup-invalid
+[PASS] rc=0 wave5-task4-setup-save.py :: OK: wave5-task4-setup-save
+[PASS] rc=0 wave5-task5-preview.py :: OK: WantlistPreview lifecycle across IDLE/LOADING/READY/FAILED modes
+[PASS] rc=0 wave5-task6-home.py :: U6 all scenarios passed
+[PASS] rc=0 wave5-task7-wantlist-nonblocking.py :: OK: wantlist screen nonblocking load (tabs responsive during sleep)
+[PASS] rc=0 wave5-task8-download-nonblocking.py :: OK: download screen nonblocking load (tabs responsive during sleep)
+[PASS] rc=0 wave5-task9-preview-class-def.py :: OK: class E console 'adam' shows IDLE (no fetch)
