@@ -15,8 +15,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from textual.app import App, ComposeResult  # pyright: ignore[reportMissingImports]
-from textual.widgets import Static  # pyright: ignore[reportMissingImports]
+from textual.app import App  # pyright: ignore[reportMissingImports]
 
 from retrofetch.config import Config, ConsoleOverride
 
@@ -42,5 +41,6 @@ class RetrofetchApp(App[int]):
         self.consoles_yml = consoles_yml
         self.overrides = overrides
 
-    def compose(self) -> ComposeResult:
-        yield Static("retrofetch TUI - coming soon. Press q to quit.")
+    def on_mount(self) -> None:
+        from retrofetch.tui.screens.home import HomeScreen
+        self.push_screen(HomeScreen())
