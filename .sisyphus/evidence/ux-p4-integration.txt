@@ -1,0 +1,12 @@
+wave6-p4-integration: OK
+gba|romsfun|titles|Mario Kart: Super Circuit; Maxim Story Mode; Pokémon Elysium; Naruto: Ninja Council; Castlevania Aria of Sorrow Definitive Edition (Tommy Edition)
+gba|vimm|titles|Pokemon: Emerald Version; Pokemon: FireRed Version; Pokemon: LeafGreen Version; Legend of Zelda, The: The Minish Cap; Pokemon: Ruby Version
+gba|wantlist|Mario Kart: Super Circuit; Maxim Story Mode; Pokémon Elysium; Naruto: Ninja Council; Castlevania Aria of Sorrow Definitive Edition (Tommy Edition)
+atari2600|romsfun|titles|Yars&#8217; Revenge; BMX Air Master; Zaxxon; Bobby is Going Home; Bugs Bunny
+atari2600|archive_org|titles|Atari 2600: Pitfall; Atari 2600: River Raid; Atari 2600: Frogger; Atari 2600: Space Invaders; Atari 2600: Custer's Revenge
+atari2600|vimm|titles|Frogger; Space Invaders; Pac-Man; Asteroids; Pitfall! Pitfall Harry's Jungle Adventure
+atari2600|coolrom|titles|Pac-Man; River Raid; Pitfall!; Space Invaders; Frogger
+atari2600|wantlist|Yars&#8217; Revenge; BMX Air Master; Zaxxon; Bobby is Going Home; Bugs Bunny
+nes|romsfun|titles|Super Mario 5000; PolyGirl&#8217;s Adventure 3: The Final chapter; Tekken 2; The Lord of King; Splatterworld: Rick to Kyoufu no Daiou
+nes|vimm|titles|Super Mario Bros.; Super Mario Bros. 3; Super Mario Bros. 2; Legend of Zelda, The; Tetris
+nes|wantlist|Super Mario 5000; PolyGirl&#8217;s Adventure 3: The Final chapter; Tekken 2; The Lord of King; Splatterworld: Rick to Kyoufu no Daiou

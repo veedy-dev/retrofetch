@@ -12,12 +12,18 @@ _SOURCE_FACTORIES: dict[str, Callable[[dict[str, object]], SourceAdapter]] = {
     "archive_org": lambda entry: __import__(
         "retrofetch.sources.archive_org", fromlist=["ArchiveOrgSource"]
     ).ArchiveOrgSource(entry),
+    "coolrom": lambda entry: __import__(
+        "retrofetch.sources.coolrom", fromlist=["CoolROMSource"]
+    ).CoolROMSource(entry),
     "romsfun": lambda entry: __import__(
         "retrofetch.sources.romsfun", fromlist=["RomsfunSource"]
     ).RomsfunSource(entry),
     "romsretro": lambda entry: __import__(
         "retrofetch.sources.romsretro", fromlist=["RomsretroSource"]
     ).RomsretroSource(entry),
+    "vimm": lambda entry: __import__(
+        "retrofetch.sources.vimm", fromlist=["VimmSource"]
+    ).VimmSource(entry),
     "minerva_http": lambda entry: __import__(
         "retrofetch.sources.minerva_http", fromlist=["MinervaHttpSource"]
     ).MinervaHttpSource(entry),

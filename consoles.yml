@@ -255,6 +255,8 @@ consoles:
     archive_org_identifier: atari_2600_library
     romsfun_slug: atari-2600
     romsretro_slug: atari-2600
+    vimm_slug: Atari2600
+    coolrom_slug: atari2600
     extensions:
       - .a26
       - .bin
@@ -271,6 +273,8 @@ consoles:
     archive_org_identifier: atari_5200_library
     romsfun_slug: atari-5200
     romsretro_slug: atari-5200
+    vimm_slug: Atari5200
+    coolrom_slug: atari5200
     extensions:
       - .a52
       - .bin
@@ -287,6 +291,8 @@ consoles:
     archive_org_identifier: atari_7800_library
     romsfun_slug: atari-7800
     romsretro_slug: atari-7800
+    vimm_slug: Atari7800
+    coolrom_slug: atari7800
     extensions:
       - .a78
       - .bin
@@ -320,6 +326,8 @@ consoles:
     archive_org_identifier:
     romsfun_slug: atari-jaguar
     romsretro_slug: atari-jaguar
+    vimm_slug: Jaguar
+    coolrom_slug: atarijaguar
     extensions:
       - .j64
       - .jag
@@ -336,6 +344,8 @@ consoles:
     archive_org_identifier: lynx-library
     romsfun_slug: atari-lynx
     romsretro_slug: atari-lynx
+    vimm_slug: Lynx
+    coolrom_slug: atarilynx
     extensions:
       - .lyx
       - .lnx
@@ -414,6 +424,7 @@ consoles:
     archive_org_identifier: softwarelibrary_c64_games
     romsfun_slug: commodore-64
     romsretro_slug: commodore-64
+    coolrom_slug: c64
     extensions:
       - .t64
       - .tap
@@ -433,6 +444,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: philips-cd-i
     romsretro_slug: cd-i
+    vimm_slug: CDi
     extensions:
       - .cue
       - .bin
@@ -687,6 +699,8 @@ consoles:
     archive_org_identifier:
     romsfun_slug: dreamcast
     romsretro_slug: dreamcast
+    vimm_slug: Dreamcast
+    coolrom_slug: dc
     extensions:
       - .gdi
       - .cdi
@@ -919,6 +933,8 @@ consoles:
     archive_org_identifier: gamegear_library
     romsfun_slug: sega-game-gear
     romsretro_slug: sega-game-gear
+    vimm_slug: GG
+    coolrom_slug: gamegear
     extensions:
       - .gg
     cd_based: false
@@ -934,6 +950,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: gameboy
     romsretro_slug: gameboy
+    vimm_slug: GB
     extensions:
       - .gb
     cd_based: false
@@ -949,6 +966,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: game-boy-advance
     romsretro_slug: gba
+    vimm_slug: GBA
     extensions:
       - .gba
     cd_based: false
@@ -964,6 +982,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: game-boy-color
     romsretro_slug: gameboy-color
+    vimm_slug: GBC
     extensions:
       - .gbc
       - .gb
@@ -980,6 +999,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: gamecube
     romsretro_slug: gamecube
+    vimm_slug: GameCube
     extensions:
       - .iso
       - .gcm
@@ -998,6 +1018,8 @@ consoles:
     archive_org_identifier: sega_genesis_library
     romsfun_slug: sega-genesis
     romsretro_slug: sega-genesis
+    vimm_slug: Genesis
+    coolrom_slug: genesis
     extensions:
       - .md
       - .gen
@@ -1184,6 +1206,8 @@ consoles:
     archive_org_identifier: sega_sms_library
     romsfun_slug: sega-master-system
     romsretro_slug: sega-master-system
+    vimm_slug: SMS
+    coolrom_slug: mastersystem
     extensions:
       - .sms
     cd_based: false
@@ -1199,6 +1223,8 @@ consoles:
     archive_org_identifier:
     romsfun_slug: sega-cd
     romsretro_slug: sega-cd
+    vimm_slug: SegaCD
+    coolrom_slug: segacd
     extensions:
       - .cue
       - .bin
@@ -1217,6 +1243,8 @@ consoles:
     archive_org_identifier:
     romsfun_slug: sega-cd
     romsretro_slug: sega-cd
+    vimm_slug: SegaCD
+    coolrom_slug: segacd
     extensions:
       - .cue
       - .bin
@@ -1237,6 +1265,8 @@ consoles:
     archive_org_identifier: sega_genesis_library
     romsfun_slug: sega-genesis
     romsretro_slug: sega-genesis
+    vimm_slug: Genesis
+    coolrom_slug: genesis
     extensions:
       - .md
       - .gen
@@ -1255,6 +1285,8 @@ consoles:
     archive_org_identifier: sega_genesis_library
     romsfun_slug: sega-genesis
     romsretro_slug: sega-genesis
+    vimm_slug: Genesis
+    coolrom_slug: genesis
     extensions:
       - .md
       - .gen
@@ -1427,6 +1459,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: nintendo-3ds
     romsretro_slug: 3ds-cia
+    vimm_slug: 3DS
     extensions:
       - .3ds
       - .cia
@@ -1444,6 +1477,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: nintendo-64
     romsretro_slug: nintendo-64
+    vimm_slug: N64
     extensions:
       - .n64
       - .v64
@@ -1525,6 +1559,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: nintendo-ds
     romsretro_slug: nds
+    vimm_slug: DS
     extensions:
       - .nds
     cd_based: false
@@ -1540,6 +1575,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: neo-geo
     romsretro_slug: neo-geo
+    coolrom_slug: neogeo
     extensions:
       - .zip
       - .ng
@@ -1556,6 +1592,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: neo-geo-cd
     romsretro_slug: neo-geo-cd
+    coolrom_slug: neogeocd
     extensions:
       - .cue
       - .bin
@@ -1574,6 +1611,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: neo-geo-cd
     romsretro_slug: neo-geo-cd
+    coolrom_slug: neogeocd
     extensions:
       - .cue
       - .bin
@@ -1594,6 +1632,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: nes
     romsretro_slug: nes
+    vimm_slug: NES
     extensions:
       - .nes
       - .unf
@@ -1626,6 +1665,7 @@ consoles:
     archive_org_identifier: ngp_library
     romsfun_slug: neo-geo-pocket
     romsretro_slug: neo-geo-pocket
+    coolrom_slug: neogeopocket
     extensions:
       - .ngp
     cd_based: false
@@ -1641,6 +1681,7 @@ consoles:
     archive_org_identifier: ngp_library
     romsfun_slug: snk-neo-geo-pocket-color
     romsretro_slug: neo-geo-pocket-color
+    coolrom_slug: neogeopocket
     extensions:
       - .ngc
       - .ngp
@@ -1891,6 +1932,8 @@ consoles:
     archive_org_identifier:
     romsfun_slug: playstation-2
     romsretro_slug: ps2
+    vimm_slug: PS2
+    coolrom_slug: ps2
     extensions:
       - .iso
       - .bin
@@ -1909,6 +1952,8 @@ consoles:
     archive_org_identifier:
     romsfun_slug: ps3
     romsretro_slug: ps3
+    vimm_slug: PS3
+    coolrom_slug: ps3
     extensions:
       - .iso
       - .pkg
@@ -1925,6 +1970,8 @@ consoles:
     archive_org_identifier:
     romsfun_slug: playstation-portable
     romsretro_slug: psp
+    vimm_slug: PSP
+    coolrom_slug: psp
     extensions:
       - .iso
       - .cso
@@ -1958,6 +2005,8 @@ consoles:
     archive_org_identifier: psxgames
     romsfun_slug: playstation
     romsretro_slug: playstation
+    vimm_slug: PS1
+    coolrom_slug: psx
     extensions:
       - .cue
       - .bin
@@ -2038,6 +2087,8 @@ consoles:
     archive_org_identifier:
     romsfun_slug: sega-saturn
     romsretro_slug: saturn
+    vimm_slug: Saturn
+    coolrom_slug: saturn
     extensions:
       - .cue
       - .bin
@@ -2056,6 +2107,8 @@ consoles:
     archive_org_identifier:
     romsfun_slug: sega-saturn
     romsretro_slug: saturn
+    vimm_slug: Saturn
+    coolrom_slug: saturn
     extensions:
       - .cue
       - .bin
@@ -2106,6 +2159,7 @@ consoles:
     archive_org_identifier: sega_genesis_library
     romsfun_slug: 32x
     romsretro_slug: sega-32x
+    vimm_slug: 32X
     extensions:
       - .32x
       - .bin
@@ -2122,6 +2176,7 @@ consoles:
     archive_org_identifier: sega_genesis_library
     romsfun_slug: 32x
     romsretro_slug: sega-32x
+    vimm_slug: 32X
     extensions:
       - .32x
       - .bin
@@ -2140,6 +2195,7 @@ consoles:
     archive_org_identifier: sega_genesis_library
     romsfun_slug: 32x
     romsretro_slug: sega-32x
+    vimm_slug: 32X
     extensions:
       - .32x
       - .bin
@@ -2158,6 +2214,8 @@ consoles:
     archive_org_identifier:
     romsfun_slug: sega-cd
     romsretro_slug: sega-cd
+    vimm_slug: SegaCD
+    coolrom_slug: segacd
     extensions:
       - .cue
       - .bin
@@ -2224,6 +2282,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: super-nintendo
     romsretro_slug: snes
+    vimm_slug: SNES
     extensions:
       - .sfc
       - .smc
@@ -2415,6 +2474,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: turbografx-cd
     romsretro_slug: turbografx-cd
+    vimm_slug: TGCD
     extensions:
       - .cue
       - .bin
@@ -2433,6 +2493,7 @@ consoles:
     archive_org_identifier: tg16_library
     romsfun_slug: turbografx
     romsretro_slug: turbografx-16
+    vimm_slug: TG16
     extensions:
       - .pce
     cd_based: false
@@ -2587,6 +2648,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: nintendo-virtual-boy
     romsretro_slug: virtual-boy
+    vimm_slug: VB
     extensions:
       - .vb
       - .vboy
@@ -2649,6 +2711,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: nintendo-wii
     romsretro_slug: wii
+    vimm_slug: Wii
     extensions:
       - .iso
       - .wbfs
@@ -2667,6 +2730,7 @@ consoles:
     archive_org_identifier:
     romsfun_slug: wii-u
     romsretro_slug: wii-u
+    vimm_slug: WiiWare
     extensions:
       - .wua
       - .wud

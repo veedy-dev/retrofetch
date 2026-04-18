@@ -21,6 +21,6 @@ source_fallback_by_class:
   B: [minerva_torrent, minerva_http, archive_org, romsretro]
   C: [romsfun, romsretro, archive_org]
 ranking_sources_by_class:
-  A: [romsfun, romsretro, archive_org]
-  B: [archive_org, romsretro]
-  C: [romsfun, romsretro]
+  A: [romsfun, romsretro, archive_org, vimm, coolrom]
+  B: [archive_org, romsretro, vimm, coolrom]
+  C: [romsfun, romsretro, vimm]
