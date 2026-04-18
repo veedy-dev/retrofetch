@@ -13,7 +13,7 @@ Once a wantlist is generated, the tool attempts to fetch files through a fallbac
 
 ## Requirements
 *   **OS**: Windows 10+ (Primary), Linux/macOS (Secondary)
-*   **Python**: `>=3.11, <3.13` (Hard pin for library compatibility)
+*   **Python**: `>=3.10, <3.14` (supports 3.10, 3.11, 3.12, 3.13)
 *   **Disk Space**: ~100 GB recommended (varies significantly by console)
 *   **Optional Dependencies**:
     *   `libtorrent`: Required for torrent-based sources (`uv pip install libtorrent`)
@@ -69,6 +69,9 @@ retrofetch verify --console virtualboy
 
 # 5. Generate a coverage report
 retrofetch report
+
+# 6. Or skip the CLI flow entirely and use the interactive command center
+retrofetch tui
 ```
 
 ## Commands
@@ -87,6 +90,7 @@ The primary command for fetching ROMs.
 |---|---|---|---|
 | `--console` | TEXT | all 178 | Single console shortname (e.g. `nes`, `psx`) |
 | `--limit` | INT | 75 | Max games per console (overrides config) |
+| `--verbose / -v` | FLAG | off | Emit per-event progress lines (GameStart / GameDone / GameFailed / source health / DAT load) |
 | `--dry-run` | FLAG | off | Print wantlist without downloading |
 | `--no-torrent` | FLAG | off | Skip libtorrent sources |
 | `--config` | PATH | `config.yml` | Path to configuration file |
@@ -106,6 +110,46 @@ Generates a `coverage.md` report showing collection progress.
 |---|---|---|---|
 | `--config` | PATH | `config.yml` | Path to configuration file |
 | `--output` | PATH | `coverage.md` | Target path for the report |
+
+### tui
+Launches the interactive command center (keyboard-driven).
+
+| Option | Type | Default | Meaning |
+|---|---|---|---|
+| `--config` | PATH | `config.yml` | Path to configuration file |
+
+Refuses to launch on MSYS2 / PowerShell ISE / non-TTY stdout (exit 2).
+
+## TUI Command Center
+`retrofetch tui` launches the keyboard-driven command center.
+
+### Prerequisites
+A real terminal is required. The TUI will fail to launch on MSYS2, PowerShell ISE, or non-TTY stdout (exit code 2).
+
+### Key Bindings
+| Key | Action |
+|---|---|
+| `q` | Quit (exit 0) |
+| `/` | Focus filter input (178-console sidebar) |
+| `?` | Help modal (key reference) |
+| `w` | Wantlist curation (DataTable, space=include, x=exclude, s=save) |
+| `d` | Download screen (live progress via EventBus, Enter=start, c=cancel) |
+| `s` | State browser (read-only .retrofetch-state.json viewer) |
+| `C` | Coverage viewer (async compute, `e` exports coverage.md) |
+| `Tab` | Cycle focus |
+| `Enter` | Select / Activate |
+| `Esc` | Back / Close modal |
+| `Ctrl+S` | Global save (where applicable) |
+
+### Features
+- **Live Progress**: Real-time per-file ProgressBars driven by the internal EventBus.
+- **Dry-Run**: Toggle dry-run mode via checkbox in the Download screen.
+- **Comment Preservation**: Wantlist overrides are saved to `overrides.yml` using `ruamel.yaml` to preserve your existing comments.
+- **Async Workers**: Coverage computation and downloads run in background workers to keep the UI responsive.
+
+![](docs/tui-home.png)
+*Note: Screenshot placeholder. No image ships in the repository yet.*
+
 
 ## Configuration
 
@@ -199,6 +243,19 @@ If you want to use torrent sources, you must install `libtorrent` manually. If i
 ### Cloudflare blocked
 Sources like romsfun and romsretro use Cloudflare protection. If the log shows persistent 403 errors, the source is temporarily unreachable. The tool will mark it as dead for the session; restart the command later.
 
+### TUI refuses to launch
+If `retrofetch tui` exits with code 2, the preflight check failed. Common causes:
+- Running inside MSYS2 / MinGW (`$env:MSYSTEM` is set)
+- Running inside PowerShell ISE (`$env:PSEDIT` is set)
+- Stdout is not a real terminal (piped, captured, or inside a CI job)
+Use Windows Terminal, an xterm-compatible emulator, or any POSIX shell.
+
+### TUI exit codes
+- 0: graceful quit (`q` binding)
+- 1: uncaught exception in a screen or worker
+- 2: preflight refusal (terminal, config, or console not found)
+- 130 (POSIX) / platform-equivalent (Windows): Ctrl+C
+
 ### Ctrl+C mid-download
 Safe to interrupt. State is preserved in `.retrofetch-state.json` and partial downloads (`.part`) remain on disk. Rerunning the command will resume where it left off.
 
@@ -208,7 +265,7 @@ Safe to interrupt. State is preserved in `.retrofetch-state.json` and partial do
 *   **No Patching**: Does not apply IPS, BPS, or XDelta patches.
 *   **No Arcade**: Hard-skips MAME/FBNeo due to complex romset versioning.
 *   **No Media**: Does not fetch box art, videos, or gamelist.xml metadata.
-*   **No GUI**: CLI-only operation; no web or graphical interface.
+*   **No Mouse**: TUI is keyboard-only; mouse events are not consumed.
 *   **No Vimm's Lair**: Bulk scraping is discouraged by the site owner and not supported.
 
 ## Repository Layout
@@ -216,7 +273,8 @@ Safe to interrupt. State is preserved in `.retrofetch-state.json` and partial do
 retrofetch/
 ├── retrofetch/
 │   ├── cli.py                 # Typer subcommands and entry points
-│   ├── config.py              # YAML loading and validation
+│   ├── config.py              # YAML loading and validation (ruamel.yaml)
+│   ├── events.py              # EventBus + typed ProgressEvents
 │   ├── ranker.py              # Popularity-based wantlist generation
 │   ├── state.py               # JSON state management
 │   ├── dat.py / dat_fetch.py  # DAT parsing and bootstrapping
@@ -225,8 +283,16 @@ retrofetch/
 │   ├── organizer.py           # File naming and path sanitization
 │   ├── orchestrator.py        # Main execution loop
 │   ├── dispatcher.py          # Source fallback management
-│   ├── report.py              # coverage.md generation
-│   └── sources/               # Site-specific adapters
+│   ├── report.py              # markdown emitter
+│   ├── coverage.py            # pure compute_coverage()
+│   ├── sources/               # Site-specific adapters
+│   └── tui/                   # Textual command center
+│       ├── app.py
+│       ├── messages.py        # EventBus -> Textual Message bridge
+│       ├── styles.tcss
+│       ├── screens/
+│       ├── widgets/
+│       └── workers/
 ├── consoles.yml               # 178-console metadata (authoritative)
 ├── config.yml.example         # Global config template
 ├── overrides.yml.example      # Per-console override template
