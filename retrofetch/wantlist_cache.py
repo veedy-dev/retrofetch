@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 import logging
 import os
@@ -122,15 +123,25 @@ def get_or_fetch_wantlist(
     cache_dir = Path(config.cache_dir)
     hit = load_cached(cache_dir, shortname)
     if hit is not None:
-        return (list(hit.titles), True)
+        return ([html.unescape(t) for t in hit.titles], True)
 
     # Re-resolve through the module to honor monkey-patches at call time.
-    titles = _ranker.get_wantlist(
+    raw_titles = _ranker.get_wantlist(
         console_entry=console_entry,
         overrides=overrides,
         config=config,
         limit=limit,
     )
+    # Decode HTML entities from scraped HTML sources.
+    titles = [html.unescape(t) for t in raw_titles]
+    # Empty list = likely transient failure (Cloudflare block, source down, etc).
+    # Do NOT persist an empty wantlist for 24h - let the next visit retry.
+    if not titles:
+        log.info(
+            "wantlist_cache: empty result for %s - not persisting (transient failure)",
+            shortname,
+        )
+        return (titles, False)
     entry = CachedWantlist(
         console=shortname,
         titles=list(titles),
