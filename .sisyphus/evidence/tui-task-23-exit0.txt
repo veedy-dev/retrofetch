@@ -1,0 +1,8 @@
+# scenario: wave4-task23-exit0.py
+# rc: 0
+
+--- stdout ---
+T23 exit0: OK (return_code=0)
+
+--- stderr ---
+

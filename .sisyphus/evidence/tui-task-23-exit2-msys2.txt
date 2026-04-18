@@ -1,0 +1,8 @@
+# scenario: wave4-task23-exit2-msys2.py
+# rc: 0
+
+--- stdout ---
+T23 exit2-msys2: OK (exit 2)
+
+--- stderr ---
+

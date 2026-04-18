@@ -202,3 +202,28 @@ T8 save_config must handle this. Simple approach: save always writes LF (ruamel'
 - `.sisyphus/qa/wave4-task20-coverage.py` -> `T20 coverage: OK (178 rows, export OK)`.
 - Regression `.sisyphus/qa/wave1-task6-goldens.py` -> `goldens ok`.
 - Evidence: `.sisyphus/evidence/tui-task-20-coverage.txt` (UTF-8).
+
+## [2026-04-18T18:00Z] T23: graceful action_quit + exit code matrix
+
+### Implementation
+- `action_quit` override enumerates `self.workers._workers`, filters on `.group == "download"`, calls `self.workers.cancel_group(self, "download")` (Textual 8.2.3 signature is `(node, group)`; defensive fallback to 1-arg form for older APIs), waits up to 3s for `worker.is_finished`, then `self.exit(0)`.
+- No custom signal handler in the TUI path: fighting Textual SIGINT triggers issue #1707. The docstring explicitly documents this decision so future agents don't re-introduce a handler.
+- Exit code matrix: 0 (q binding), 1 (uncaught -> Textual `_handle_exception`), 2 (preflight in cli.py), 130 (POSIX SIGINT); no new codes.
+
+### Pilot gotchas
+- `pilot.press("q")` on a freshly mounted HomeScreen does NOT trigger the `q->quit` binding because HomeScreen auto-focuses its filter Input, which consumes printable keys as text. Workaround: `app.set_focus(None)` before `pilot.press("q")`. Experimentally confirmed - with Input focused, `app.return_code` stays `None` forever; after blur, `return_code=0` after one `pilot.pause()`.
+- `App.run()` returns `return_value` (the typed `App[int]` result), NOT `return_code`. To propagate a crash to the process, the caller must do `sys.exit(app.return_code if app.return_code is not None else <default>)`. The CLI `cli.py::tui` already does this via `raise typer.Exit(return_code if return_code is not None else 0)`. The T23 exit1 scenario replicates the same pattern so the subprocess returncode reflects `_return_code` after `App._handle_exception` maps an unhandled `on_mount` exception to `return_code=1`.
+
+### Windows Ctrl+C behaviour
+- `subprocess.Popen` with PIPE stdin/stdout is non-TTY, so the TUI preflight refuses to launch (exit 2) before CTRL_BREAK_EVENT can be delivered. Scenario accepts `rc == 2 OR rc not in (0, 1)` as platform-correct: either TTY refusal or signal-induced non-zero. POSIX still asserts `rc == 130`.
+
+### Evidence hygiene
+- Writing via Python `write_bytes(body.encode("utf-8"))` forces LF line endings on Windows (matches the `.gitattributes` policy for `.sisyphus/fixtures/*.yml`, avoids the BOM+CRLF gotcha from PowerShell redirects documented in the Wave 1 orchestrator summary).
+
+### Pre-existing out-of-scope failure (not introduced by T23)
+- `.sisyphus/qa/wave3-task12-launch.py` asserts `app.query("Static")` finds a placeholder with "coming soon" text. Broken since T15 refactored HomeScreen to mount Static inside Horizontal (Screen-hosted widgets are not reachable via `app.query` in `run_test` per the T19 learning). Not a T23 regression; fix belongs in a T12 follow-up.
+
+### Anti-pattern grep (retrofetch/tui/, 2026-04-18)
+- `signal.signal(` -> 1 hit in `app.py` docstring explaining why we deliberately do NOT install a handler. Zero executable occurrences.
+- `ShutdownCoordinator.install(` -> 0 hits.
+- `self.exit(3|4|...|10)` -> 0 hits.
