@@ -60,9 +60,9 @@ class Config(BaseModel):
     )
     ranking_sources_by_class: dict[str, list[str]] = Field(
         default_factory=lambda: {
-            "A": ["romsfun", "romsretro", "archive_org"],
-            "B": ["archive_org", "romsretro"],
-            "C": ["romsfun", "romsretro"],
+            "A": ["romsfun", "romsretro", "archive_org", "vimm", "coolrom"],
+            "B": ["archive_org", "romsretro", "vimm", "coolrom"],
+            "C": ["romsfun", "romsretro", "vimm"],
         }
     )
 
