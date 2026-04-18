@@ -3,6 +3,7 @@ from __future__ import annotations
 from textual.app import App  # pyright: ignore[reportMissingImports]
 from textual.message import Message  # pyright: ignore[reportMissingImports]
 
+from retrofetch.coverage import CoverageReport
 from retrofetch.orchestrator import RunReport
 from retrofetch.events import (
     CloudflareBlockEvent,
@@ -165,4 +166,10 @@ class DownloadComplete(Message):
 class DownloadCrashed(Message):
     def __init__(self, exc: str) -> None:
         self.exc = exc
+        super().__init__()
+
+
+class CoverageReady(Message):
+    def __init__(self, report: CoverageReport) -> None:
+        self.report = report
         super().__init__()

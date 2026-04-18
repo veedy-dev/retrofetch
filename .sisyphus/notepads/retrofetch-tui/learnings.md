@@ -162,11 +162,16 @@ T8 save_config must handle this. Simple approach: save always writes LF (ruamel'
 - `DownloadWorker.start()` owns EventBus + EventBusBridge setup on the UI thread and returns a shared `threading.Event` used for cancellation.
 - `DownloadWorker.run()` stays thread-only, never touches widgets directly, forwards success via `DownloadComplete(report)` and failures via `DownloadCrashed(str(exc))`, then always tears down the bridge in `_cleanup()`.
 - On this machine dry-run cancellation finishes too quickly to observe a mid-run stop reliably, so the QA harness asserts the shared stop_event path by pre-setting cancellation before the worker loop begins; completion still arrives as `DownloadComplete` with `attempted < 100`.
-# #   T 1 7 :   W a n t l i s t   S c r e e n  
- -   I m p l e m e n t e d   W a n t l i s t S c r e e n   w i t h   D a t a T a b l e   a n d   p a g i n a t i o n   ( 5 0   r o w s / p a g e )   t o   a v o i d   p e r f o r m a n c e   i s s u e s   w i t h   l a r g e   d a t a s e t s .  
- -   U s e d   r u a m e l . y a m l   f o r   l o a d - t h e n - m u t a t e   p a t t e r n   t o   p r e s e r v e   c o m m e n t s   w h e n   s a v i n g   o v e r r i d e s .  
- -   W i r e d   u p   ' w '   k e y   i n   H o m e S c r e e n   t o   p u s h   W a n t l i s t S c r e e n   f o r   C l a s s   A / B / C   c o n s o l e s .  
- -   C r e a t e d   C o n f i g E d i t o r S c r e e n   a n d   O v e r r i d e s E d i t o r S c r e e n   f o r   e d i t i n g   c o n f i g u r a t i o n   f i l e s .  
+# #   T 1 7 :   W a n t l i s t   S c r e e n 
+ 
+ -   I m p l e m e n t e d   W a n t l i s t S c r e e n   w i t h   D a t a T a b l e   a n d   p a g i n a t i o n   ( 5 0   r o w s / p a g e )   t o   a v o i d   p e r f o r m a n c e   i s s u e s   w i t h   l a r g e   d a t a s e t s . 
+ 
+ -   U s e d   r u a m e l . y a m l   f o r   l o a d - t h e n - m u t a t e   p a t t e r n   t o   p r e s e r v e   c o m m e n t s   w h e n   s a v i n g   o v e r r i d e s . 
+ 
+ -   W i r e d   u p   ' w '   k e y   i n   H o m e S c r e e n   t o   p u s h   W a n t l i s t S c r e e n   f o r   C l a s s   A / B / C   c o n s o l e s . 
+ 
+ -   C r e a t e d   C o n f i g E d i t o r S c r e e n   a n d   O v e r r i d e s E d i t o r S c r e e n   f o r   e d i t i n g   c o n f i g u r a t i o n   f i l e s . 
+ 
  
 ## T18: Download Screen
 - Textual's Checkbox consumes the enter key by default. If a screen binding uses enter, it won't trigger if the Checkbox has focus. In QA scripts, we can bypass this by calling the action method directly (e.g., screen.action_start()) instead of simulating key presses if focus management is tricky.
@@ -178,3 +183,22 @@ T8 save_config must handle this. Simple approach: save always writes LF (ruamel'
 - Textual quirk (worth writing down): `app.query(".status-cell")` does NOT traverse a screen pushed via `app.push_screen(...)` in `run_test()` harnesses. Use `screen.query(".status-cell")` or `app.screen.query(...)`. T19 QA originally used `app.query` and saw `classes_seen=set()` even though three labels existed under the screen. Fixed by querying from the screen directly.
 - Read-only semantics: StateScreen never calls `save_state`; all writes go through dispatcher / orchestrator.
 - HomeScreen binding already added: `s` dispatches to StateScreen for Class A/B/C rows; Class D/E/F noop to match wantlist/download pattern.
+
+## T20 - Coverage viewer (async compute + DataTable + markdown export)
+
+### What shipped
+- New screen: `retrofetch/tui/screens/coverage.py` - DataTable of 178 consoles, keys `e` (export) / `esc` (back).
+- New message: `CoverageReady(report)` in `retrofetch/tui/messages.py` (plus `CoverageReport` import from `retrofetch.coverage`).
+- HomeScreen binding (`C` -> `action_open_coverage`) and main-panel hint were already present; no change required.
+- QA: `.sisyphus/qa/wave4-task20-coverage.py` - Pilot opens screen, waits 5s for the `@work(thread=True)` compute, asserts 178 rows, presses `e`, verifies `coverage.md` written with expected header.
+
+### Gotcha (resolved during QA)
+- `@work(thread=True)` workers that post results with `self.app.post_message(...)` DO NOT invoke Screen-level `on_<message>` handlers - the message is dispatched on the App, not the Screen, so `CoverageScreen.on_coverage_ready` never fires.
+- Fix: from inside the worker thread, post with `self.post_message(CoverageReady(report))` on the Screen. `post_message` is thread-safe in Textual 8.2.3, and posting on the Screen bubbles the message through the Screen handlers first (then on to the App if unhandled). This is the pattern to reuse for any future screen-local `@work` result.
+- Contrast: the Download worker (`retrofetch/tui/workers/download_worker.py`) posts `DownloadComplete` via `self._app.post_message` because it runs outside any Screen context and the Download Screen is the App active screen at that moment, so in that narrower flow the active-screen routing happens to work. For Screen-owned `@work` methods, always use `self.post_message`.
+
+### Verification
+- `python -m compileall retrofetch` -> exit 0.
+- `.sisyphus/qa/wave4-task20-coverage.py` -> `T20 coverage: OK (178 rows, export OK)`.
+- Regression `.sisyphus/qa/wave1-task6-goldens.py` -> `goldens ok`.
+- Evidence: `.sisyphus/evidence/tui-task-20-coverage.txt` (UTF-8).
