@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from textual.app import App  # pyright: ignore[reportMissingImports]
 from textual.message import Message  # pyright: ignore[reportMissingImports]
+from pathlib import Path
 
 from retrofetch.coverage import CoverageReport
 from retrofetch.orchestrator import RunReport
@@ -173,4 +174,25 @@ class DownloadCrashed(Message):
 class CoverageReady(Message):
     def __init__(self, report: CoverageReport) -> None:
         self.report = report
+        super().__init__()
+
+
+class WantlistReady(Message):
+    def __init__(self, console: str, titles: list[str], from_cache: bool) -> None:
+        self.console = console
+        self.titles = titles
+        self.from_cache = from_cache
+        super().__init__()
+
+
+class WantlistFailed(Message):
+    def __init__(self, console: str, reason: str) -> None:
+        self.console = console
+        self.reason = reason
+        super().__init__()
+
+
+class SetupComplete(Message):
+    def __init__(self, config_path: Path) -> None:
+        self.config_path = config_path
         super().__init__()
