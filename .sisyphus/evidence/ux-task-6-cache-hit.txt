@@ -1,0 +1,4 @@
+status=PASS
+shortname=arcadia
+worker_calls=[]
+preview_state=READY

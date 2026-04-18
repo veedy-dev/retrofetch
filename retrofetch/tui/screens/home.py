@@ -1,4 +1,18 @@
-"""Home screen: 178-console sidebar + filter + main panel placeholder."""
+"""Home screen: 178-console sidebar + filter + live wantlist preview panel.
+
+The main panel is a :class:`WantlistPreview` that mirrors the currently
+highlighted console. Highlight changes fire a 400ms-debounced worker that
+reads :mod:`retrofetch.wantlist_cache` first (fresh hit skips network) and
+falls through to ``ranker.get_wantlist`` on miss / stale / malformed cache.
+
+Keybindings:
+- ``Enter`` on a class A/B/C row → ``ConsoleSelected`` (existing).
+- Any highlight (arrow keys, page up/down) → debounced preview fetch.
+- ``Ctrl+R`` → invalidate cache for the highlighted console and re-fetch.
+
+Workers all carry explicit ``group=`` names per Metis K.6:
+- ``preview`` for the Highlighted-debounced fetcher.
+"""
 from __future__ import annotations
 
 from typing import Any
@@ -8,7 +22,18 @@ from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Horizontal, Vertical  # pyright: ignore[reportMissingImports]
 from textual.message import Message  # pyright: ignore[reportMissingImports]
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import Footer, Header, Input, Label, ListItem, ListView, Static  # pyright: ignore[reportMissingImports]
+from textual.widgets import Footer, Header, Input, Label, ListItem, ListView  # pyright: ignore[reportMissingImports]
+from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
+
+from retrofetch.state import load_state
+from retrofetch.tui.messages import WantlistFailed, WantlistReady
+from retrofetch.tui.widgets.wantlist_preview import WantlistPreview
+from retrofetch.wantlist_cache import (
+    cache_path,
+    get_or_fetch_wantlist,
+    invalidate,
+    load_cached,
+)
 
 
 class ConsoleSelected(Message):
@@ -22,7 +47,7 @@ class ConsoleSelected(Message):
 
 
 class HomeScreen(Screen[None]):
-    CSS_PATH = "../styles.tcss"  # inherit app-level styles; re-import here too if needed
+    CSS_PATH = "../styles.tcss"
 
     BINDINGS = [
         Binding("q", "quit", "Quit", show=True),
@@ -33,15 +58,24 @@ class HomeScreen(Screen[None]):
         Binding("d", "open_download", "Download", show=True),
         Binding("s", "open_state", "State", show=True),
         Binding("C", "open_coverage", "Coverage", show=True),
+        Binding("ctrl+r", "retry_fetch", "Retry", show=True),
     ]
 
-    # Debounce for filter Input.Changed events, per T2 spike (200ms sweet spot).
+    # Debounce for filter Input.Changed events, per T2 spike.
     _FILTER_DEBOUNCE_MS = 200
+    # Debounce for ListView.Highlighted auto-fetch, per UX plan (U6).
+    _PREVIEW_DEBOUNCE_MS = 400
+    # Cap preview listing at 20 titles (shown by WantlistPreview).
+    _PREVIEW_LIMIT = 20
 
     def __init__(self) -> None:
         super().__init__()
         self._all_items: list[tuple[dict[str, Any], ListItem]] = []
         self._filter_timer = None
+        self._preview_timer = None
+        # Remember the last shortname whose preview we started to kick, so
+        # Ctrl+R can re-trigger the same console without asking the ListView.
+        self._last_highlighted: str | None = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -49,11 +83,7 @@ class HomeScreen(Screen[None]):
             with Vertical(id="sidebar"):
                 yield Input(placeholder="filter consoles...", id="filter")
                 yield ListView(id="console-list")
-            yield Static(
-                "Select a console from the sidebar.\n\n"
-                "[w] wantlist  [d] download  [s] state  [C] coverage  [?] help  [q] quit",
-                id="main-panel",
-            )
+            yield WantlistPreview(id="main-panel")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -70,15 +100,18 @@ class HomeScreen(Screen[None]):
             if klass in ("D", "E", "F"):
                 classes.append("class-def")
             item = ListItem(label, classes=" ".join(classes))
-            # Stash metadata for later retrieval
             item._rf_shortname = shortname  # type: ignore[attr-defined]
             item._rf_display_name = display_name  # type: ignore[attr-defined]
             item._rf_klass = klass  # type: ignore[attr-defined]
             list_view.append(item)
             self._all_items.append((entry, item))
+        # Preview starts in IDLE state (WantlistPreview.on_mount handles it).
 
+    # ------------------------------------------------------------------
+    # Filter debounce (unchanged)
+    # ------------------------------------------------------------------
     def on_input_changed(self, event: Input.Changed) -> None:
-        """Debounced filter — T2 verdict: 200ms."""
+        """Debounced filter."""
         if event.input.id != "filter":
             return
         if self._filter_timer is not None:
@@ -96,16 +129,155 @@ class HomeScreen(Screen[None]):
             matches = (not query) or (query in display_name) or (query in shortname)
             item.display = matches
 
+    # ------------------------------------------------------------------
+    # Preview highlight debounce + auto-fetch (U6)
+    # ------------------------------------------------------------------
+    def _lookup_entry(self, shortname: str) -> dict[str, Any] | None:
+        entries = self.app.consoles_yml.get("consoles", []) or []
+        for entry in entries:
+            if str(entry.get("shortname", "")) == shortname:
+                return entry
+        return None
+
+    def _compute_state_counts(self, shortname: str) -> dict[str, int]:
+        try:
+            state = load_state(shortname, self.app.config.roms_root)
+        except Exception:
+            return {"acquired": 0, "unverified": 0, "failed": 0, "pending": 0}
+        counts: dict[str, int] = {"acquired": 0, "unverified": 0, "failed": 0, "pending": 0}
+        for game in state.games:
+            status = getattr(game, "status", "pending")
+            counts[status] = counts.get(status, 0) + 1
+        return counts
+
+    def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
+        """Debounced auto-fetch on console highlight (arrow keys / page up/down)."""
+        item = event.item
+        if item is None:
+            return
+        klass = getattr(item, "_rf_klass", "?")
+        preview = self.query_one("#main-panel", WantlistPreview)
+        # Cancel pending debounce regardless of class — new highlight supersedes.
+        if self._preview_timer is not None:
+            self._preview_timer.stop()
+            self._preview_timer = None
+
+        if klass in ("D", "E", "F"):
+            # Skipped classes: no fetch, show IDLE placeholder.
+            self._last_highlighted = None
+            preview.show_idle()
+            return
+
+        shortname = str(getattr(item, "_rf_shortname", ""))
+        if not shortname:
+            return
+        entry = self._lookup_entry(shortname)
+        if entry is None:
+            return
+        self._last_highlighted = shortname
+
+        # Cache fast-path: a fresh JSON read is O(few ms), safe on UI thread.
+        cache_dir = self.app.config.cache_dir
+        hit = load_cached(cache_dir, shortname)
+        if hit is not None:
+            counts = self._compute_state_counts(shortname)
+            preview.show_ready(shortname, list(hit.titles), True, counts)
+            return
+
+        # Miss / stale → show loading + schedule debounced worker.
+        preview.show_loading(shortname)
+        self._preview_timer = self.set_timer(
+            self._PREVIEW_DEBOUNCE_MS / 1000.0,
+            lambda e=entry: self._kick_preview_fetch(e),
+        )
+
+    @work(thread=True, exclusive=True, group="preview")
+    def _kick_preview_fetch(self, entry: dict[str, Any]) -> None:
+        """Background worker: fetch wantlist via cache, post result to self."""
+        shortname = str(entry.get("shortname", ""))
+        override = self.app.overrides.get(shortname)
+        default_limit = self.app.config.default_limit
+        limit = max(self._PREVIEW_LIMIT, min(default_limit, 40))
+        try:
+            titles, from_cache = get_or_fetch_wantlist(
+                console_entry=entry,
+                overrides=override,
+                config=self.app.config,
+                limit=limit,
+            )
+        except Exception as exc:
+            self.post_message(WantlistFailed(shortname, str(exc)))
+            return
+        self.post_message(WantlistReady(shortname, titles, from_cache))
+
+    # ------------------------------------------------------------------
+    # Message handlers — run on UI thread
+    # ------------------------------------------------------------------
+    def on_wantlist_ready(self, message: WantlistReady) -> None:
+        # Only accept if the highlighted console still matches, to avoid
+        # stale worker results clobbering a newer highlight.
+        if self._last_highlighted and message.console != self._last_highlighted:
+            return
+        counts = self._compute_state_counts(message.console)
+        preview = self.query_one("#main-panel", WantlistPreview)
+        preview.show_ready(
+            message.console,
+            message.titles[: self._PREVIEW_LIMIT],
+            message.from_cache,
+            counts,
+        )
+
+    def on_wantlist_failed(self, message: WantlistFailed) -> None:
+        if self._last_highlighted and message.console != self._last_highlighted:
+            return
+        try:
+            self.app.show_toast(f"Fetch failed: {message.reason}", severity="warning")
+        except Exception:
+            # shutdown race: toast container may already be gone
+            pass
+        preview = self.query_one("#main-panel", WantlistPreview)
+        preview.show_failed(message.console, message.reason)
+
+    # ------------------------------------------------------------------
+    # Retry binding (Ctrl+R)
+    # ------------------------------------------------------------------
+    def action_retry_fetch(self) -> None:
+        shortname = self._last_highlighted
+        if not shortname:
+            return
+        entry = self._lookup_entry(shortname)
+        if entry is None:
+            return
+        cache_dir = self.app.config.cache_dir
+        try:
+            invalidate(cache_dir, shortname)
+        except Exception:
+            # best-effort: invalidate failure should not block retry
+            pass
+        preview = self.query_one("#main-panel", WantlistPreview)
+        preview.show_loading(shortname)
+        if self._preview_timer is not None:
+            self._preview_timer.stop()
+            self._preview_timer = None
+        # Retry kicks immediately (no debounce — user explicitly asked).
+        self._kick_preview_fetch(entry)
+
+    # ------------------------------------------------------------------
+    # Existing Enter handler (unchanged)
+    # ------------------------------------------------------------------
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Enter on an item — post ConsoleSelected ONLY for class A/B/C."""
         item = event.item
         klass = getattr(item, "_rf_klass", "?")
         if klass in ("D", "E", "F"):
-            return  # no-op: skipped classes are visually dimmed and non-selectable
+            return
         shortname = getattr(item, "_rf_shortname", "?")
         display_name = getattr(item, "_rf_display_name", "?")
         self.post_message(ConsoleSelected(shortname, display_name, klass))
 
+    # ------------------------------------------------------------------
+    # Existing action handlers (unchanged)
+    # ------------------------------------------------------------------
     def action_focus_filter(self) -> None:
         self.query_one("#filter", Input).focus()
 
@@ -120,11 +292,9 @@ class HomeScreen(Screen[None]):
             return
         klass = getattr(item, "_rf_klass", "?")
         if klass in ("D", "E", "F"):
-            return  # skipped classes can't open wantlist
+            return
         shortname = getattr(item, "_rf_shortname", "?")
-        # Look up the full entry from consoles_yml
-        entries = self.app.consoles_yml.get("consoles", []) or []
-        entry = next((e for e in entries if str(e.get("shortname", "")) == shortname), None)
+        entry = self._lookup_entry(shortname)
         if entry is None:
             return
         override = self.app.overrides.get(shortname)
@@ -140,8 +310,7 @@ class HomeScreen(Screen[None]):
         if klass in ("D", "E", "F"):
             return
         shortname = getattr(item, "_rf_shortname", "?")
-        entries = self.app.consoles_yml.get("consoles", []) or []
-        entry = next((e for e in entries if str(e.get("shortname", "")) == shortname), None)
+        entry = self._lookup_entry(shortname)
         if entry is None:
             return
         override = self.app.overrides.get(shortname)
@@ -157,8 +326,7 @@ class HomeScreen(Screen[None]):
         if klass in ("D", "E", "F"):
             return
         shortname = getattr(item, "_rf_shortname", "?")
-        entries = self.app.consoles_yml.get("consoles", []) or []
-        entry = next((e for e in entries if str(e.get("shortname", "")) == shortname), None)
+        entry = self._lookup_entry(shortname)
         if entry is None:
             return
         from retrofetch.tui.screens.state import StateScreen

@@ -1,0 +1,4 @@
+status=PASS
+calls=['arcadia']
+fetch_count=1
+highlight_hits=['B:3do', 'B:amigacd32', 'A:arcadia']
