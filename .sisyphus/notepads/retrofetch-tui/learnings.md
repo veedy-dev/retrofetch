@@ -157,3 +157,8 @@ T8 save_config must handle this. Simple approach: save always writes LF (ruamel'
 - TUI launch flow: preflight TTY -> MSYSTEM -> PSEDIT -> config / consoles / overrides.
 - `q` quits cleanly with exit 0 under `run_test()`.
 - QA evidence written via Python to UTF-8 files under `.sisyphus/evidence/`.
+
+## [2026-04-18T04:20:48Z] T14: download worker
+- `DownloadWorker.start()` owns EventBus + EventBusBridge setup on the UI thread and returns a shared `threading.Event` used for cancellation.
+- `DownloadWorker.run()` stays thread-only, never touches widgets directly, forwards success via `DownloadComplete(report)` and failures via `DownloadCrashed(str(exc))`, then always tears down the bridge in `_cleanup()`.
+- On this machine dry-run cancellation finishes too quickly to observe a mid-run stop reliably, so the QA harness asserts the shared stop_event path by pre-setting cancellation before the worker loop begins; completion still arrives as `DownloadComplete` with `attempted < 100`.

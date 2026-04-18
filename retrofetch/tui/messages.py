@@ -3,6 +3,7 @@ from __future__ import annotations
 from textual.app import App  # pyright: ignore[reportMissingImports]
 from textual.message import Message  # pyright: ignore[reportMissingImports]
 
+from retrofetch.orchestrator import RunReport
 from retrofetch.events import (
     CloudflareBlockEvent,
     DatLoadDoneEvent,
@@ -153,3 +154,15 @@ def wire_event_bus(app: App, bus: EventBus) -> EventBusBridge:
     bridge = EventBusBridge(app, bus)
     bridge.start()
     return bridge
+
+
+class DownloadComplete(Message):
+    def __init__(self, report: RunReport) -> None:
+        self.report = report
+        super().__init__()
+
+
+class DownloadCrashed(Message):
+    def __init__(self, exc: str) -> None:
+        self.exc = exc
+        super().__init__()
