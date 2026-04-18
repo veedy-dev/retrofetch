@@ -124,3 +124,12 @@ T8 save_config must handle this. Simple approach: save always writes LF (ruamel'
 - Created retrofetch/coverage.py with CoverageReport + compute_coverage
 - retrofetch/report.py now thin wrapper: generate_coverage_report = compute + write_markdown
 - Public signature preserved, markdown format byte-identical
+
+## [2026-04-18T00:05:18Z] T8: ruamel migration
+- Sites migrated: config.py::load_config, config.py::load_overrides, cli.py::_load_consoles, coverage.py::compute_coverage (T9-moved successor of report.py:21).
+- Save helpers: save_config + save_overrides, both delegate to _atomic_dump(). LF-only via newline="\n". Atomic: write tmp -> flush -> fsync -> os.replace.
+- Line-ending decision: LF-only on save. Documented in module docstring. Users whose config.yml was originally CRLF will see LF after first TUI save - accepted per orchestrator decision.
+- fsync gotcha (Windows): the spec snippet opened tmp "rb" then called os.fsync(fh.fileno()) - errno 9 (Bad file descriptor) on Windows because fsync requires a write-mode handle. Fix: write via open(..., "w", encoding="utf-8", newline="\n") and fsync inside the same with-block before close. Matches the canonical Python atomic-write idiom.
+- YAMLError subclass gotcha: ruamel.yaml.YAMLError is the base; subclasses like ParserError inherit it and still expose problem_mark and problem attrs. One except-block suffices.
+- Scope discrepancy flagged: task referenced report.py:21 but T9 moved that call into coverage.py. Migrated the semantic target (coverage.py::compute_coverage) plus deleted the dual-library shim (try-import + yaml.safe_load fallback) because it would have broken after T8 anyway (YAML instance is not callable, so the callable-cast shim would have crashed on first invocation post-T8).
+- Files touched: retrofetch/config.py, retrofetch/cli.py, retrofetch/coverage.py. retrofetch/report.py untouched (no longer has yaml imports after T9).

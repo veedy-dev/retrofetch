@@ -8,10 +8,15 @@ from pathlib import Path
 from typing import Any, Optional
 
 import typer
-import yaml
 
 from retrofetch import __version__
-from retrofetch.config import ConfigError, Config, load_config, load_overrides
+from retrofetch.config import (
+    ConfigError,
+    Config,
+    _yaml_rt,
+    load_config,
+    load_overrides,
+)
 from retrofetch.dat import parse_dat, verify_file
 from retrofetch.dat_fetch import bootstrap_dats, find_dat_for_console
 from retrofetch.logging_setup import setup_logging
@@ -58,7 +63,7 @@ def _load_consoles(consoles_path: Path) -> dict[str, Any]:
             f"consoles.yml not found at {consoles_path}. "
             "Ensure you are running from the retrofetch project root or run 'retrofetch init'."
         )
-    data = yaml.safe_load(consoles_path.read_text(encoding="utf-8"))
+    data = _yaml_rt.load(consoles_path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ConfigError(
             f"consoles.yml root must be a mapping, got {type(data).__name__}"
