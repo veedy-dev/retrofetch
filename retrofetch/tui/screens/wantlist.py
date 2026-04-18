@@ -12,6 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Horizontal, Vertical  # pyright: ignore[reportMissingImports]
@@ -19,7 +20,8 @@ from textual.screen import Screen  # pyright: ignore[reportMissingImports]
 from textual.widgets import DataTable, Footer, Header, Label, Static  # pyright: ignore[reportMissingImports]
 
 from retrofetch.config import ConsoleOverride, _yaml_rt, save_overrides
-from retrofetch.ranker import get_wantlist
+from retrofetch.tui.messages import WantlistFailed, WantlistReady
+from retrofetch.wantlist_cache import get_or_fetch_wantlist
 
 
 class WantlistScreen(Screen[None]):
@@ -70,20 +72,37 @@ class WantlistScreen(Screen[None]):
         klass = str(self.console_entry.get("class", "?"))
         ranking_sources = self.app.config.ranking_sources_by_class.get(klass, [])  # pyright: ignore[reportAttributeAccessIssue]
         self._primary_source = ranking_sources[0] if ranking_sources else "-"
-        self._load_wantlist()
+        # Kick background loader. UI remains responsive; handler fills the table.
+        self._set_status("Loading wantlist...")
+        self._kick_load()
 
-    def _load_wantlist(self) -> None:
+    @work(thread=True, exclusive=True, group="wantlist-load")
+    def _kick_load(self) -> None:
         try:
-            titles = get_wantlist(
+            titles, from_cache = get_or_fetch_wantlist(
                 console_entry=self.console_entry,
-                overrides=None,  # we compute the raw ranking, overrides applied in UI
+                overrides=None,  # raw ranking; UI applies user's include/exclude
                 config=self.app.config,  # pyright: ignore[reportAttributeAccessIssue]
                 limit=200,
             )
         except Exception as exc:
-            self._set_status(f"error: {exc}")
-            titles = []
-        self._wantlist = titles
+            self.post_message(WantlistFailed(self.shortname, str(exc)))
+            return
+        self.post_message(WantlistReady(self.shortname, titles, from_cache))
+
+    def on_wantlist_ready(self, message: WantlistReady) -> None:
+        if message.console != self.shortname:
+            return
+        self._wantlist = list(message.titles)
+        indicator = "cached" if message.from_cache else "fresh"
+        self._set_status(f"{len(self._wantlist)} titles loaded ({indicator})")
+        self._render_page()
+
+    def on_wantlist_failed(self, message: WantlistFailed) -> None:
+        if message.console != self.shortname:
+            return
+        self._wantlist = []
+        self._set_status(f"error: {message.reason}")
         self._render_page()
 
     def _render_page(self) -> None:
