@@ -14,6 +14,27 @@ hashes.
 ## Quick start (5 minutes)
 Follow these steps to get running on Windows with PowerShell.
 
+### Simplest path: use the launcher
+
+If you just want to run it, use the bundled launcher. It creates the venv and installs dependencies on first run, then drops you straight into the TUI.
+
+```powershell
+# Windows PowerShell
+.\launch.ps1
+```
+
+```cmd
+:: Windows double-click
+launch.bat
+```
+
+```bash
+# Linux / macOS
+./launch.sh
+```
+
+Skip the rest of this section if the launcher worked. The manual steps below are for people who want to control each step.
+
 1. Clone and install
 ```powershell
 git clone https://github.com/user/retrofetch D:\retrofetch
