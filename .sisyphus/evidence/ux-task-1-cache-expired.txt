@@ -1,0 +1,6 @@
+cache_file=C:\Users\vidif\AppData\Local\Temp\tmpnoc5l35a\cache\wantlists\nes.json
+expired_cached_at=2026-04-16T06:28:04.608738+00:00
+load_cached=None
+from_cache=False
+call_count=1
+titles=['Mega Man 2', 'Castlevania III']

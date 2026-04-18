@@ -1,0 +1,6 @@
+cache_file=C:\Users\vidif\AppData\Local\Temp\tmpodcarpf5\cache\wantlists\nes.json
+first_from_cache=False
+second_from_cache=True
+third_from_cache=False
+call_count=2
+titles=['Super Mario Bros.', 'The Legend of Zelda']
