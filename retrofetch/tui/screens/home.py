@@ -29,6 +29,8 @@ class HomeScreen(Screen[None]):
         Binding("slash", "focus_filter", "Filter", show=True, key_display="/"),
         Binding("question_mark", "help", "Help", show=True, key_display="?"),
         Binding("tab", "focus_next", "Next", show=False),
+        Binding("w", "open_wantlist", "Wantlist", show=True),
+        Binding("s", "open_state", "State", show=True),
     ]
 
     # Debounce for filter Input.Changed events, per T2 spike (200ms sweet spot).
@@ -108,3 +110,37 @@ class HomeScreen(Screen[None]):
     def action_help(self) -> None:
         # T22 implements help screen; for now, no-op.
         pass
+
+    def action_open_wantlist(self) -> None:
+        list_view = self.query_one("#console-list", ListView)
+        item = list_view.highlighted_child
+        if item is None:
+            return
+        klass = getattr(item, "_rf_klass", "?")
+        if klass in ("D", "E", "F"):
+            return  # skipped classes can't open wantlist
+        shortname = getattr(item, "_rf_shortname", "?")
+        # Look up the full entry from consoles_yml
+        entries = self.app.consoles_yml.get("consoles", []) or []
+        entry = next((e for e in entries if str(e.get("shortname", "")) == shortname), None)
+        if entry is None:
+            return
+        override = self.app.overrides.get(shortname)
+        from retrofetch.tui.screens.wantlist import WantlistScreen
+        self.app.push_screen(WantlistScreen(console_entry=entry, override=override))
+
+    def action_open_state(self) -> None:
+        list_view = self.query_one("#console-list")
+        item = list_view.highlighted_child
+        if item is None:
+            return
+        klass = getattr(item, "_rf_klass", "?")
+        if klass in ("D", "E", "F"):
+            return
+        shortname = getattr(item, "_rf_shortname", "?")
+        entries = self.app.consoles_yml.get("consoles", []) or []
+        entry = next((e for e in entries if str(e.get("shortname", "")) == shortname), None)
+        if entry is None:
+            return
+        from retrofetch.tui.screens.state import StateScreen
+        self.app.push_screen(StateScreen(console_entry=entry))
