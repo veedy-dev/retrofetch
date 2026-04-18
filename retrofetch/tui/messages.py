@@ -146,6 +146,7 @@ class EventBusBridge:
                 try:
                     self._app.post_message(msg_cls(**kwargs))
                 except Exception:
+                    # subscriber isolation: App may be tearing down when a background event arrives
                     pass
                 return
 

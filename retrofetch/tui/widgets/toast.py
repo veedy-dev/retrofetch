@@ -43,4 +43,5 @@ class Toast(Static):
         try:
             self.remove()
         except Exception:
+            # race: toast may already be detached when timer fires
             pass

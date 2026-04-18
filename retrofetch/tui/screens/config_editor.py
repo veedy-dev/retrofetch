@@ -95,4 +95,5 @@ class ConfigEditorScreen(Screen[None]):
         try:
             self.query_one("#cfg-status", Label).update(("* " if self._dirty else "") + msg)
         except Exception:
+            # defensive: status Label may be unmounted during teardown
             pass

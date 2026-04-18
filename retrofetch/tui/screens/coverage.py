@@ -8,7 +8,7 @@ from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Vertical  # pyright: ignore[reportMissingImports]
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
 from textual.widgets import DataTable, Footer, Header, Label  # pyright: ignore[reportMissingImports]
-from textual import work  # pyright: ignore[reportMissingImports]
+from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
 
 from retrofetch.coverage import CoverageReport, compute_coverage
 from retrofetch.report import write_coverage_markdown

@@ -124,4 +124,5 @@ class EventBus:
             try:
                 callback(event)
             except Exception:
+                # best-effort delivery: one faulty subscriber must not block others
                 pass

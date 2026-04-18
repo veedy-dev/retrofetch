@@ -110,8 +110,8 @@ class HomeScreen(Screen[None]):
         self.query_one("#filter", Input).focus()
 
     def action_help(self) -> None:
-        # T22 implements help screen; for now, no-op.
-        pass
+        from retrofetch.tui.screens.help import HelpScreen
+        self.app.push_screen(HelpScreen())
 
     def action_open_wantlist(self) -> None:
         list_view = self.query_one("#console-list", ListView)

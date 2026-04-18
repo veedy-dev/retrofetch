@@ -5,23 +5,24 @@ loaded configuration, consoles metadata, and overrides - screens access them
 via `self.app.<attr>` without re-reading YAML from disk.
 
 Exit code policy:
-- 0: graceful quit via `q` binding
-- 130: Ctrl+C -> Textual's SIGINT handler -> action_quit (T23 implements this)
+- 0: graceful quit via `q` binding (``action_quit`` -> ``self.exit(0)``)
+- 130: SIGINT / Ctrl+C on POSIX -> handled natively by Textual's SIGINT hook.
+  The Python interpreter unwinds with the signal exit code (130 on POSIX); on
+  Windows CTRL_BREAK_EVENT produces a platform-specific non-zero code.
 - 2: raised by `cli.py::tui` preflight (NOT this module)
 - 1: uncaught exception falls through Python
 
 Shutdown decision tree (T23 - single Textual-native path):
-- User presses `q` or Textual intercepts SIGINT -> `action_quit` below runs.
-- `action_quit` cancels any in-flight `@work(group="download")` worker so the
+- User presses `q` -> ``action_quit`` below runs -> ``self.exit(0)``.
+- SIGINT / Ctrl+C -> handled natively by Textual's SIGINT hook. We intentionally
+  avoid installing our own SIGINT handler (fighting Textual's handler causes
+  issue #1707, banned by the plan's Must-NOT guardrail). We also do not call
+  ``ShutdownCoordinator.install()`` in the TUI path for the same reason; the
+  orchestrator's worker-group cancellation is sufficient.
+- ``action_quit`` cancels any in-flight `@work(group="download")` worker so the
   orchestrator observes its shared `stop_event` and persists state.json
-  per-iteration (see DownloadWorker). We do NOT install a custom
-  `signal.signal(SIGINT, ...)` handler - fighting Textual's SIGINT hook
-  triggers the Textual-native blocking bug (issue #1707) and is forbidden
-  by the plan's Must-NOT guardrail.
-- After cancellation is observed (or after a 3s best-effort wait), we call
-  `self.exit(0)`. Ctrl+C on POSIX still yields exit 130 at the interpreter
-  layer because Textual's SIGINT path does not swallow the signal; on
-  Windows, CTRL_BREAK_EVENT produces a platform-specific non-zero code.
+  per-iteration (see DownloadWorker). After cancellation is observed (or
+  after a 3s best-effort wait), we call ``self.exit(0)``.
 """
 from __future__ import annotations
 
@@ -76,6 +77,7 @@ class RetrofetchApp(App[int]):
         try:
             workers = list(self.workers._workers)  # pyright: ignore[reportAttributeAccessIssue]
         except Exception:
+            # Textual API compat: private _workers attribute may differ between releases
             workers = []
         download_workers = [
             w for w in workers if getattr(w, "group", None) == "download"
@@ -87,8 +89,10 @@ class RetrofetchApp(App[int]):
                 try:
                     self.workers.cancel_group("download")  # type: ignore[call-arg]
                 except Exception:
+                    # Textual API compat: cancel_group signature varies between releases
                     pass
             except Exception:
+                # shutdown race: worker group may already be cancelled by Textual
                 pass
             for _ in range(30):
                 await _asyncio.sleep(0.1)
@@ -108,4 +112,5 @@ class RetrofetchApp(App[int]):
             toast = Toast(message, severity=sev)
             self.mount(toast)
         except Exception:
+            # shutdown race: toast container may already be unmounted
             pass

@@ -50,6 +50,7 @@ class WantlistScreen(Screen[None]):
         self._wantlist: list[str] = []
         self._page = 0
         self._status = ""
+        self._primary_source: str = "-"
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -64,8 +65,11 @@ class WantlistScreen(Screen[None]):
 
     def on_mount(self) -> None:
         table: DataTable = self.query_one("#wantlist-table", DataTable)
-        table.add_columns("sel", "Title", "Included", "Excluded")
+        table.add_columns("sel", "Title", "Source", "Included", "Excluded")
         table.cursor_type = "row"
+        klass = str(self.console_entry.get("class", "?"))
+        ranking_sources = self.app.config.ranking_sources_by_class.get(klass, [])  # pyright: ignore[reportAttributeAccessIssue]
+        self._primary_source = ranking_sources[0] if ranking_sources else "-"
         self._load_wantlist()
 
     def _load_wantlist(self) -> None:
@@ -91,7 +95,13 @@ class WantlistScreen(Screen[None]):
         for title in page_rows:
             inc = "[x]" if title in self._include else "[ ]"
             exc = "[x]" if title in self._exclude else "[ ]"
-            table.add_row(inc, title, "yes" if title in self._include else "", "yes" if title in self._exclude else "")
+            table.add_row(
+                inc,
+                title,
+                self._primary_source,
+                "yes" if title in self._include else "",
+                "yes" if title in self._exclude else "",
+            )
         total_pages = max(1, (len(self._wantlist) + self._PAGE_SIZE - 1) // self._PAGE_SIZE)
         self.query_one("#page-indicator", Label).update(
             f"page {self._page + 1} / {total_pages}  ({len(self._wantlist)} items)"
@@ -102,6 +112,7 @@ class WantlistScreen(Screen[None]):
         try:
             self.query_one("#status-line", Label).update(msg)
         except Exception:
+            # defensive: status Label may be unmounted during teardown
             pass
 
     def _current_title(self) -> str | None:

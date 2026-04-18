@@ -1,0 +1,1 @@
+T18 download: OK (summary='Done. attempted=2 acquired=0 failed=0 unverified=0. Press esc to return.')

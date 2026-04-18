@@ -110,4 +110,5 @@ class OverridesEditorScreen(Screen[None]):
         try:
             self.query_one("#ov-status", Label).update(msg)
         except Exception:
+            # defensive: status Label may be unmounted during teardown
             pass
