@@ -1,2760 +1,2829 @@
 consoles:
-- shortname: 3do
-  display_name: 3DO Interactive Multiplayer
-  class: B
-  igdb_platform_id: null
-  dat_system: Panasonic - 3DO Interactive Multiplayer
-  minerva_path: Redump/Panasonic - 3DO Interactive Multiplayer
-  archive_org_identifier: null
-  romsfun_slug: 3do
-  romsretro_slug: 3do
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: adam
-  display_name: Coleco Adam
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: amiga
-  display_name: Commodore Amiga
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: amiga1200
-  display_name: Commodore Amiga 1200
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: amiga600
-  display_name: Commodore Amiga 600
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: amigacd32
-  display_name: Commodore Amiga CD32
-  class: B
-  igdb_platform_id: null
-  dat_system: Commodore - Amiga CD32
-  minerva_path: Redump/Commodore - Amiga CD32
-  archive_org_identifier: null
-  romsfun_slug: amiga-cd32
-  romsretro_slug: amiga-cd32
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: amstradcpc
-  display_name: Amstrad CPC
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: androidapps
-  display_name: Android Apps
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: androidgames
-  display_name: Android Games
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: apple2
-  display_name: Apple II
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: apple2gs
-  display_name: Apple IIGS
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: arcade
-  display_name: Arcade
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: arcadia
-  display_name: Emerson Arcadia 2001
-  class: A
-  igdb_platform_id: 94
-  dat_system: Emerson - Arcadia 2001
-  minerva_path: No-Intro/Emerson - Arcadia 2001
-  archive_org_identifier: null
-  romsfun_slug: arcadia-2001
-  romsretro_slug: arcadia-2001
-  extensions:
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: archimedes
-  display_name: Acorn Archimedes
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: arduboy
-  display_name: Arduboy Miniature Game System
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: astrocde
-  display_name: Bally Astrocade
-  class: A
-  igdb_platform_id: 91
-  dat_system: Bally - Astrocade
-  minerva_path: No-Intro/Bally - Astrocade
-  archive_org_identifier: null
-  romsfun_slug: astrocade
-  romsretro_slug: astrocade
-  extensions:
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: atari2600
-  display_name: Atari 2600
-  class: A
-  igdb_platform_id: 59
-  dat_system: Atari - 2600
-  minerva_path: No-Intro/Atari - 2600
-  archive_org_identifier: null
-  romsfun_slug: atari-2600
-  romsretro_slug: atari-2600
-  extensions:
-  - .a26
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: atari5200
-  display_name: Atari 5200
-  class: A
-  igdb_platform_id: 66
-  dat_system: Atari - 5200
-  minerva_path: No-Intro/Atari - 5200
-  archive_org_identifier: null
-  romsfun_slug: atari-5200
-  romsretro_slug: atari-5200
-  extensions:
-  - .a52
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: atari7800
-  display_name: Atari 7800 ProSystem
-  class: A
-  igdb_platform_id: 60
-  dat_system: Atari - 7800
-  minerva_path: No-Intro/Atari - 7800
-  archive_org_identifier: null
-  romsfun_slug: atari-7800
-  romsretro_slug: atari-7800
-  extensions:
-  - .a78
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: atari800
-  display_name: Atari 800
-  class: A
-  igdb_platform_id: 65
-  dat_system: Atari - 8-bit Family
-  minerva_path: No-Intro/Atari - 8-bit Family
-  archive_org_identifier: null
-  romsfun_slug: atari-800
-  romsretro_slug: atari-800
-  extensions:
-  - .atr
-  - .xex
-  - .cas
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: atarijaguar
-  display_name: Atari Jaguar
-  class: A
-  igdb_platform_id: 62
-  dat_system: Atari - Jaguar
-  minerva_path: No-Intro/Atari - Jaguar
-  archive_org_identifier: null
-  romsfun_slug: atari-jaguar
-  romsretro_slug: atari-jaguar
-  extensions:
-  - .j64
-  - .jag
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: atarilynx
-  display_name: Atari Lynx
-  class: A
-  igdb_platform_id: 61
-  dat_system: Atari - Lynx
-  minerva_path: No-Intro/Atari - Lynx
-  archive_org_identifier: null
-  romsfun_slug: atari-lynx
-  romsretro_slug: atari-lynx
-  extensions:
-  - .lyx
-  - .lnx
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: atarist
-  display_name: Atari ST
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: atarixe
-  display_name: Atari XE
-  class: A
-  igdb_platform_id: null
-  dat_system: Atari - 8-bit Family
-  minerva_path: No-Intro/Atari - 8-bit Family
-  archive_org_identifier: null
-  romsfun_slug: atari-8bit
-  romsretro_slug: atari-8bit
-  extensions:
-  - .atr
-  - .xex
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: atomiswave
-  display_name: Sammy Corporation Atomiswave
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: bbcmicro
-  display_name: Acorn Computers BBC Micro
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: c64
-  display_name: Commodore 64
-  class: A
-  igdb_platform_id: 15
-  dat_system: Commodore - Commodore 64
-  minerva_path: No-Intro/Commodore - Commodore 64
-  archive_org_identifier: null
-  romsfun_slug: commodore-64
-  romsretro_slug: commodore-64
-  extensions:
-  - .t64
-  - .tap
-  - .prg
-  - .d64
-  - .crt
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: cdimono1
-  display_name: Philips CD-i
-  class: B
-  igdb_platform_id: null
-  dat_system: Philips - CD-i
-  minerva_path: Redump/Philips - CD-i
-  archive_org_identifier: null
-  romsfun_slug: cd-i
-  romsretro_slug: cd-i
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: cdtv
-  display_name: Commodore CDTV
-  class: B
-  igdb_platform_id: null
-  dat_system: Commodore - Amiga CDTV
-  minerva_path: Redump/Commodore - Amiga CDTV
-  archive_org_identifier: null
-  romsfun_slug: cdtv
-  romsretro_slug: cdtv
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: chailove
-  display_name: ChaiLove Game Engine
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: channelf
-  display_name: Fairchild Channel F
-  class: A
-  igdb_platform_id: 127
-  dat_system: Fairchild - Channel F
-  minerva_path: No-Intro/Fairchild - Channel F
-  archive_org_identifier: null
-  romsfun_slug: channel-f
-  romsretro_slug: channel-f
-  extensions:
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: coco
-  display_name: Tandy Color Computer
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: colecovision
-  display_name: Coleco ColecoVision
-  class: A
-  igdb_platform_id: 68
-  dat_system: Coleco - ColecoVision
-  minerva_path: No-Intro/Coleco - ColecoVision
-  archive_org_identifier: null
-  romsfun_slug: colecovision
-  romsretro_slug: colecovision
-  extensions:
-  - .col
-  - .rom
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: consolearcade
-  display_name: Console Arcade Systems
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: cps
-  display_name: Capcom Play System
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: cps1
-  display_name: Capcom Play System I
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: cps2
-  display_name: Capcom Play System II
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: cps3
-  display_name: Capcom Play System III
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: crvision
-  display_name: VTech CreatiVision
-  class: A
-  igdb_platform_id: null
-  dat_system: VTech - CreatiVision
-  minerva_path: No-Intro/VTech - CreatiVision
-  archive_org_identifier: null
-  romsfun_slug: creativision
-  romsretro_slug: creativision
-  extensions:
-  - .bin
-  - .rom
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: daphne
-  display_name: Daphne Arcade LaserDisc Emulator
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: doom
-  display_name: Doom
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: dos
-  display_name: DOS (PC)
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: dragon32
-  display_name: Dragon Data Dragon 32
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: dreamcast
-  display_name: Sega Dreamcast
-  class: B
-  igdb_platform_id: 23
-  dat_system: Sega - Dreamcast
-  minerva_path: Redump/Sega - Dreamcast
-  archive_org_identifier: null
-  romsfun_slug: dreamcast
-  romsretro_slug: dreamcast
-  extensions:
-  - .gdi
-  - .cdi
-  - .chd
-  - .cue
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: easyrpg
-  display_name: EasyRPG Game Engine
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: electron
-  display_name: Acorn Electron
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: emulators
-  display_name: Emulators
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: epic
-  display_name: Epic Games Store
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: famicom
-  display_name: Nintendo Family Computer
-  class: A
-  igdb_platform_id: 18
-  dat_system: Nintendo - Nintendo Entertainment System
-  minerva_path: No-Intro/Nintendo - Nintendo Entertainment System
-  archive_org_identifier: null
-  romsfun_slug: famicom
-  romsretro_slug: famicom
-  extensions:
-  - .nes
-  - .fds
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: fba
-  display_name: FinalBurn Alpha
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: fbneo
-  display_name: FinalBurn Neo
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: fds
-  display_name: Nintendo Famicom Disk System
-  class: A
-  igdb_platform_id: 51
-  dat_system: Nintendo - Family Computer Disk System
-  minerva_path: No-Intro/Nintendo - Family Computer Disk System
-  archive_org_identifier: null
-  romsfun_slug: famicom-disk-system
-  romsretro_slug: famicom-disk-system
-  extensions:
-  - .fds
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: flash
-  display_name: Adobe Flash
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: fm7
-  display_name: Fujitsu FM-7
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: fmtowns
-  display_name: Fujitsu FM Towns
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: gamate
-  display_name: Bit Corporation Gamate
-  class: A
-  igdb_platform_id: null
-  dat_system: Bit Corporation - Gamate
-  minerva_path: No-Intro/Bit Corporation - Gamate
-  archive_org_identifier: null
-  romsfun_slug: gamate
-  romsretro_slug: gamate
-  extensions:
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: gameandwatch
-  display_name: Nintendo Game and Watch
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: gamecom
-  display_name: Tiger Electronics Game.com
-  class: A
-  igdb_platform_id: null
-  dat_system: Tiger - Game.com
-  minerva_path: No-Intro/Tiger - Game.com
-  archive_org_identifier: null
-  romsfun_slug: game-com
-  romsretro_slug: game-com
-  extensions:
-  - .tgc
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: gamegear
-  display_name: Sega Game Gear
-  class: A
-  igdb_platform_id: 35
-  dat_system: Sega - Game Gear
-  minerva_path: No-Intro/Sega - Game Gear
-  archive_org_identifier: null
-  romsfun_slug: sega-game-gear
-  romsretro_slug: sega-game-gear
-  extensions:
-  - .gg
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: gb
-  display_name: Nintendo Game Boy
-  class: A
-  igdb_platform_id: 33
-  dat_system: Nintendo - Game Boy
-  minerva_path: No-Intro/Nintendo - Game Boy
-  archive_org_identifier: null
-  romsfun_slug: gameboy
-  romsretro_slug: gameboy
-  extensions:
-  - .gb
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: gba
-  display_name: Nintendo Game Boy Advance
-  class: A
-  igdb_platform_id: 24
-  dat_system: Nintendo - Game Boy Advance
-  minerva_path: No-Intro/Nintendo - Game Boy Advance
-  archive_org_identifier: null
-  romsfun_slug: gameboy-advance
-  romsretro_slug: gameboy-advance
-  extensions:
-  - .gba
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: gbc
-  display_name: Nintendo Game Boy Color
-  class: A
-  igdb_platform_id: 22
-  dat_system: Nintendo - Game Boy Color
-  minerva_path: No-Intro/Nintendo - Game Boy Color
-  archive_org_identifier: null
-  romsfun_slug: gameboy-color
-  romsretro_slug: gameboy-color
-  extensions:
-  - .gbc
-  - .gb
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: gc
-  display_name: Nintendo GameCube
-  class: B
-  igdb_platform_id: 21
-  dat_system: Nintendo - GameCube
-  minerva_path: Redump/Nintendo - GameCube
-  archive_org_identifier: null
-  romsfun_slug: gamecube
-  romsretro_slug: gamecube
-  extensions:
-  - .iso
-  - .gcm
-  - .rvz
-  - .wia
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: genesis
-  display_name: Sega Genesis
-  class: A
-  igdb_platform_id: 29
-  dat_system: Sega - Mega Drive - Genesis
-  minerva_path: No-Intro/Sega - Mega Drive - Genesis
-  archive_org_identifier: null
-  romsfun_slug: sega-genesis
-  romsretro_slug: sega-genesis
-  extensions:
-  - .md
-  - .gen
-  - .bin
-  - .smd
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: gmaster
-  display_name: Hartung Game Master
-  class: A
-  igdb_platform_id: null
-  dat_system: Hartung - Game Master
-  minerva_path: No-Intro/Hartung - Game Master
-  archive_org_identifier: null
-  romsfun_slug: game-master
-  romsretro_slug: game-master
-  extensions:
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: gx4000
-  display_name: Amstrad GX4000
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: intellivision
-  display_name: Mattel Electronics Intellivision
-  class: A
-  igdb_platform_id: 67
-  dat_system: Mattel - Intellivision
-  minerva_path: No-Intro/Mattel - Intellivision
-  archive_org_identifier: null
-  romsfun_slug: intellivision
-  romsretro_slug: intellivision
-  extensions:
-  - .int
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: j2me
-  display_name: Java 2 Micro Edition (J2ME)
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: laserdisc
-  display_name: LaserDisc Games
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: lcdgames
-  display_name: LCD Handheld Games
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: lowresnx
-  display_name: LowRes NX Fantasy Console
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: lutro
-  display_name: Lutro Game Engine
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: macintosh
-  display_name: Apple Macintosh
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: mame
-  display_name: Multiple Arcade Machine Emulator
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: mark3
-  display_name: Sega Mark III
-  class: A
-  igdb_platform_id: 64
-  dat_system: Sega - Master System - Mark III
-  minerva_path: No-Intro/Sega - Master System - Mark III
-  archive_org_identifier: null
-  romsfun_slug: sega-master-system
-  romsretro_slug: sega-master-system
-  extensions:
-  - .sms
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: mastersystem
-  display_name: Sega Master System
-  class: A
-  igdb_platform_id: 64
-  dat_system: Sega - Master System - Mark III
-  minerva_path: No-Intro/Sega - Master System - Mark III
-  archive_org_identifier: null
-  romsfun_slug: sega-master-system
-  romsretro_slug: sega-master-system
-  extensions:
-  - .sms
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: megacd
-  display_name: Sega Mega-CD
-  class: B
-  igdb_platform_id: 78
-  dat_system: Sega - Mega CD & Sega CD
-  minerva_path: Redump/Sega - Mega CD & Sega CD
-  archive_org_identifier: null
-  romsfun_slug: sega-cd
-  romsretro_slug: sega-cd
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: megacdjp
-  display_name: Sega Mega-CD
-  class: B
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: sega-cd
-  romsretro_slug: sega-cd
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: megacd
-  region_filter:
-  - Japan
-  - JP
-  skip_reason: null
-- shortname: megadrive
-  display_name: Sega Mega Drive
-  class: A
-  igdb_platform_id: 29
-  dat_system: Sega - Mega Drive - Genesis
-  minerva_path: No-Intro/Sega - Mega Drive - Genesis
-  archive_org_identifier: null
-  romsfun_slug: sega-genesis
-  romsretro_slug: sega-genesis
-  extensions:
-  - .md
-  - .gen
-  - .bin
-  - .smd
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: megadrivejp
-  display_name: Sega Mega Drive
-  class: A
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: sega-genesis
-  romsretro_slug: sega-genesis
-  extensions:
-  - .md
-  - .gen
-  - .bin
-  - .smd
-  cd_based: false
-  region_alias_of: megadrive
-  region_filter:
-  - Japan
-  - JP
-  skip_reason: null
-- shortname: megaduck
-  display_name: Creatronic Mega Duck
-  class: A
-  igdb_platform_id: null
-  dat_system: Creatronic - Mega Duck
-  minerva_path: No-Intro/Creatronic - Mega Duck
-  archive_org_identifier: null
-  romsfun_slug: mega-duck
-  romsretro_slug: mega-duck
-  extensions:
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: mess
-  display_name: Multi Emulator Super System
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: model2
-  display_name: Sega Model 2
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: model3
-  display_name: Sega Model 3
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: moto
-  display_name: Thomson MO/TO Series
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: msx
-  display_name: MSX
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: msx1
-  display_name: MSX1
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: msx2
-  display_name: MSX2
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: msxturbor
-  display_name: MSX Turbo R
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: multivision
-  display_name: Othello Multivision
-  class: A
-  igdb_platform_id: null
-  dat_system: Tsukuda - Othello Multivision
-  minerva_path: No-Intro/Tsukuda - Othello Multivision
-  archive_org_identifier: null
-  romsfun_slug: othello-multivision
-  romsretro_slug: othello-multivision
-  extensions:
-  - .sg
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: n3ds
-  display_name: Nintendo 3DS
-  class: C
-  igdb_platform_id: 37
-  dat_system: Nintendo - Nintendo 3DS
-  minerva_path: No-Intro/Nintendo - Nintendo 3DS
-  archive_org_identifier: null
-  romsfun_slug: 3ds
-  romsretro_slug: 3ds
-  extensions:
-  - .3ds
-  - .cia
-  - .cci
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: n64
-  display_name: Nintendo 64
-  class: A
-  igdb_platform_id: 4
-  dat_system: Nintendo - Nintendo 64
-  minerva_path: No-Intro/Nintendo - Nintendo 64
-  archive_org_identifier: null
-  romsfun_slug: nintendo-64
-  romsretro_slug: nintendo-64
-  extensions:
-  - .n64
-  - .v64
-  - .z64
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: n64dd
-  display_name: Nintendo 64DD
-  class: A
-  igdb_platform_id: null
-  dat_system: Nintendo - Nintendo 64DD
-  minerva_path: No-Intro/Nintendo - Nintendo 64DD
-  archive_org_identifier: null
-  romsfun_slug: nintendo-64dd
-  romsretro_slug: nintendo-64dd
-  extensions:
-  - .ndd
-  - .n64
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: naomi
-  display_name: Sega NAOMI
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: naomi2
-  display_name: Sega NAOMI 2
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: naomigd
-  display_name: Sega NAOMI GD-ROM
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: nds
-  display_name: Nintendo DS
-  class: A
-  igdb_platform_id: 20
-  dat_system: Nintendo - Nintendo DS
-  minerva_path: No-Intro/Nintendo - Nintendo DS
-  archive_org_identifier: null
-  romsfun_slug: nintendo-ds
-  romsretro_slug: nintendo-ds
-  extensions:
-  - .nds
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: neogeo
-  display_name: SNK Neo Geo
-  class: A
-  igdb_platform_id: 80
-  dat_system: SNK - Neo Geo
-  minerva_path: No-Intro/SNK - Neo Geo
-  archive_org_identifier: null
-  romsfun_slug: neo-geo
-  romsretro_slug: neo-geo
-  extensions:
-  - .zip
-  - .ng
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: neogeocd
-  display_name: SNK Neo Geo CD
-  class: B
-  igdb_platform_id: 136
-  dat_system: SNK - Neo Geo CD
-  minerva_path: Redump/SNK - Neo Geo CD
-  archive_org_identifier: null
-  romsfun_slug: neo-geo-cd
-  romsretro_slug: neo-geo-cd
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: neogeocdjp
-  display_name: SNK Neo Geo CD
-  class: B
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: neo-geo-cd
-  romsretro_slug: neo-geo-cd
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: neogeocd
-  region_filter:
-  - Japan
-  - JP
-  skip_reason: null
-- shortname: nes
-  display_name: Nintendo Entertainment System
-  class: A
-  igdb_platform_id: 18
-  dat_system: Nintendo - Nintendo Entertainment System
-  minerva_path: No-Intro/Nintendo - Nintendo Entertainment System
-  archive_org_identifier: null
-  romsfun_slug: nes
-  romsretro_slug: nes
-  extensions:
-  - .nes
-  - .unf
-  - .unif
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: ngage
-  display_name: Nokia N-Gage
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: ngp
-  display_name: SNK Neo Geo Pocket
-  class: A
-  igdb_platform_id: 119
-  dat_system: SNK - Neo Geo Pocket
-  minerva_path: No-Intro/SNK - Neo Geo Pocket
-  archive_org_identifier: null
-  romsfun_slug: neo-geo-pocket
-  romsretro_slug: neo-geo-pocket
-  extensions:
-  - .ngp
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: ngpc
-  display_name: SNK Neo Geo Pocket Color
-  class: A
-  igdb_platform_id: 120
-  dat_system: SNK - Neo Geo Pocket Color
-  minerva_path: No-Intro/SNK - Neo Geo Pocket Color
-  archive_org_identifier: null
-  romsfun_slug: neo-geo-pocket-color
-  romsretro_slug: neo-geo-pocket-color
-  extensions:
-  - .ngc
-  - .ngp
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: odyssey2
-  display_name: Magnavox Odyssey 2
-  class: A
-  igdb_platform_id: 133
-  dat_system: Magnavox - Odyssey 2
-  minerva_path: No-Intro/Magnavox - Odyssey 2
-  archive_org_identifier: null
-  romsfun_slug: odyssey-2
-  romsretro_slug: odyssey-2
-  extensions:
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: openbor
-  display_name: OpenBOR Game Engine
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: oric
-  display_name: Tangerine Computer Systems Oric
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: palm
-  display_name: Palm OS
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: pc
-  display_name: IBM PC
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: pc88
-  display_name: NEC PC-8800 Series
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: pc98
-  display_name: NEC PC-9800 Series
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: pcarcade
-  display_name: PC Arcade Systems
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: pcengine
-  display_name: NEC PC Engine
-  class: A
-  igdb_platform_id: 86
-  dat_system: NEC - PC Engine - TurboGrafx 16
-  minerva_path: No-Intro/NEC - PC Engine - TurboGrafx 16
-  archive_org_identifier: null
-  romsfun_slug: pc-engine
-  romsretro_slug: pc-engine
-  extensions:
-  - .pce
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: pcenginecd
-  display_name: NEC PC Engine CD
-  class: B
-  igdb_platform_id: 150
-  dat_system: NEC - PC Engine CD & TurboGrafx CD
-  minerva_path: Redump/NEC - PC Engine CD & TurboGrafx CD
-  archive_org_identifier: null
-  romsfun_slug: pc-engine-cd
-  romsretro_slug: pc-engine-cd
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: pcfx
-  display_name: NEC PC-FX
-  class: B
-  igdb_platform_id: 274
-  dat_system: NEC - PC-FX & PC-FXGA
-  minerva_path: Redump/NEC - PC-FX & PC-FXGA
-  archive_org_identifier: null
-  romsfun_slug: pc-fx
-  romsretro_slug: pc-fx
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: pico8
-  display_name: PICO-8 Fantasy Console
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: plus4
-  display_name: Commodore Plus/4
-  class: A
-  igdb_platform_id: 94
-  dat_system: Commodore - Plus-4
-  minerva_path: No-Intro/Commodore - Plus-4
-  archive_org_identifier: null
-  romsfun_slug: commodore-plus4
-  romsretro_slug: commodore-plus4
-  extensions:
-  - .prg
-  - .d64
-  - .tap
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: pokemini
-  display_name: Nintendo Pokémon Mini
-  class: A
-  igdb_platform_id: 166
-  dat_system: Nintendo - Pokemon Mini
-  minerva_path: No-Intro/Nintendo - Pokemon Mini
-  archive_org_identifier: null
-  romsfun_slug: pokemon-mini
-  romsretro_slug: pokemon-mini
-  extensions:
-  - .min
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: ports
-  display_name: Ports
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: ps2
-  display_name: Sony PlayStation 2
-  class: B
-  igdb_platform_id: 8
-  dat_system: Sony - PlayStation 2
-  minerva_path: Redump/Sony - PlayStation 2
-  archive_org_identifier: null
-  romsfun_slug: playstation-2
-  romsretro_slug: playstation-2
-  extensions:
-  - .iso
-  - .bin
-  - .cue
-  - .chd
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: ps3
-  display_name: Sony PlayStation 3
-  class: C
-  igdb_platform_id: 9
-  dat_system: Sony - PlayStation 3
-  minerva_path: No-Intro/Sony - PlayStation 3
-  archive_org_identifier: null
-  romsfun_slug: playstation-3
-  romsretro_slug: playstation-3
-  extensions:
-  - .iso
-  - .pkg
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: psp
-  display_name: Sony PlayStation Portable
-  class: B
-  igdb_platform_id: 38
-  dat_system: Sony - PlayStation Portable
-  minerva_path: Redump/Sony - PlayStation Portable
-  archive_org_identifier: null
-  romsfun_slug: psp
-  romsretro_slug: psp
-  extensions:
-  - .iso
-  - .cso
-  - .pbp
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: psvita
-  display_name: Sony PlayStation Vita
-  class: C
-  igdb_platform_id: 46
-  dat_system: Sony - PlayStation Vita
-  minerva_path: No-Intro/Sony - PlayStation Vita
-  archive_org_identifier: null
-  romsfun_slug: psvita
-  romsretro_slug: psvita
-  extensions:
-  - .vpk
-  - .nsp
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: psx
-  display_name: Sony PlayStation
-  class: B
-  igdb_platform_id: 7
-  dat_system: Sony - PlayStation
-  minerva_path: Redump/Sony - PlayStation
-  archive_org_identifier: null
-  romsfun_slug: playstation
-  romsretro_slug: playstation
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  - .pbp
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: pv1000
-  display_name: Casio PV-1000
-  class: A
-  igdb_platform_id: null
-  dat_system: Casio - PV-1000
-  minerva_path: No-Intro/Casio - PV-1000
-  archive_org_identifier: null
-  romsfun_slug: pv-1000
-  romsretro_slug: pv-1000
-  extensions:
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: quake
-  display_name: Quake
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: samcoupe
-  display_name: MGT SAM Coupé
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: satellaview
-  display_name: Nintendo Satellaview
-  class: A
-  igdb_platform_id: null
-  dat_system: Nintendo - Satellaview
-  minerva_path: No-Intro/Nintendo - Satellaview
-  archive_org_identifier: null
-  romsfun_slug: satellaview
-  romsretro_slug: satellaview
-  extensions:
-  - .bs
-  - .sfc
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: saturn
-  display_name: Sega Saturn
-  class: B
-  igdb_platform_id: 32
-  dat_system: Sega - Saturn
-  minerva_path: Redump/Sega - Saturn
-  archive_org_identifier: null
-  romsfun_slug: saturn
-  romsretro_slug: saturn
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: saturnjp
-  display_name: Sega Saturn
-  class: B
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: saturn
-  romsretro_slug: saturn
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: saturn
-  region_filter:
-  - Japan
-  - JP
-  skip_reason: null
-- shortname: scummvm
-  display_name: ScummVM Game Engine
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: scv
-  display_name: Epoch Super Cassette Vision
-  class: A
-  igdb_platform_id: null
-  dat_system: Epoch - Super Cassette Vision
-  minerva_path: No-Intro/Epoch - Super Cassette Vision
-  archive_org_identifier: null
-  romsfun_slug: super-cassette-vision
-  romsretro_slug: super-cassette-vision
-  extensions:
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: sega32x
-  display_name: Sega Mega Drive 32X
-  class: A
-  igdb_platform_id: 30
-  dat_system: Sega - 32X
-  minerva_path: No-Intro/Sega - 32X
-  archive_org_identifier: null
-  romsfun_slug: sega-32x
-  romsretro_slug: sega-32x
-  extensions:
-  - .32x
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: sega32xjp
-  display_name: Sega Super 32X
-  class: A
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: sega-32x
-  romsretro_slug: sega-32x
-  extensions:
-  - .32x
-  - .bin
-  cd_based: false
-  region_alias_of: sega32x
-  region_filter:
-  - Japan
-  - JP
-  skip_reason: null
-- shortname: sega32xna
-  display_name: Sega Genesis 32X
-  class: A
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: sega-32x
-  romsretro_slug: sega-32x
-  extensions:
-  - .32x
-  - .bin
-  cd_based: false
-  region_alias_of: sega32x
-  region_filter:
-  - NA
-  - USA
-  skip_reason: null
-- shortname: segacd
-  display_name: Sega CD
-  class: B
-  igdb_platform_id: 78
-  dat_system: Sega - Mega CD & Sega CD
-  minerva_path: Redump/Sega - Mega CD & Sega CD
-  archive_org_identifier: null
-  romsfun_slug: sega-cd
-  romsretro_slug: sega-cd
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: sfc
-  display_name: Nintendo SFC (Super Famicom)
-  class: A
-  igdb_platform_id: null
-  dat_system: Nintendo - Super Nintendo Entertainment System
-  minerva_path: No-Intro/Nintendo - Super Nintendo Entertainment System
-  archive_org_identifier: null
-  romsfun_slug: super-famicom
-  romsretro_slug: super-famicom
-  extensions:
-  - .sfc
-  - .smc
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: sg-1000
-  display_name: Sega SG-1000
-  class: A
-  igdb_platform_id: 84
-  dat_system: Sega - SG-1000
-  minerva_path: No-Intro/Sega - SG-1000
-  archive_org_identifier: null
-  romsfun_slug: sg-1000
-  romsretro_slug: sg-1000
-  extensions:
-  - .sg
-  - .sc
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: sgb
-  display_name: Nintendo Super Game Boy
-  class: A
-  igdb_platform_id: 307
-  dat_system: Nintendo - Super Game Boy
-  minerva_path: No-Intro/Nintendo - Super Game Boy
-  archive_org_identifier: null
-  romsfun_slug: super-game-boy
-  romsretro_slug: super-game-boy
-  extensions:
-  - .sgb
-  - .gb
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: snes
-  display_name: Nintendo SNES (Super Nintendo)
-  class: A
-  igdb_platform_id: 19
-  dat_system: Nintendo - Super Nintendo Entertainment System
-  minerva_path: No-Intro/Nintendo - Super Nintendo Entertainment System
-  archive_org_identifier: null
-  romsfun_slug: snes
-  romsretro_slug: snes
-  extensions:
-  - .sfc
-  - .smc
-  - .swc
-  - .fig
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: snesna
-  display_name: Nintendo SNES (Super Nintendo)
-  class: A
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: snes
-  romsretro_slug: snes
-  extensions:
-  - .sfc
-  - .smc
-  cd_based: false
-  region_alias_of: snes
-  region_filter:
-  - NA
-  - USA
-  skip_reason: null
-- shortname: spectravideo
-  display_name: Spectravideo
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: steam
-  display_name: Valve Steam
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: stv
-  display_name: Sega Titan Video Game System
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: sufami
-  display_name: Bandai SuFami Turbo
-  class: A
-  igdb_platform_id: null
-  dat_system: Nintendo - Sufami Turbo
-  minerva_path: No-Intro/Nintendo - Sufami Turbo
-  archive_org_identifier: null
-  romsfun_slug: sufami-turbo
-  romsretro_slug: sufami-turbo
-  extensions:
-  - .st
-  - .sfc
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: supergrafx
-  display_name: NEC SuperGrafx
-  class: A
-  igdb_platform_id: 128
-  dat_system: NEC - PC Engine SuperGrafx
-  minerva_path: No-Intro/NEC - PC Engine SuperGrafx
-  archive_org_identifier: null
-  romsfun_slug: supergrafx
-  romsretro_slug: supergrafx
-  extensions:
-  - .sgx
-  - .pce
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: supervision
-  display_name: Watara Supervision
-  class: A
-  igdb_platform_id: null
-  dat_system: Watara - Supervision
-  minerva_path: No-Intro/Watara - Supervision
-  archive_org_identifier: null
-  romsfun_slug: supervision
-  romsretro_slug: supervision
-  extensions:
-  - .sv
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: supracan
-  display_name: Funtech Super A'Can
-  class: A
-  igdb_platform_id: null
-  dat_system: Funtech - Super Acan
-  minerva_path: No-Intro/Funtech - Super Acan
-  archive_org_identifier: null
-  romsfun_slug: super-acan
-  romsretro_slug: super-acan
-  extensions:
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: switch
-  display_name: Nintendo Switch
-  class: C
-  igdb_platform_id: 130
-  dat_system: Nintendo - Switch
-  minerva_path: No-Intro/Nintendo - Switch
-  archive_org_identifier: null
-  romsfun_slug: switch
-  romsretro_slug: switch
-  extensions:
-  - .xci
-  - .nsp
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: symbian
-  display_name: Symbian
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: tanodragon
-  display_name: Tano Dragon
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: tg-cd
-  display_name: NEC TurboGrafx-CD
-  class: B
-  igdb_platform_id: 150
-  dat_system: NEC - PC Engine CD & TurboGrafx CD
-  minerva_path: Redump/NEC - PC Engine CD & TurboGrafx CD
-  archive_org_identifier: null
-  romsfun_slug: turbografx-cd
-  romsretro_slug: turbografx-cd
-  extensions:
-  - .cue
-  - .bin
-  - .iso
-  - .chd
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: tg16
-  display_name: NEC TurboGrafx-16
-  class: A
-  igdb_platform_id: 86
-  dat_system: NEC - PC Engine - TurboGrafx 16
-  minerva_path: No-Intro/NEC - PC Engine - TurboGrafx 16
-  archive_org_identifier: null
-  romsfun_slug: turbografx-16
-  romsretro_slug: turbografx-16
-  extensions:
-  - .pce
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: ti99
-  display_name: Texas Instruments TI-99
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: tic80
-  display_name: TIC-80 Fantasy Computer
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: to8
-  display_name: Thomson TO8
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: type-x
-  display_name: Taito Type X
-  class: D
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions:
-  - .zip
-  - .7z
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Arcade romset-versioning model out of scope for v1
-- shortname: uzebox
-  display_name: Uzebox Open Source Console
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: vectrex
-  display_name: GCE Vectrex
-  class: A
-  igdb_platform_id: 70
-  dat_system: GCE - Vectrex
-  minerva_path: No-Intro/GCE - Vectrex
-  archive_org_identifier: null
-  romsfun_slug: vectrex
-  romsretro_slug: vectrex
-  extensions:
-  - .vec
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: vic20
-  display_name: Commodore VIC-20
-  class: A
-  igdb_platform_id: 71
-  dat_system: Commodore - VIC-20
-  minerva_path: No-Intro/Commodore - VIC-20
-  archive_org_identifier: null
-  romsfun_slug: vic-20
-  romsretro_slug: vic-20
-  extensions:
-  - .t64
-  - .prg
-  - .crt
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: videopac
-  display_name: Philips Videopac G7000
-  class: A
-  igdb_platform_id: 133
-  dat_system: Magnavox - Odyssey 2
-  minerva_path: No-Intro/Magnavox - Odyssey 2
-  archive_org_identifier: null
-  romsfun_slug: videopac
-  romsretro_slug: videopac
-  extensions:
-  - .bin
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: vircon32
-  display_name: Vircon32 Virtual Console
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: virtualboy
-  display_name: Nintendo Virtual Boy
-  class: A
-  igdb_platform_id: 87
-  dat_system: Nintendo - Virtual Boy
-  minerva_path: No-Intro/Nintendo - Virtual Boy
-  archive_org_identifier: null
-  romsfun_slug: virtual-boy
-  romsretro_slug: virtual-boy
-  extensions:
-  - .vb
-  - .vboy
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: vpinball
-  display_name: Visual Pinball
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: vsmile
-  display_name: VTech V.Smile
-  class: A
-  igdb_platform_id: null
-  dat_system: VTech - V.Smile
-  minerva_path: No-Intro/VTech - V.Smile
-  archive_org_identifier: null
-  romsfun_slug: v-smile
-  romsretro_slug: v-smile
-  extensions:
-  - .bin
-  - .zip
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: wasm4
-  display_name: WASM-4 Fantasy Console
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: wii
-  display_name: Nintendo Wii
-  class: B
-  igdb_platform_id: 5
-  dat_system: Nintendo - Wii
-  minerva_path: Redump/Nintendo - Wii
-  archive_org_identifier: null
-  romsfun_slug: wii
-  romsretro_slug: wii
-  extensions:
-  - .iso
-  - .wbfs
-  - .rvz
-  - .wia
-  cd_based: true
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: wiiu
-  display_name: Nintendo Wii U
-  class: C
-  igdb_platform_id: 41
-  dat_system: Nintendo - Wii U
-  minerva_path: No-Intro/Nintendo - Wii U
-  archive_org_identifier: null
-  romsfun_slug: wii-u
-  romsretro_slug: wii-u
-  extensions:
-  - .wua
-  - .wud
-  - .wux
-  - .rpx
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: windows
-  display_name: Microsoft Windows
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: windows3x
-  display_name: Microsoft Windows 3.x
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: windows9x
-  display_name: Microsoft Windows 9x
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: wonderswan
-  display_name: Bandai WonderSwan
-  class: A
-  igdb_platform_id: 57
-  dat_system: Bandai - WonderSwan
-  minerva_path: No-Intro/Bandai - WonderSwan
-  archive_org_identifier: null
-  romsfun_slug: wonderswan
-  romsretro_slug: wonderswan
-  extensions:
-  - .ws
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: wonderswancolor
-  display_name: Bandai WonderSwan Color
-  class: A
-  igdb_platform_id: 123
-  dat_system: Bandai - WonderSwan Color
-  minerva_path: No-Intro/Bandai - WonderSwan Color
-  archive_org_identifier: null
-  romsfun_slug: wonderswan-color
-  romsretro_slug: wonderswan-color
-  extensions:
-  - .wsc
-  - .ws
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: null
-- shortname: x1
-  display_name: Sharp X1
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: x68000
-  display_name: Sharp X68000
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: zmachine
-  display_name: Infocom Z-machine
-  class: F
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Fantasy/homebrew/mobile platform - different distribution ecosystem
-- shortname: zx81
-  display_name: Sinclair ZX81
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
-- shortname: zxspectrum
-  display_name: Sinclair ZX Spectrum
-  class: E
-  igdb_platform_id: null
-  dat_system: null
-  minerva_path: null
-  archive_org_identifier: null
-  romsfun_slug: null
-  romsretro_slug: null
-  extensions: []
-  cd_based: false
-  region_alias_of: null
-  region_filter: null
-  skip_reason: Home computer / engine / port - ROM download model not applicable
+  - shortname: 3do
+    display_name: 3DO Interactive Multiplayer
+    class: B
+    igdb_platform_id:
+    dat_system: Panasonic - 3DO Interactive Multiplayer
+    minerva_path: Redump/Panasonic - 3DO Interactive Multiplayer
+    archive_org_identifier:
+    romsfun_slug: 3do
+    romsretro_slug: 3do
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: adam
+    display_name: Coleco Adam
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: amiga
+    display_name: Commodore Amiga
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: amiga1200
+    display_name: Commodore Amiga 1200
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: amiga600
+    display_name: Commodore Amiga 600
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: amigacd32
+    display_name: Commodore Amiga CD32
+    class: B
+    igdb_platform_id:
+    dat_system: Commodore - Amiga CD32
+    minerva_path: Redump/Commodore - Amiga CD32
+    archive_org_identifier:
+    romsfun_slug: amiga-cd32
+    romsretro_slug: amiga-cd32
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: amstradcpc
+    display_name: Amstrad CPC
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: androidapps
+    display_name: Android Apps
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: androidgames
+    display_name: Android Games
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: apple2
+    display_name: Apple II
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: apple2gs
+    display_name: Apple IIGS
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: arcade
+    display_name: Arcade
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: arcadia
+    display_name: Emerson Arcadia 2001
+    class: A
+    igdb_platform_id: 94
+    dat_system: Emerson - Arcadia 2001
+    minerva_path: No-Intro/Emerson - Arcadia 2001
+    archive_org_identifier:
+    romsfun_slug: arcadia-2001
+    romsretro_slug: arcadia-2001
+    extensions:
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: archimedes
+    display_name: Acorn Archimedes
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: arduboy
+    display_name: Arduboy Miniature Game System
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: astrocde
+    display_name: Bally Astrocade
+    class: A
+    igdb_platform_id: 91
+    dat_system: Bally - Astrocade
+    minerva_path: No-Intro/Bally - Astrocade
+    archive_org_identifier:
+    romsfun_slug: astrocade
+    romsretro_slug: astrocade
+    extensions:
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: atari2600
+    display_name: Atari 2600
+    class: A
+    igdb_platform_id: 59
+    dat_system: Atari - 2600
+    minerva_path: No-Intro/Atari - 2600
+    archive_org_identifier:
+    romsfun_slug: atari-2600
+    romsretro_slug: atari-2600
+    extensions:
+      - .a26
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: atari5200
+    display_name: Atari 5200
+    class: A
+    igdb_platform_id: 66
+    dat_system: Atari - 5200
+    minerva_path: No-Intro/Atari - 5200
+    archive_org_identifier:
+    romsfun_slug: atari-5200
+    romsretro_slug: atari-5200
+    extensions:
+      - .a52
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: atari7800
+    display_name: Atari 7800 ProSystem
+    class: A
+    igdb_platform_id: 60
+    dat_system: Atari - 7800
+    minerva_path: No-Intro/Atari - 7800
+    archive_org_identifier:
+    romsfun_slug: atari-7800
+    romsretro_slug: atari-7800
+    extensions:
+      - .a78
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: atari800
+    display_name: Atari 800
+    class: A
+    igdb_platform_id: 65
+    dat_system: Atari - 8-bit Family
+    minerva_path: No-Intro/Atari - 8-bit Family
+    archive_org_identifier:
+    romsfun_slug: atari-800
+    romsretro_slug: atari-800
+    extensions:
+      - .atr
+      - .xex
+      - .cas
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: atarijaguar
+    display_name: Atari Jaguar
+    class: A
+    igdb_platform_id: 62
+    dat_system: Atari - Jaguar
+    minerva_path: No-Intro/Atari - Jaguar
+    archive_org_identifier:
+    romsfun_slug: atari-jaguar
+    romsretro_slug: atari-jaguar
+    extensions:
+      - .j64
+      - .jag
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: atarilynx
+    display_name: Atari Lynx
+    class: A
+    igdb_platform_id: 61
+    dat_system: Atari - Lynx
+    minerva_path: No-Intro/Atari - Lynx
+    archive_org_identifier:
+    romsfun_slug: atari-lynx
+    romsretro_slug: atari-lynx
+    extensions:
+      - .lyx
+      - .lnx
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: atarist
+    display_name: Atari ST
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: atarixe
+    display_name: Atari XE
+    class: A
+    igdb_platform_id:
+    dat_system: Atari - 8-bit Family
+    minerva_path: No-Intro/Atari - 8-bit Family
+    archive_org_identifier:
+    romsfun_slug: atari-8bit
+    romsretro_slug: atari-8bit
+    extensions:
+      - .atr
+      - .xex
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: atomiswave
+    display_name: Sammy Corporation Atomiswave
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: bbcmicro
+    display_name: Acorn Computers BBC Micro
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: c64
+    display_name: Commodore 64
+    class: A
+    igdb_platform_id: 15
+    dat_system: Commodore - Commodore 64
+    minerva_path: No-Intro/Commodore - Commodore 64
+    archive_org_identifier:
+    romsfun_slug: commodore-64
+    romsretro_slug: commodore-64
+    extensions:
+      - .t64
+      - .tap
+      - .prg
+      - .d64
+      - .crt
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: cdimono1
+    display_name: Philips CD-i
+    class: B
+    igdb_platform_id:
+    dat_system: Philips - CD-i
+    minerva_path: Redump/Philips - CD-i
+    archive_org_identifier:
+    romsfun_slug: philips-cd-i
+    romsretro_slug: cd-i
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: cdtv
+    display_name: Commodore CDTV
+    class: B
+    igdb_platform_id:
+    dat_system: Commodore - Amiga CDTV
+    minerva_path: Redump/Commodore - Amiga CDTV
+    archive_org_identifier:
+    romsfun_slug: cdtv
+    romsretro_slug: cdtv
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: chailove
+    display_name: ChaiLove Game Engine
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: channelf
+    display_name: Fairchild Channel F
+    class: A
+    igdb_platform_id: 127
+    dat_system: Fairchild - Channel F
+    minerva_path: No-Intro/Fairchild - Channel F
+    archive_org_identifier:
+    romsfun_slug: channel-f
+    romsretro_slug: channel-f
+    extensions:
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: coco
+    display_name: Tandy Color Computer
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: colecovision
+    display_name: Coleco ColecoVision
+    class: A
+    igdb_platform_id: 68
+    dat_system: Coleco - ColecoVision
+    minerva_path: No-Intro/Coleco - ColecoVision
+    archive_org_identifier:
+    romsfun_slug: colecovision
+    romsretro_slug: colecovision
+    extensions:
+      - .col
+      - .rom
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: consolearcade
+    display_name: Console Arcade Systems
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: cps
+    display_name: Capcom Play System
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: cps1
+    display_name: Capcom Play System I
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: cps2
+    display_name: Capcom Play System II
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: cps3
+    display_name: Capcom Play System III
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: crvision
+    display_name: VTech CreatiVision
+    class: A
+    igdb_platform_id:
+    dat_system: VTech - CreatiVision
+    minerva_path: No-Intro/VTech - CreatiVision
+    archive_org_identifier:
+    romsfun_slug: creativision
+    romsretro_slug: creativision
+    extensions:
+      - .bin
+      - .rom
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: daphne
+    display_name: Daphne Arcade LaserDisc Emulator
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: doom
+    display_name: Doom
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: dos
+    display_name: DOS (PC)
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: dragon32
+    display_name: Dragon Data Dragon 32
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: dreamcast
+    display_name: Sega Dreamcast
+    class: B
+    igdb_platform_id: 23
+    dat_system: Sega - Dreamcast
+    minerva_path: Redump/Sega - Dreamcast
+    archive_org_identifier:
+    romsfun_slug: dreamcast
+    romsretro_slug: dreamcast
+    extensions:
+      - .gdi
+      - .cdi
+      - .chd
+      - .cue
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: easyrpg
+    display_name: EasyRPG Game Engine
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: electron
+    display_name: Acorn Electron
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: emulators
+    display_name: Emulators
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: epic
+    display_name: Epic Games Store
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: famicom
+    display_name: Nintendo Family Computer
+    class: A
+    igdb_platform_id: 18
+    dat_system: Nintendo - Nintendo Entertainment System
+    minerva_path: No-Intro/Nintendo - Nintendo Entertainment System
+    archive_org_identifier:
+    romsfun_slug: famicom
+    romsretro_slug: famicom
+    extensions:
+      - .nes
+      - .fds
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: fba
+    display_name: FinalBurn Alpha
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: fbneo
+    display_name: FinalBurn Neo
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: fds
+    display_name: Nintendo Famicom Disk System
+    class: A
+    igdb_platform_id: 51
+    dat_system: Nintendo - Family Computer Disk System
+    minerva_path: No-Intro/Nintendo - Family Computer Disk System
+    archive_org_identifier:
+    romsfun_slug: famicom-disk-system
+    romsretro_slug: famicom-disk-system
+    extensions:
+      - .fds
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: flash
+    display_name: Adobe Flash
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: fm7
+    display_name: Fujitsu FM-7
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: fmtowns
+    display_name: Fujitsu FM Towns
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: gamate
+    display_name: Bit Corporation Gamate
+    class: A
+    igdb_platform_id:
+    dat_system: Bit Corporation - Gamate
+    minerva_path: No-Intro/Bit Corporation - Gamate
+    archive_org_identifier:
+    romsfun_slug: gamate
+    romsretro_slug: gamate
+    extensions:
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: gameandwatch
+    display_name: Nintendo Game and Watch
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: gamecom
+    display_name: Tiger Electronics Game.com
+    class: A
+    igdb_platform_id:
+    dat_system: Tiger - Game.com
+    minerva_path: No-Intro/Tiger - Game.com
+    archive_org_identifier:
+    romsfun_slug: game-com
+    romsretro_slug: game-com
+    extensions:
+      - .tgc
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: gamegear
+    display_name: Sega Game Gear
+    class: A
+    igdb_platform_id: 35
+    dat_system: Sega - Game Gear
+    minerva_path: No-Intro/Sega - Game Gear
+    archive_org_identifier:
+    romsfun_slug: sega-game-gear
+    romsretro_slug: sega-game-gear
+    extensions:
+      - .gg
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: gb
+    display_name: Nintendo Game Boy
+    class: A
+    igdb_platform_id: 33
+    dat_system: Nintendo - Game Boy
+    minerva_path: No-Intro/Nintendo - Game Boy
+    archive_org_identifier:
+    romsfun_slug: gameboy
+    romsretro_slug: gameboy
+    extensions:
+      - .gb
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: gba
+    display_name: Nintendo Game Boy Advance
+    class: A
+    igdb_platform_id: 24
+    dat_system: Nintendo - Game Boy Advance
+    minerva_path: No-Intro/Nintendo - Game Boy Advance
+    archive_org_identifier:
+    romsfun_slug: game-boy-advance
+    romsretro_slug: gba
+    extensions:
+      - .gba
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: gbc
+    display_name: Nintendo Game Boy Color
+    class: A
+    igdb_platform_id: 22
+    dat_system: Nintendo - Game Boy Color
+    minerva_path: No-Intro/Nintendo - Game Boy Color
+    archive_org_identifier:
+    romsfun_slug: game-boy-color
+    romsretro_slug: gameboy-color
+    extensions:
+      - .gbc
+      - .gb
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: gc
+    display_name: Nintendo GameCube
+    class: B
+    igdb_platform_id: 21
+    dat_system: Nintendo - GameCube
+    minerva_path: Redump/Nintendo - GameCube
+    archive_org_identifier:
+    romsfun_slug: gamecube
+    romsretro_slug: gamecube
+    extensions:
+      - .iso
+      - .gcm
+      - .rvz
+      - .wia
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: genesis
+    display_name: Sega Genesis
+    class: A
+    igdb_platform_id: 29
+    dat_system: Sega - Mega Drive - Genesis
+    minerva_path: No-Intro/Sega - Mega Drive - Genesis
+    archive_org_identifier:
+    romsfun_slug: sega-genesis
+    romsretro_slug: sega-genesis
+    extensions:
+      - .md
+      - .gen
+      - .bin
+      - .smd
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: gmaster
+    display_name: Hartung Game Master
+    class: A
+    igdb_platform_id:
+    dat_system: Hartung - Game Master
+    minerva_path: No-Intro/Hartung - Game Master
+    archive_org_identifier:
+    romsfun_slug: game-master
+    romsretro_slug: game-master
+    extensions:
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: gx4000
+    display_name: Amstrad GX4000
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: intellivision
+    display_name: Mattel Electronics Intellivision
+    class: A
+    igdb_platform_id: 67
+    dat_system: Mattel - Intellivision
+    minerva_path: No-Intro/Mattel - Intellivision
+    archive_org_identifier:
+    romsfun_slug: intellivision
+    romsretro_slug: intellivision
+    extensions:
+      - .int
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: j2me
+    display_name: Java 2 Micro Edition (J2ME)
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: laserdisc
+    display_name: LaserDisc Games
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: lcdgames
+    display_name: LCD Handheld Games
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: lowresnx
+    display_name: LowRes NX Fantasy Console
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: lutro
+    display_name: Lutro Game Engine
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: macintosh
+    display_name: Apple Macintosh
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: mame
+    display_name: Multiple Arcade Machine Emulator
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: mark3
+    display_name: Sega Mark III
+    class: A
+    igdb_platform_id: 64
+    dat_system: Sega - Master System - Mark III
+    minerva_path: No-Intro/Sega - Master System - Mark III
+    archive_org_identifier:
+    romsfun_slug: sega-master-system
+    romsretro_slug: sega-master-system
+    extensions:
+      - .sms
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: mastersystem
+    display_name: Sega Master System
+    class: A
+    igdb_platform_id: 64
+    dat_system: Sega - Master System - Mark III
+    minerva_path: No-Intro/Sega - Master System - Mark III
+    archive_org_identifier:
+    romsfun_slug: sega-master-system
+    romsretro_slug: sega-master-system
+    extensions:
+      - .sms
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: megacd
+    display_name: Sega Mega-CD
+    class: B
+    igdb_platform_id: 78
+    dat_system: Sega - Mega CD & Sega CD
+    minerva_path: Redump/Sega - Mega CD & Sega CD
+    archive_org_identifier:
+    romsfun_slug: sega-cd
+    romsretro_slug: sega-cd
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: megacdjp
+    display_name: Sega Mega-CD
+    class: B
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug: sega-cd
+    romsretro_slug: sega-cd
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of: megacd
+    region_filter:
+      - Japan
+      - JP
+    skip_reason:
+  - shortname: megadrive
+    display_name: Sega Mega Drive
+    class: A
+    igdb_platform_id: 29
+    dat_system: Sega - Mega Drive - Genesis
+    minerva_path: No-Intro/Sega - Mega Drive - Genesis
+    archive_org_identifier:
+    romsfun_slug: sega-genesis
+    romsretro_slug: sega-genesis
+    extensions:
+      - .md
+      - .gen
+      - .bin
+      - .smd
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: megadrivejp
+    display_name: Sega Mega Drive
+    class: A
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug: sega-genesis
+    romsretro_slug: sega-genesis
+    extensions:
+      - .md
+      - .gen
+      - .bin
+      - .smd
+    cd_based: false
+    region_alias_of: megadrive
+    region_filter:
+      - Japan
+      - JP
+    skip_reason:
+  - shortname: megaduck
+    display_name: Creatronic Mega Duck
+    class: A
+    igdb_platform_id:
+    dat_system: Creatronic - Mega Duck
+    minerva_path: No-Intro/Creatronic - Mega Duck
+    archive_org_identifier:
+    romsfun_slug: mega-duck
+    romsretro_slug: mega-duck
+    extensions:
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: mess
+    display_name: Multi Emulator Super System
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: model2
+    display_name: Sega Model 2
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: model3
+    display_name: Sega Model 3
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: moto
+    display_name: Thomson MO/TO Series
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: msx
+    display_name: MSX
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: msx1
+    display_name: MSX1
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: msx2
+    display_name: MSX2
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: msxturbor
+    display_name: MSX Turbo R
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: multivision
+    display_name: Othello Multivision
+    class: A
+    igdb_platform_id:
+    dat_system: Tsukuda - Othello Multivision
+    minerva_path: No-Intro/Tsukuda - Othello Multivision
+    archive_org_identifier:
+    romsfun_slug: othello-multivision
+    romsretro_slug: othello-multivision
+    extensions:
+      - .sg
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: n3ds
+    display_name: Nintendo 3DS
+    class: C
+    igdb_platform_id: 37
+    dat_system: Nintendo - Nintendo 3DS
+    minerva_path: No-Intro/Nintendo - Nintendo 3DS
+    archive_org_identifier:
+    romsfun_slug: nintendo-3ds
+    romsretro_slug: 3ds-cia
+    extensions:
+      - .3ds
+      - .cia
+      - .cci
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: n64
+    display_name: Nintendo 64
+    class: A
+    igdb_platform_id: 4
+    dat_system: Nintendo - Nintendo 64
+    minerva_path: No-Intro/Nintendo - Nintendo 64
+    archive_org_identifier:
+    romsfun_slug: nintendo-64
+    romsretro_slug: nintendo-64
+    extensions:
+      - .n64
+      - .v64
+      - .z64
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: n64dd
+    display_name: Nintendo 64DD
+    class: A
+    igdb_platform_id:
+    dat_system: Nintendo - Nintendo 64DD
+    minerva_path: No-Intro/Nintendo - Nintendo 64DD
+    archive_org_identifier:
+    romsfun_slug: nintendo-64dd
+    romsretro_slug: nintendo-64dd
+    extensions:
+      - .ndd
+      - .n64
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: naomi
+    display_name: Sega NAOMI
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: naomi2
+    display_name: Sega NAOMI 2
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: naomigd
+    display_name: Sega NAOMI GD-ROM
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: nds
+    display_name: Nintendo DS
+    class: A
+    igdb_platform_id: 20
+    dat_system: Nintendo - Nintendo DS
+    minerva_path: No-Intro/Nintendo - Nintendo DS
+    archive_org_identifier:
+    romsfun_slug: nintendo-ds
+    romsretro_slug: nds
+    extensions:
+      - .nds
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: neogeo
+    display_name: SNK Neo Geo
+    class: A
+    igdb_platform_id: 80
+    dat_system: SNK - Neo Geo
+    minerva_path: No-Intro/SNK - Neo Geo
+    archive_org_identifier:
+    romsfun_slug: neo-geo
+    romsretro_slug: neo-geo
+    extensions:
+      - .zip
+      - .ng
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: neogeocd
+    display_name: SNK Neo Geo CD
+    class: B
+    igdb_platform_id: 136
+    dat_system: SNK - Neo Geo CD
+    minerva_path: Redump/SNK - Neo Geo CD
+    archive_org_identifier:
+    romsfun_slug: neo-geo-cd
+    romsretro_slug: neo-geo-cd
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: neogeocdjp
+    display_name: SNK Neo Geo CD
+    class: B
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug: neo-geo-cd
+    romsretro_slug: neo-geo-cd
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of: neogeocd
+    region_filter:
+      - Japan
+      - JP
+    skip_reason:
+  - shortname: nes
+    display_name: Nintendo Entertainment System
+    class: A
+    igdb_platform_id: 18
+    dat_system: Nintendo - Nintendo Entertainment System
+    minerva_path: No-Intro/Nintendo - Nintendo Entertainment System
+    archive_org_identifier:
+    romsfun_slug: nes
+    romsretro_slug: nes
+    extensions:
+      - .nes
+      - .unf
+      - .unif
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: ngage
+    display_name: Nokia N-Gage
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: ngp
+    display_name: SNK Neo Geo Pocket
+    class: A
+    igdb_platform_id: 119
+    dat_system: SNK - Neo Geo Pocket
+    minerva_path: No-Intro/SNK - Neo Geo Pocket
+    archive_org_identifier:
+    romsfun_slug: neo-geo-pocket
+    romsretro_slug: neo-geo-pocket
+    extensions:
+      - .ngp
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: ngpc
+    display_name: SNK Neo Geo Pocket Color
+    class: A
+    igdb_platform_id: 120
+    dat_system: SNK - Neo Geo Pocket Color
+    minerva_path: No-Intro/SNK - Neo Geo Pocket Color
+    archive_org_identifier:
+    romsfun_slug: snk-neo-geo-pocket-color
+    romsretro_slug: neo-geo-pocket-color
+    extensions:
+      - .ngc
+      - .ngp
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: odyssey2
+    display_name: Magnavox Odyssey 2
+    class: A
+    igdb_platform_id: 133
+    dat_system: Magnavox - Odyssey 2
+    minerva_path: No-Intro/Magnavox - Odyssey 2
+    archive_org_identifier:
+    romsfun_slug: odyssey-2
+    romsretro_slug: odyssey-2
+    extensions:
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: openbor
+    display_name: OpenBOR Game Engine
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: oric
+    display_name: Tangerine Computer Systems Oric
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: palm
+    display_name: Palm OS
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: pc
+    display_name: IBM PC
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: pc88
+    display_name: NEC PC-8800 Series
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: pc98
+    display_name: NEC PC-9800 Series
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: pcarcade
+    display_name: PC Arcade Systems
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: pcengine
+    display_name: NEC PC Engine
+    class: A
+    igdb_platform_id: 86
+    dat_system: NEC - PC Engine - TurboGrafx 16
+    minerva_path: No-Intro/NEC - PC Engine - TurboGrafx 16
+    archive_org_identifier:
+    romsfun_slug: pc-engine
+    romsretro_slug: pc-engine
+    extensions:
+      - .pce
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: pcenginecd
+    display_name: NEC PC Engine CD
+    class: B
+    igdb_platform_id: 150
+    dat_system: NEC - PC Engine CD & TurboGrafx CD
+    minerva_path: Redump/NEC - PC Engine CD & TurboGrafx CD
+    archive_org_identifier:
+    romsfun_slug: pc-engine-cd
+    romsretro_slug: pc-engine-cd
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: pcfx
+    display_name: NEC PC-FX
+    class: B
+    igdb_platform_id: 274
+    dat_system: NEC - PC-FX & PC-FXGA
+    minerva_path: Redump/NEC - PC-FX & PC-FXGA
+    archive_org_identifier:
+    romsfun_slug: nec-pc-fx
+    romsretro_slug: pc-fx
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: pico8
+    display_name: PICO-8 Fantasy Console
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: plus4
+    display_name: Commodore Plus/4
+    class: A
+    igdb_platform_id: 94
+    dat_system: Commodore - Plus-4
+    minerva_path: No-Intro/Commodore - Plus-4
+    archive_org_identifier:
+    romsfun_slug: commodore-plus4
+    romsretro_slug: commodore-plus4
+    extensions:
+      - .prg
+      - .d64
+      - .tap
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: pokemini
+    display_name: Nintendo Pokémon Mini
+    class: A
+    igdb_platform_id: 166
+    dat_system: Nintendo - Pokemon Mini
+    minerva_path: No-Intro/Nintendo - Pokemon Mini
+    archive_org_identifier:
+    romsfun_slug: nintendo-pokemon-mini
+    romsretro_slug: pokemon-mini
+    extensions:
+      - .min
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: ports
+    display_name: Ports
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: ps2
+    display_name: Sony PlayStation 2
+    class: B
+    igdb_platform_id: 8
+    dat_system: Sony - PlayStation 2
+    minerva_path: Redump/Sony - PlayStation 2
+    archive_org_identifier:
+    romsfun_slug: playstation-2
+    romsretro_slug: ps2
+    extensions:
+      - .iso
+      - .bin
+      - .cue
+      - .chd
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: ps3
+    display_name: Sony PlayStation 3
+    class: C
+    igdb_platform_id: 9
+    dat_system: Sony - PlayStation 3
+    minerva_path: No-Intro/Sony - PlayStation 3
+    archive_org_identifier:
+    romsfun_slug: ps3
+    romsretro_slug: ps3
+    extensions:
+      - .iso
+      - .pkg
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: psp
+    display_name: Sony PlayStation Portable
+    class: B
+    igdb_platform_id: 38
+    dat_system: Sony - PlayStation Portable
+    minerva_path: Redump/Sony - PlayStation Portable
+    archive_org_identifier:
+    romsfun_slug: playstation-portable
+    romsretro_slug: psp
+    extensions:
+      - .iso
+      - .cso
+      - .pbp
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: psvita
+    display_name: Sony PlayStation Vita
+    class: C
+    igdb_platform_id: 46
+    dat_system: Sony - PlayStation Vita
+    minerva_path: No-Intro/Sony - PlayStation Vita
+    archive_org_identifier:
+    romsfun_slug: ps-vita
+    romsretro_slug: ps-vita
+    extensions:
+      - .vpk
+      - .nsp
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: psx
+    display_name: Sony PlayStation
+    class: B
+    igdb_platform_id: 7
+    dat_system: Sony - PlayStation
+    minerva_path: Redump/Sony - PlayStation
+    archive_org_identifier:
+    romsfun_slug: playstation
+    romsretro_slug: playstation
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+      - .pbp
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: pv1000
+    display_name: Casio PV-1000
+    class: A
+    igdb_platform_id:
+    dat_system: Casio - PV-1000
+    minerva_path: No-Intro/Casio - PV-1000
+    archive_org_identifier:
+    romsfun_slug: pv-1000
+    romsretro_slug: pv-1000
+    extensions:
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: quake
+    display_name: Quake
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: samcoupe
+    display_name: MGT SAM Coupé
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: satellaview
+    display_name: Nintendo Satellaview
+    class: A
+    igdb_platform_id:
+    dat_system: Nintendo - Satellaview
+    minerva_path: No-Intro/Nintendo - Satellaview
+    archive_org_identifier:
+    romsfun_slug: satellaview
+    romsretro_slug: satellaview
+    extensions:
+      - .bs
+      - .sfc
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: saturn
+    display_name: Sega Saturn
+    class: B
+    igdb_platform_id: 32
+    dat_system: Sega - Saturn
+    minerva_path: Redump/Sega - Saturn
+    archive_org_identifier:
+    romsfun_slug: sega-saturn
+    romsretro_slug: saturn
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: saturnjp
+    display_name: Sega Saturn
+    class: B
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug: sega-saturn
+    romsretro_slug: saturn
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of: saturn
+    region_filter:
+      - Japan
+      - JP
+    skip_reason:
+  - shortname: scummvm
+    display_name: ScummVM Game Engine
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: scv
+    display_name: Epoch Super Cassette Vision
+    class: A
+    igdb_platform_id:
+    dat_system: Epoch - Super Cassette Vision
+    minerva_path: No-Intro/Epoch - Super Cassette Vision
+    archive_org_identifier:
+    romsfun_slug: super-cassette-vision
+    romsretro_slug: super-cassette-vision
+    extensions:
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: sega32x
+    display_name: Sega Mega Drive 32X
+    class: A
+    igdb_platform_id: 30
+    dat_system: Sega - 32X
+    minerva_path: No-Intro/Sega - 32X
+    archive_org_identifier:
+    romsfun_slug: 32x
+    romsretro_slug: sega-32x
+    extensions:
+      - .32x
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: sega32xjp
+    display_name: Sega Super 32X
+    class: A
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug: 32x
+    romsretro_slug: sega-32x
+    extensions:
+      - .32x
+      - .bin
+    cd_based: false
+    region_alias_of: sega32x
+    region_filter:
+      - Japan
+      - JP
+    skip_reason:
+  - shortname: sega32xna
+    display_name: Sega Genesis 32X
+    class: A
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug: 32x
+    romsretro_slug: sega-32x
+    extensions:
+      - .32x
+      - .bin
+    cd_based: false
+    region_alias_of: sega32x
+    region_filter:
+      - NA
+      - USA
+    skip_reason:
+  - shortname: segacd
+    display_name: Sega CD
+    class: B
+    igdb_platform_id: 78
+    dat_system: Sega - Mega CD & Sega CD
+    minerva_path: Redump/Sega - Mega CD & Sega CD
+    archive_org_identifier:
+    romsfun_slug: sega-cd
+    romsretro_slug: sega-cd
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: sfc
+    display_name: Nintendo SFC (Super Famicom)
+    class: A
+    igdb_platform_id:
+    dat_system: Nintendo - Super Nintendo Entertainment System
+    minerva_path: No-Intro/Nintendo - Super Nintendo Entertainment System
+    archive_org_identifier:
+    romsfun_slug: super-famicom
+    romsretro_slug: super-famicom
+    extensions:
+      - .sfc
+      - .smc
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: sg-1000
+    display_name: Sega SG-1000
+    class: A
+    igdb_platform_id: 84
+    dat_system: Sega - SG-1000
+    minerva_path: No-Intro/Sega - SG-1000
+    archive_org_identifier:
+    romsfun_slug: sega-sg-1000
+    romsretro_slug: sg-1000
+    extensions:
+      - .sg
+      - .sc
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: sgb
+    display_name: Nintendo Super Game Boy
+    class: A
+    igdb_platform_id: 307
+    dat_system: Nintendo - Super Game Boy
+    minerva_path: No-Intro/Nintendo - Super Game Boy
+    archive_org_identifier:
+    romsfun_slug: super-game-boy
+    romsretro_slug: super-game-boy
+    extensions:
+      - .sgb
+      - .gb
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: snes
+    display_name: Nintendo SNES (Super Nintendo)
+    class: A
+    igdb_platform_id: 19
+    dat_system: Nintendo - Super Nintendo Entertainment System
+    minerva_path: No-Intro/Nintendo - Super Nintendo Entertainment System
+    archive_org_identifier:
+    romsfun_slug: super-nintendo
+    romsretro_slug: snes
+    extensions:
+      - .sfc
+      - .smc
+      - .swc
+      - .fig
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: snesna
+    display_name: Nintendo SNES (Super Nintendo)
+    class: A
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug: super-nintendo
+    romsretro_slug: snes
+    extensions:
+      - .sfc
+      - .smc
+    cd_based: false
+    region_alias_of: snes
+    region_filter:
+      - NA
+      - USA
+    skip_reason:
+  - shortname: spectravideo
+    display_name: Spectravideo
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: steam
+    display_name: Valve Steam
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: stv
+    display_name: Sega Titan Video Game System
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: sufami
+    display_name: Bandai SuFami Turbo
+    class: A
+    igdb_platform_id:
+    dat_system: Nintendo - Sufami Turbo
+    minerva_path: No-Intro/Nintendo - Sufami Turbo
+    archive_org_identifier:
+    romsfun_slug: sufami-turbo
+    romsretro_slug: sufami-turbo
+    extensions:
+      - .st
+      - .sfc
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: supergrafx
+    display_name: NEC SuperGrafx
+    class: A
+    igdb_platform_id: 128
+    dat_system: NEC - PC Engine SuperGrafx
+    minerva_path: No-Intro/NEC - PC Engine SuperGrafx
+    archive_org_identifier:
+    romsfun_slug: supergrafx
+    romsretro_slug: supergrafx
+    extensions:
+      - .sgx
+      - .pce
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: supervision
+    display_name: Watara Supervision
+    class: A
+    igdb_platform_id:
+    dat_system: Watara - Supervision
+    minerva_path: No-Intro/Watara - Supervision
+    archive_org_identifier:
+    romsfun_slug: supervision
+    romsretro_slug: supervision
+    extensions:
+      - .sv
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: supracan
+    display_name: Funtech Super A'Can
+    class: A
+    igdb_platform_id:
+    dat_system: Funtech - Super Acan
+    minerva_path: No-Intro/Funtech - Super Acan
+    archive_org_identifier:
+    romsfun_slug: super-acan
+    romsretro_slug: super-acan
+    extensions:
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: switch
+    display_name: Nintendo Switch
+    class: C
+    igdb_platform_id: 130
+    dat_system: Nintendo - Switch
+    minerva_path: No-Intro/Nintendo - Switch
+    archive_org_identifier:
+    romsfun_slug: switch
+    romsretro_slug: switch
+    extensions:
+      - .xci
+      - .nsp
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: symbian
+    display_name: Symbian
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: tanodragon
+    display_name: Tano Dragon
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: tg-cd
+    display_name: NEC TurboGrafx-CD
+    class: B
+    igdb_platform_id: 150
+    dat_system: NEC - PC Engine CD & TurboGrafx CD
+    minerva_path: Redump/NEC - PC Engine CD & TurboGrafx CD
+    archive_org_identifier:
+    romsfun_slug: turbografx-cd
+    romsretro_slug: turbografx-cd
+    extensions:
+      - .cue
+      - .bin
+      - .iso
+      - .chd
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: tg16
+    display_name: NEC TurboGrafx-16
+    class: A
+    igdb_platform_id: 86
+    dat_system: NEC - PC Engine - TurboGrafx 16
+    minerva_path: No-Intro/NEC - PC Engine - TurboGrafx 16
+    archive_org_identifier:
+    romsfun_slug: turbografx
+    romsretro_slug: turbografx-16
+    extensions:
+      - .pce
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: ti99
+    display_name: Texas Instruments TI-99
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: tic80
+    display_name: TIC-80 Fantasy Computer
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: to8
+    display_name: Thomson TO8
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: type-x
+    display_name: Taito Type X
+    class: D
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions:
+      - .zip
+      - .7z
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Arcade romset-versioning model out of scope for v1
+  - shortname: uzebox
+    display_name: Uzebox Open Source Console
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: vectrex
+    display_name: GCE Vectrex
+    class: A
+    igdb_platform_id: 70
+    dat_system: GCE - Vectrex
+    minerva_path: No-Intro/GCE - Vectrex
+    archive_org_identifier:
+    romsfun_slug: vectrex
+    romsretro_slug: vectrex
+    extensions:
+      - .vec
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: vic20
+    display_name: Commodore VIC-20
+    class: A
+    igdb_platform_id: 71
+    dat_system: Commodore - VIC-20
+    minerva_path: No-Intro/Commodore - VIC-20
+    archive_org_identifier:
+    romsfun_slug: vic-20
+    romsretro_slug: vic-20
+    extensions:
+      - .t64
+      - .prg
+      - .crt
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: videopac
+    display_name: Philips Videopac G7000
+    class: A
+    igdb_platform_id: 133
+    dat_system: Magnavox - Odyssey 2
+    minerva_path: No-Intro/Magnavox - Odyssey 2
+    archive_org_identifier:
+    romsfun_slug: videopac
+    romsretro_slug: videopac
+    extensions:
+      - .bin
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: vircon32
+    display_name: Vircon32 Virtual Console
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: virtualboy
+    display_name: Nintendo Virtual Boy
+    class: A
+    igdb_platform_id: 87
+    dat_system: Nintendo - Virtual Boy
+    minerva_path: No-Intro/Nintendo - Virtual Boy
+    archive_org_identifier:
+    romsfun_slug: nintendo-virtual-boy
+    romsretro_slug: virtual-boy
+    extensions:
+      - .vb
+      - .vboy
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: vpinball
+    display_name: Visual Pinball
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: vsmile
+    display_name: VTech V.Smile
+    class: A
+    igdb_platform_id:
+    dat_system: VTech - V.Smile
+    minerva_path: No-Intro/VTech - V.Smile
+    archive_org_identifier:
+    romsfun_slug: v-smile
+    romsretro_slug: v-smile
+    extensions:
+      - .bin
+      - .zip
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: wasm4
+    display_name: WASM-4 Fantasy Console
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: wii
+    display_name: Nintendo Wii
+    class: B
+    igdb_platform_id: 5
+    dat_system: Nintendo - Wii
+    minerva_path: Redump/Nintendo - Wii
+    archive_org_identifier:
+    romsfun_slug: nintendo-wii
+    romsretro_slug: wii
+    extensions:
+      - .iso
+      - .wbfs
+      - .rvz
+      - .wia
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: wiiu
+    display_name: Nintendo Wii U
+    class: C
+    igdb_platform_id: 41
+    dat_system: Nintendo - Wii U
+    minerva_path: No-Intro/Nintendo - Wii U
+    archive_org_identifier:
+    romsfun_slug: wii-u
+    romsretro_slug: wii-u
+    extensions:
+      - .wua
+      - .wud
+      - .wux
+      - .rpx
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: windows
+    display_name: Microsoft Windows
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: windows3x
+    display_name: Microsoft Windows 3.x
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: windows9x
+    display_name: Microsoft Windows 9x
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: wonderswan
+    display_name: Bandai WonderSwan
+    class: A
+    igdb_platform_id: 57
+    dat_system: Bandai - WonderSwan
+    minerva_path: No-Intro/Bandai - WonderSwan
+    archive_org_identifier:
+    romsfun_slug: wonderswan
+    romsretro_slug: wonderswan
+    extensions:
+      - .ws
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: wonderswancolor
+    display_name: Bandai WonderSwan Color
+    class: A
+    igdb_platform_id: 123
+    dat_system: Bandai - WonderSwan Color
+    minerva_path: No-Intro/Bandai - WonderSwan Color
+    archive_org_identifier:
+    romsfun_slug: wonderswan-color
+    romsretro_slug: wonderswan-color
+    extensions:
+      - .wsc
+      - .ws
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason:
+  - shortname: x1
+    display_name: Sharp X1
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: x68000
+    display_name: Sharp X68000
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: zmachine
+    display_name: Infocom Z-machine
+    class: F
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Fantasy/homebrew/mobile platform - different distribution 
+      ecosystem
+  - shortname: zx81
+    display_name: Sinclair ZX81
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
+  - shortname: zxspectrum
+    display_name: Sinclair ZX Spectrum
+    class: E
+    igdb_platform_id:
+    dat_system:
+    minerva_path:
+    archive_org_identifier:
+    romsfun_slug:
+    romsretro_slug:
+    extensions: []
+    cd_based: false
+    region_alias_of:
+    region_filter:
+    skip_reason: Home computer / engine / port - ROM download model not 
+      applicable
