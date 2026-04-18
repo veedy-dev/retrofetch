@@ -8,6 +8,7 @@ from __future__ import annotations
 import threading
 from typing import Any
 
+from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import ScrollableContainer, Vertical  # pyright: ignore[reportMissingImports]
@@ -15,18 +16,20 @@ from textual.screen import Screen  # pyright: ignore[reportMissingImports]
 from textual.widgets import Checkbox, Footer, Header, Label, ProgressBar, Static  # pyright: ignore[reportMissingImports]
 
 from retrofetch.config import ConsoleOverride
-from retrofetch.ranker import get_wantlist
 from retrofetch.tui.messages import (
+    CloudflareBlock,
     DownloadComplete,
     DownloadCrashed,
     GameBytes,
     GameDone,
     GameFailed,
     GameStart,
-    CloudflareBlock,
     SourceDead,
+    WantlistFailed,
+    WantlistReady,
 )
 from retrofetch.tui.workers.download_worker import DownloadWorker
+from retrofetch.wantlist_cache import get_or_fetch_wantlist
 
 
 class DownloadScreen(Screen[None]):
@@ -70,23 +73,54 @@ class DownloadScreen(Screen[None]):
         yield Footer()
 
     def on_mount(self) -> None:
+        self.query_one("#summary-line", Label).update("Loading wantlist...")
+        self._kick_load()
+
+    @work(thread=True, exclusive=True, group="download-load")
+    def _kick_load(self) -> None:
+        limit = (
+            self.override.limit
+            if (self.override and self.override.limit)
+            else self.app.config.default_limit  # pyright: ignore[reportAttributeAccessIssue]
+        )
         try:
-            self._wantlist = get_wantlist(
+            titles, from_cache = get_or_fetch_wantlist(
                 console_entry=self.console_entry,
                 overrides=self.override,
                 config=self.app.config,  # pyright: ignore[reportAttributeAccessIssue]
-                limit=self.override.limit if (self.override and self.override.limit) else self.app.config.default_limit,  # pyright: ignore[reportAttributeAccessIssue]
+                limit=limit,
             )
         except Exception as exc:
-            self._wantlist = []
-            self.query_one("#summary-line", Label).update(f"wantlist error: {exc}")
+            self.post_message(WantlistFailed(self.shortname, str(exc)))
             return
+        self.post_message(WantlistReady(self.shortname, titles, from_cache))
+
+    def on_wantlist_ready(self, message: WantlistReady) -> None:
+        if message.console != self.shortname:
+            return
+        self._wantlist = list(message.titles)
+        indicator = "cached" if message.from_cache else "fresh"
         self.query_one("#summary-line", Label).update(
-            f"Ready to download {len(self._wantlist)} games. Press Enter to start."
+            f"Ready to download {len(self._wantlist)} games ({indicator}). Press Enter to start."
+        )
+
+    def on_wantlist_failed(self, message: WantlistFailed) -> None:
+        if message.console != self.shortname:
+            return
+        self._wantlist = []
+        # Block accidental Enter-starts: `_started=True` makes action_start a no-op.
+        self._started = True
+        self.query_one("#summary-line", Label).update(
+            f"Failed to load wantlist: {message.reason}"
         )
 
     def action_start(self) -> None:
         if self._started:
+            return
+        if not self._wantlist:
+            self.query_one("#summary-line", Label).update(
+                "Wantlist not ready yet. Wait for load to complete."
+            )
             return
         self._started = True
         # snapshot dry-run state at start

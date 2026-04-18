@@ -9,7 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from retrofetch.config import Config, ConsoleOverride
-from retrofetch.ranker import get_wantlist
+# NOTE: ``get_wantlist`` is looked up indirectly via the ranker module each call
+# (see ``get_or_fetch_wantlist``) so monkey-patches at ``retrofetch.ranker.get_wantlist``
+# keep flowing through, which matters for the existing wave1-4 pilot harness.
+from retrofetch import ranker as _ranker
 
 log = logging.getLogger(__name__)
 
@@ -121,7 +124,8 @@ def get_or_fetch_wantlist(
     if hit is not None:
         return (list(hit.titles), True)
 
-    titles = get_wantlist(
+    # Re-resolve through the module to honor monkey-patches at call time.
+    titles = _ranker.get_wantlist(
         console_entry=console_entry,
         overrides=overrides,
         config=config,

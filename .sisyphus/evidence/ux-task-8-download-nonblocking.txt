@@ -1,0 +1,5 @@
+status=PASS
+sleep_sec=1.0
+ui_responsive_elapsed=0.219
+summary_before='Loading wantlist...'
+summary_after='Ready to download 2 games (fresh). Press Enter to start.'

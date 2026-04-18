@@ -20,15 +20,18 @@ async def main() -> None:
         overrides={},
     )
 
-    # Stub ranker to avoid network
+    # Stub the @work cache-aware fetcher (new U8 call site) to avoid network.
+    # Returns (titles, from_cache) tuple.
     import retrofetch.tui.screens.download as dl_mod
-    dl_mod.get_wantlist = lambda **kw: ["Alpha", "Beta"]  # type: ignore[assignment]
+    dl_mod.get_or_fetch_wantlist = lambda **kw: (["Alpha", "Beta"], True)  # type: ignore[assignment]
 
     async with app.run_test() as pilot:
         await pilot.pause()
         screen = DownloadScreen(console_entry=entry, override=None)
         await app.push_screen(screen)
-        await pilot.pause(0.3)
+        # Wait for the @work wantlist-load worker to post WantlistReady; U8 made
+        # this async so we pause longer before invoking action_start.
+        await pilot.pause(1.0)
 
         # Start the download directly to bypass Checkbox focus consuming 'enter'
         screen.action_start()
