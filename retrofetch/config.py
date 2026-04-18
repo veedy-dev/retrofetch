@@ -1,4 +1,4 @@
-"""YAML config loader and schema validation.
+"""Configuration helpers.
 
 All YAML I/O for user-facing config files (`config.yml`, `overrides.yml`,
 `consoles.yml`) goes through the module-level ``_yaml_rt`` round-trip loader so
@@ -35,6 +35,7 @@ class Config(BaseModel):
     cache_dir: Path = Path(".cache")
     log_file: Path = Path("retrofetch.log")
     default_limit: int = 75
+    dry_run: bool = False
     region_priority: list[str] = Field(
         default_factory=lambda: ["USA", "World", "Europe", "Japan"]
     )

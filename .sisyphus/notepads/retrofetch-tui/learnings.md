@@ -133,3 +133,9 @@ T8 save_config must handle this. Simple approach: save always writes LF (ruamel'
 - YAMLError subclass gotcha: ruamel.yaml.YAMLError is the base; subclasses like ParserError inherit it and still expose problem_mark and problem attrs. One except-block suffices.
 - Scope discrepancy flagged: task referenced report.py:21 but T9 moved that call into coverage.py. Migrated the semantic target (coverage.py::compute_coverage) plus deleted the dual-library shim (try-import + yaml.safe_load fallback) because it would have broken after T8 anyway (YAML instance is not callable, so the callable-cast shim would have crashed on first invocation post-T8).
 - Files touched: retrofetch/config.py, retrofetch/cli.py, retrofetch/coverage.py. retrofetch/report.py untouched (no longer has yaml imports after T9).
+
+## [2026-04-18T00:22:45Z] T10: event bus wiring
+- Files changed: [sources/__init__.py, sources/archive_org.py, sources/minerva_http.py, sources/romsfun.py, sources/minerva_torrent.py, downloader.py, dispatcher.py, orchestrator.py, cli.py, config.py]
+- Dry-run mechanism: config.dry_run carries intent; orchestrator skips dispatcher, still emits synthetic events
+- CLI golden regression: PASS
+- Any subtleties discovered: non-verbose dry-run stayed byte-identical by keeping preview prints in cli.py while moving execution into run_console; dispatcher publishes source-dead/cloudflare events opportunistically without mutating state in dry-run

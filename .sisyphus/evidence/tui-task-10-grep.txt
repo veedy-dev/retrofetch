@@ -1,0 +1,1 @@
+T10 grep: no progress_cb in production code

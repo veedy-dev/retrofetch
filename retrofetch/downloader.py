@@ -1,5 +1,3 @@
-"""Download orchestrator with resume and extraction."""
-
 from __future__ import annotations
 
 import logging
@@ -8,9 +6,10 @@ from pathlib import Path
 from typing import Protocol
 
 from retrofetch.dat import GameEntry, Rom, VerifyResult, verify_file
+from retrofetch.events import EventBus, GameDoneEvent, GameFailedEvent, GameStartEvent
 from retrofetch.extractor import ExtractionError, extract_archive, is_archive
 from retrofetch.sanitize import sanitize_filename
-from retrofetch.sources import DownloadCandidate, ProgressCallback, SourceUnavailable
+from retrofetch.sources import DownloadCandidate, SourceUnavailable
 from retrofetch.state import GameAttempt, State, update_game
 
 _log = logging.getLogger(__name__)
@@ -29,7 +28,8 @@ class Source(Protocol):
         self,
         candidate: DownloadCandidate,
         dest_dir: Path,
-        progress_cb: ProgressCallback | None = None,
+        *,
+        event_bus: EventBus | None = None,
     ) -> Path: ...
 
 
@@ -89,16 +89,23 @@ def download_game(
     game: GameEntry | None,
     game_title: str,
     state: State,
-    progress_cb: ProgressCallback | None = None,
+    *,
+    console: str,
+    event_bus: EventBus | None = None,
 ) -> DownloadResult:
     target_dir = Path(target_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
+
+    if event_bus is not None:
+        event_bus.publish(
+            GameStartEvent(game=game_title, source=source.name, console=console)
+        )
 
     last_reason: str | None = None
     had_verify_failure = False
     for attempt_num in range(1, MAX_ATTEMPTS_PER_SOURCE + 1):
         try:
-            downloaded = source.download(candidate, target_dir, progress_cb)
+            downloaded = source.download(candidate, target_dir, event_bus=event_bus)
         except SourceUnavailable as exc:
             last_reason = str(exc)
             _log.warning(
@@ -173,6 +180,15 @@ def download_game(
             crc32=candidate.expected_crc32,
             size_bytes=candidate.expected_size,
         )
+        if event_bus is not None:
+            event_bus.publish(
+                GameDoneEvent(
+                    game=game_title,
+                    source=source.name,
+                    size=candidate.expected_size or 0,
+                    sha1=candidate.expected_sha1,
+                )
+            )
         return DownloadResult(status="acquired", filename=sanitized, source=source.name)
 
     final_status = "unverified" if had_verify_failure else "failed"
@@ -182,8 +198,11 @@ def download_game(
         status=final_status,
         source=source.name,
     )
+    final_reason = last_reason or "exhausted attempts"
+    if event_bus is not None:
+        event_bus.publish(GameFailedEvent(game=game_title, reason=final_reason))
     return DownloadResult(
         status=final_status,
         source=source.name,
-        reason=last_reason or "exhausted attempts",
+        reason=final_reason,
     )

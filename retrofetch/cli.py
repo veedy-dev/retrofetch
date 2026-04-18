@@ -1,5 +1,3 @@
-"""Typer CLI entrypoint."""
-
 from __future__ import annotations
 
 import logging
@@ -11,8 +9,8 @@ import typer
 
 from retrofetch import __version__
 from retrofetch.config import (
-    ConfigError,
     Config,
+    ConfigError,
     _yaml_rt,
     load_config,
     load_overrides,
@@ -147,6 +145,7 @@ def download(
     """Download ROMs for one or all consoles."""
 
     config = _resolve_config(config_path)
+    config.dry_run = dry_run
     setup_logging(config.log_file)
     consoles_yml_path = Path.cwd() / "consoles.yml"
     if not consoles_yml_path.exists():
@@ -205,9 +204,6 @@ def download(
         if len(wantlist) > 5:
             console.print(f"  ... and {len(wantlist) - 5} more")
 
-        if dry_run:
-            continue
-
         coordinator = install_signal_handlers()
         report = run_console(
             console_entry=entry,
@@ -216,15 +212,17 @@ def download(
             allow_torrent=not no_torrent,
             consoles_yml=consoles_yml,
             stop_event=coordinator.stop_event,
+            dry_run=config.dry_run,
         )
-        if report.error:
-            console.print(f"[red]{short} error:[/red] {report.error}")
-        else:
-            console.print(
-                f"[green]{short}:[/green] attempted={report.attempted} "
-                f"acquired={report.acquired} failed={report.failed} "
-                f"unverified={report.unverified}"
-            )
+        if not dry_run:
+            if report.error:
+                console.print(f"[red]{short} error:[/red] {report.error}")
+            else:
+                console.print(
+                    f"[green]{short}:[/green] attempted={report.attempted} "
+                    f"acquired={report.acquired} failed={report.failed} "
+                    f"unverified={report.unverified}"
+                )
         if coordinator.stop_event.is_set():
             console.print("[yellow]stopped by signal; rerun to resume[/yellow]")
             break

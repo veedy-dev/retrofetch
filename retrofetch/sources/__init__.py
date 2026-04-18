@@ -1,10 +1,10 @@
-"""Source adapters for ROM providers."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Protocol, runtime_checkable
+
+from retrofetch.events import EventBus
 
 
 class SourceUnavailable(Exception):
@@ -37,7 +37,8 @@ class SourceAdapter(Protocol):
         self,
         candidate: DownloadCandidate,
         dest_dir: Path,
-        progress_cb: ProgressCallback | None = None,
+        *,
+        event_bus: EventBus | None = None,
     ) -> Path: ...
 
     def list_popular(

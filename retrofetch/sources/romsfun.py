@@ -1,5 +1,3 @@
-"""romsfun.com source adapter."""
-
 from __future__ import annotations
 
 import logging
@@ -8,7 +6,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin
 
-from retrofetch.sources import DownloadCandidate, ProgressCallback, SourceUnavailable
+from retrofetch.events import EventBus, GameBytesEvent
+from retrofetch.sources import DownloadCandidate, SourceUnavailable
 from retrofetch.sources._cloudflare_base import (
     CloudflareBlocked,
     health,
@@ -133,7 +132,8 @@ class RomsfunSource:
         self,
         candidate: DownloadCandidate,
         dest_dir: Path,
-        progress_cb: ProgressCallback | None = None,
+        *,
+        event_bus: EventBus | None = None,
     ) -> Path:
         if is_dead(self.name):
             raise SourceUnavailable(f"{self.name} marked dead for session")
@@ -158,8 +158,14 @@ class RomsfunSource:
                             continue
                         fh.write(chunk)
                         downloaded += len(chunk)
-                        if progress_cb:
-                            progress_cb(downloaded, total or downloaded)
+                        if event_bus is not None:
+                            event_bus.publish(
+                                GameBytesEvent(
+                                    game=candidate.filename,
+                                    downloaded=downloaded,
+                                    total=total or downloaded,
+                                )
+                            )
         except SourceUnavailable:
             raise
         except Exception as exc:

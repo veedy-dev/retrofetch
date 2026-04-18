@@ -1,5 +1,3 @@
-"""Run orchestrator with concurrency and preflight."""
-
 from __future__ import annotations
 
 import logging
@@ -15,7 +13,14 @@ from retrofetch.config import Config
 from retrofetch.dat import DatEntry, parse_dat
 from retrofetch.dat_fetch import find_dat_for_console
 from retrofetch.dispatcher import SourceDispatcher
-from retrofetch.state import State, load_state, save_state, update_game
+from retrofetch.events import (
+    DatLoadDoneEvent,
+    DatLoadStartEvent,
+    EventBus,
+    GameDoneEvent,
+    GameStartEvent,
+)
+from retrofetch.state import load_state, save_state
 
 _log = logging.getLogger(__name__)
 
@@ -74,6 +79,9 @@ def run_console(
     allow_torrent: bool,
     consoles_yml: dict[str, Any],
     stop_event: threading.Event | None = None,
+    *,
+    event_bus: EventBus | None = None,
+    dry_run: bool = False,
 ) -> RunReport:
     short = str(console_entry.get("shortname", "?"))
     klass = str(console_entry.get("class", "?"))
@@ -98,12 +106,23 @@ def run_console(
     if not dats_dir.exists():
         dats_dir = Path(__file__).resolve().parent.parent / "dats"
     dat_path = find_dat_for_console(short, consoles_yml, dats_dir)
+    if event_bus is not None:
+        event_bus.publish(
+            DatLoadStartEvent(
+                console=short,
+                dat_name=dat_path.name if dat_path is not None else "(none)",
+            )
+        )
     if dat_path is not None:
         try:
             dat = parse_dat(dat_path)
         except Exception as exc:
             _log.warning("failed to parse DAT for %s: %s", short, exc)
             dat = None
+    if event_bus is not None:
+        event_bus.publish(
+            DatLoadDoneEvent(console=short, games_loaded=len(dat.games) if dat else 0)
+        )
 
     source_names = config.source_fallback_by_class.get(klass, [])
     dispatcher = SourceDispatcher(
@@ -129,13 +148,23 @@ def run_console(
         for variant in variants:
             if stop_event is not None and stop_event.is_set():
                 break
+            if dry_run:
+                if event_bus is not None:
+                    event_bus.publish(
+                        GameStartEvent(game=variant, source="dry-run", console=short)
+                    )
+                    event_bus.publish(
+                        GameDoneEvent(game=variant, source="dry-run", size=0, sha1=None)
+                    )
+                continue
             result = dispatcher.dispatch_download(
                 game_title=variant,
                 game=game_entry,
                 target_dir=target_dir,
                 region_priority=config.region_priority,
                 state=state,
-                progress_cb=None,
+                console=short,
+                event_bus=event_bus,
             )
             if result.status == "acquired":
                 acquired_any = True
@@ -143,9 +172,11 @@ def run_console(
                 report.unverified += 1
             else:
                 report.failed += 1
-            save_state(state, config.roms_root)
+            if not dry_run:
+                save_state(state, config.roms_root)
         if acquired_any:
             report.acquired += 1
 
-    save_state(state, config.roms_root)
+    if not dry_run:
+        save_state(state, config.roms_root)
     return report

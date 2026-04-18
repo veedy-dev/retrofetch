@@ -1,5 +1,3 @@
-"""Archive.org source adapter."""
-
 from __future__ import annotations
 
 import importlib
@@ -8,7 +6,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-from retrofetch.sources import DownloadCandidate, ProgressCallback, SourceUnavailable
+from retrofetch.events import EventBus
+from retrofetch.sources import DownloadCandidate, SourceUnavailable
 
 _log = logging.getLogger(__name__)
 
@@ -120,7 +119,8 @@ class ArchiveOrgSource:
         self,
         candidate: DownloadCandidate,
         dest_dir: Path,
-        progress_cb: ProgressCallback | None = None,
+        *,
+        event_bus: EventBus | None = None,
     ) -> Path:
         ia = self._internetarchive()
         identifier = (candidate.extra or {}).get("identifier", self.identifier)
@@ -149,7 +149,11 @@ class ArchiveOrgSource:
             raise SourceUnavailable(
                 f"archive.org reported success but file not found: {final} (results={results})"
             )
-        if progress_cb is not None:
+        if event_bus is not None:
+            from retrofetch.events import GameBytesEvent
+
             size = final.stat().st_size
-            progress_cb(size, size)
+            event_bus.publish(
+                GameBytesEvent(game=candidate.filename, downloaded=size, total=size)
+            )
         return final

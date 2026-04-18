@@ -1,5 +1,3 @@
-"""Minerva Archive torrent source adapter (libtorrent required)."""
-
 from __future__ import annotations
 
 import importlib
@@ -7,7 +5,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from retrofetch.sources import DownloadCandidate, ProgressCallback, SourceUnavailable
+from retrofetch.events import EventBus
+from retrofetch.sources import DownloadCandidate, SourceUnavailable
 
 _log = logging.getLogger(__name__)
 
@@ -47,7 +46,8 @@ class MinervaTorrentSource:
         self,
         candidate: DownloadCandidate,
         dest_dir: Path,
-        progress_cb: ProgressCallback | None = None,
+        *,
+        event_bus: EventBus | None = None,
     ) -> Path:
         raise SourceUnavailable(
             "Minerva torrent download not implemented in v1. "

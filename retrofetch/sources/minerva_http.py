@@ -1,5 +1,3 @@
-"""Minerva Archive HTTP source adapter."""
-
 from __future__ import annotations
 
 import importlib
@@ -10,7 +8,8 @@ from urllib.parse import unquote, urljoin
 
 import httpx
 
-from retrofetch.sources import DownloadCandidate, ProgressCallback, SourceUnavailable
+from retrofetch.events import EventBus, GameBytesEvent
+from retrofetch.sources import DownloadCandidate, SourceUnavailable
 
 _log = logging.getLogger(__name__)
 
@@ -118,7 +117,8 @@ class MinervaHttpSource:
         self,
         candidate: DownloadCandidate,
         dest_dir: Path,
-        progress_cb: ProgressCallback | None = None,
+        *,
+        event_bus: EventBus | None = None,
     ) -> Path:
         dest_dir = Path(dest_dir)
         dest_dir.mkdir(parents=True, exist_ok=True)
@@ -148,8 +148,14 @@ class MinervaHttpSource:
                                 for chunk in resp2.iter_bytes(chunk_size=64 * 1024):
                                     fh.write(chunk)
                                     downloaded += len(chunk)
-                                    if progress_cb:
-                                        progress_cb(downloaded, total or downloaded)
+                                    if event_bus is not None:
+                                        event_bus.publish(
+                                            GameBytesEvent(
+                                                game=candidate.filename,
+                                                downloaded=downloaded,
+                                                total=total or downloaded,
+                                            )
+                                        )
                     else:
                         if resp.status_code not in (200, 206):
                             raise SourceUnavailable(
@@ -166,8 +172,14 @@ class MinervaHttpSource:
                             for chunk in resp.iter_bytes(chunk_size=64 * 1024):
                                 fh.write(chunk)
                                 downloaded += len(chunk)
-                                if progress_cb:
-                                    progress_cb(downloaded, total or downloaded)
+                                if event_bus is not None:
+                                    event_bus.publish(
+                                        GameBytesEvent(
+                                            game=candidate.filename,
+                                            downloaded=downloaded,
+                                            total=total or downloaded,
+                                        )
+                                    )
         except httpx.HTTPError as exc:
             raise SourceUnavailable(f"minerva download error: {exc}") from exc
         part.replace(final)

@@ -1,5 +1,3 @@
-"""Source dispatcher with fallback chain."""
-
 from __future__ import annotations
 
 import logging
@@ -8,6 +6,7 @@ from typing import Any
 
 from retrofetch.dat import GameEntry
 from retrofetch.downloader import DownloadResult, Source, download_game
+from retrofetch.events import CloudflareBlockEvent, EventBus, SourceDeadEvent
 from retrofetch.sources import DownloadCandidate, SourceUnavailable
 from retrofetch.sources._cloudflare_base import is_dead as is_source_dead
 from retrofetch.sources.archive_org import ArchiveOrgSource
@@ -63,15 +62,26 @@ class SourceDispatcher:
         target_dir: Path,
         region_priority: list[str],
         state: State,
-        progress_cb: Any | None = None,
+        *,
+        console: str,
+        event_bus: EventBus | None = None,
     ) -> DownloadResult:
         attempts_summary: list[str] = []
+        published_dead_sources: set[str] = set()
         for source_name in self.source_names:
             if not self.allow_torrent and source_name in _TORRENT_SOURCES:
                 attempts_summary.append(f"{source_name}:skipped_no_torrent")
                 continue
             if is_source_dead(source_name):
                 attempts_summary.append(f"{source_name}:dead")
+                if event_bus is not None and source_name not in published_dead_sources:
+                    event_bus.publish(
+                        SourceDeadEvent(
+                            source=source_name,
+                            reason="marked dead for session",
+                        )
+                    )
+                    published_dead_sources.add(source_name)
                 continue
             source = self._get_source(source_name)
             if source is None:
@@ -94,8 +104,14 @@ class SourceDispatcher:
                 game=game,
                 game_title=game_title,
                 state=state,
-                progress_cb=progress_cb,
+                console=console,
+                event_bus=event_bus,
             )
+            if event_bus is not None and result.reason:
+                if "cloudflare" in result.reason.lower():
+                    event_bus.publish(
+                        CloudflareBlockEvent(source=source_name, status=0)
+                    )
             if result.status == "acquired":
                 result.reason = ";".join(attempts_summary + [f"{source_name}:acquired"])
                 return result
