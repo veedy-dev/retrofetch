@@ -30,7 +30,9 @@ class HomeScreen(Screen[None]):
         Binding("question_mark", "help", "Help", show=True, key_display="?"),
         Binding("tab", "focus_next", "Next", show=False),
         Binding("w", "open_wantlist", "Wantlist", show=True),
+        Binding("d", "open_download", "Download", show=True),
         Binding("s", "open_state", "State", show=True),
+        Binding("C", "open_coverage", "Coverage", show=True),
     ]
 
     # Debounce for filter Input.Changed events, per T2 spike (200ms sweet spot).
@@ -129,6 +131,23 @@ class HomeScreen(Screen[None]):
         from retrofetch.tui.screens.wantlist import WantlistScreen
         self.app.push_screen(WantlistScreen(console_entry=entry, override=override))
 
+    def action_open_download(self) -> None:
+        list_view = self.query_one("#console-list", ListView)
+        item = list_view.highlighted_child
+        if item is None:
+            return
+        klass = getattr(item, "_rf_klass", "?")
+        if klass in ("D", "E", "F"):
+            return
+        shortname = getattr(item, "_rf_shortname", "?")
+        entries = self.app.consoles_yml.get("consoles", []) or []
+        entry = next((e for e in entries if str(e.get("shortname", "")) == shortname), None)
+        if entry is None:
+            return
+        override = self.app.overrides.get(shortname)
+        from retrofetch.tui.screens.download import DownloadScreen
+        self.app.push_screen(DownloadScreen(console_entry=entry, override=override))
+
     def action_open_state(self) -> None:
         list_view = self.query_one("#console-list")
         item = list_view.highlighted_child
@@ -144,3 +163,7 @@ class HomeScreen(Screen[None]):
             return
         from retrofetch.tui.screens.state import StateScreen
         self.app.push_screen(StateScreen(console_entry=entry))
+
+    def action_open_coverage(self) -> None:
+        from retrofetch.tui.screens.coverage import CoverageScreen
+        self.app.push_screen(CoverageScreen())

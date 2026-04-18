@@ -166,4 +166,8 @@ T8 save_config must handle this. Simple approach: save always writes LF (ruamel'
  -   I m p l e m e n t e d   W a n t l i s t S c r e e n   w i t h   D a t a T a b l e   a n d   p a g i n a t i o n   ( 5 0   r o w s / p a g e )   t o   a v o i d   p e r f o r m a n c e   i s s u e s   w i t h   l a r g e   d a t a s e t s .  
  -   U s e d   r u a m e l . y a m l   f o r   l o a d - t h e n - m u t a t e   p a t t e r n   t o   p r e s e r v e   c o m m e n t s   w h e n   s a v i n g   o v e r r i d e s .  
  -   W i r e d   u p   ' w '   k e y   i n   H o m e S c r e e n   t o   p u s h   W a n t l i s t S c r e e n   f o r   C l a s s   A / B / C   c o n s o l e s .  
+ -   C r e a t e d   C o n f i g E d i t o r S c r e e n   a n d   O v e r r i d e s E d i t o r S c r e e n   f o r   e d i t i n g   c o n f i g u r a t i o n   f i l e s .  
  
+## T18: Download Screen
+- Textual's Checkbox consumes the enter key by default. If a screen binding uses enter, it won't trigger if the Checkbox has focus. In QA scripts, we can bypass this by calling the action method directly (e.g., screen.action_start()) instead of simulating key presses if focus management is tricky.
+- When a worker posts a message to self.app, it is handled by the app and does not bubble down to the active screen. To have the screen handle the message, the worker should be initialized with self (the screen) instead of self.app, so it posts directly to the screen.
