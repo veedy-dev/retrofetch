@@ -392,3 +392,59 @@ def report(
         consoles_yml_path = _REPO_DIR / "consoles.yml"
     path = generate_coverage_report(consoles_yml_path, config.roms_root, output)
     console.print(f"[green]Report written:[/green] {path}")
+
+
+@app.command()
+def tui(
+    config_path: Path = typer.Option(
+        Path("config.yml"), "--config", help="Path to config.yml"
+    ),
+) -> None:
+    """Launch the interactive TUI command center."""
+    import os
+    import sys as _sys
+
+    if not _sys.stdout.isatty():
+        console.print("[red]retrofetch tui requires an interactive terminal[/red]")
+        raise typer.Exit(2)
+    if os.environ.get("MSYSTEM"):
+        console.print(
+            "[red]MSYS2 / MinGW is not supported. Use Windows Terminal or a native POSIX shell.[/red]"
+        )
+        raise typer.Exit(2)
+    if os.environ.get("PSEDIT"):
+        console.print(
+            "[red]PowerShell ISE is not supported. Use Windows Terminal.[/red]"
+        )
+        raise typer.Exit(2)
+
+    config = _resolve_config(config_path)
+    consoles_yml_path = Path.cwd() / "consoles.yml"
+    if not consoles_yml_path.exists():
+        consoles_yml_path = _REPO_DIR / "consoles.yml"
+    if not consoles_yml_path.exists():
+        console.print(
+            f"[red]consoles.yml not found at {consoles_yml_path} or repo dir[/red]"
+        )
+        raise typer.Exit(2)
+    try:
+        consoles_yml = _load_consoles(consoles_yml_path)
+    except ConfigError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+    try:
+        overrides = load_overrides(Path("overrides.yml"))
+    except ConfigError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    from retrofetch.tui.app import RetrofetchApp
+
+    tui_app = RetrofetchApp(
+        config=config,
+        config_path=config_path,
+        consoles_yml=consoles_yml,
+        overrides=overrides,
+    )
+    return_code = tui_app.run()
+    raise typer.Exit(return_code if return_code is not None else 0)

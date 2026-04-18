@@ -139,3 +139,21 @@ T8 save_config must handle this. Simple approach: save always writes LF (ruamel'
 - Dry-run mechanism: config.dry_run carries intent; orchestrator skips dispatcher, still emits synthetic events
 - CLI golden regression: PASS
 - Any subtleties discovered: non-verbose dry-run stayed byte-identical by keeping preview prints in cli.py while moving execution into run_console; dispatcher publishes source-dead/cloudflare events opportunistically without mutating state in dry-run
+
+## [2026-04-18T07:36:07Z] T11: --verbose flag on download
+- Pattern: `bus: EventBus | None = None` then `if verbose: bus = EventBus(); bus.subscribe(_verbose_formatter(console))`. Passed `event_bus=bus` to run_console. Non-verbose path stays `event_bus=None` so zero bus work and golden stays byte-identical.
+- Event formatter: private `_verbose_formatter(cons: Console) -> Callable[[ProgressEvent], None]` with isinstance chain over all 10 user-facing event types (GameBytesEvent skipped - too chatty for CLI, task requirement).
+- ASCII marker swap: task spec said use `->`/`OK check`/`X cross` chars literally calling them "ASCII-safe", but Rich's Windows legacy renderer writes through cp1252 which cannot encode U+2192 / U+2713 / U+2717 - raises UnicodeEncodeError, EventBus swallows it silently, user sees NOTHING. Switched to pure ASCII `->`, `[OK]`, `[X]` for cross-platform safety. QA keyword regex (Starting / Acquired / Failed / Loading DAT) still matches. No emoji pictograph planes.
+- GameDoneEvent sha1=None guard: `f"{event.sha1[:8]}..." if event.sha1 else "sha1=?"` - slicing None would TypeError in format string.
+- Rich markup gotcha with `[OK]`/`[X]`: Rich treats `[name]` as a style tag; unknown style names render as literal text (confirmed via direct console.print test). Safe.
+- Typer syntax for both long and short flag: `typer.Option(False, "--verbose", "-v", help="...")` - both strings as positional args after default.
+- Top-level `retrofetch --help` unchanged because `download` docstring first line unchanged (Typer derives short_help from docstring line 1).
+- Regression preserved: cli-mame-dry-run.txt (76 bytes) and cli-nes-dry-run.txt (135 bytes) byte-for-byte matches; wave1-task6-goldens and wave2-task10-regression both pass.
+- Verbose nes dry-run emits 8 event lines (DatLoadStart + DatLoadDone + 3x GameStart + 3x GameDone; QA regex catches 7 after filtering "DAT loaded" redundancy with "Loading DAT" keyword).
+
+## [2026-04-18T08:12:00Z] T12: TUI scaffolding + tui subcommand
+- Subpackage scaffold created under `retrofetch/tui/`: `__init__.py`, `app.py`, `screens/`, `widgets/`, `workers/`, `messages.py`, `styles.tcss`.
+- `RetrofetchApp` now owns config / consoles / overrides and renders a single placeholder `Static` widget.
+- TUI launch flow: preflight TTY -> MSYSTEM -> PSEDIT -> config / consoles / overrides.
+- `q` quits cleanly with exit 0 under `run_test()`.
+- QA evidence written via Python to UTF-8 files under `.sisyphus/evidence/`.

@@ -16,5 +16,6 @@
 | verify    Rescan existing ROM files and update state with verification      |
 |           results.                                                          |
 | report    Generate the coverage.md report from state files.                 |
+| tui       Launch the interactive TUI command center.                        |
 +-----------------------------------------------------------------------------+
 
