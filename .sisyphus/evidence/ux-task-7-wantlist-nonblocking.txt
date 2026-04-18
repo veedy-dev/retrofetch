@@ -1,4 +1,4 @@
 status=PASS
 sleep_sec=1.2
-ui_responsive_elapsed=0.125
+ui_responsive_elapsed=0.127
 final_row_count=3

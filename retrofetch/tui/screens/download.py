@@ -1,7 +1,7 @@
 """Download screen with live per-file progress bars.
 
 Pushed from HomeScreen when the user presses 'd' on a selected Class A/B/C console.
-Wires an EventBus → DownloadWorker → DownloadComplete/DownloadCrashed message flow.
+Wires an EventBus -> DownloadWorker -> DownloadComplete/DownloadCrashed message flow.
 """
 from __future__ import annotations
 

@@ -6,9 +6,9 @@ reads :mod:`retrofetch.wantlist_cache` first (fresh hit skips network) and
 falls through to ``ranker.get_wantlist`` on miss / stale / malformed cache.
 
 Keybindings:
-- ``Enter`` on a class A/B/C row → ``ConsoleSelected`` (existing).
-- Any highlight (arrow keys, page up/down) → debounced preview fetch.
-- ``Ctrl+R`` → invalidate cache for the highlighted console and re-fetch.
+- ``Enter`` on a class A/B/C row -> ``ConsoleSelected`` (existing).
+- Any highlight (arrow keys, page up/down) -> debounced preview fetch.
+- ``Ctrl+R`` -> invalidate cache for the highlighted console and re-fetch.
 
 Workers all carry explicit ``group=`` names per Metis K.6:
 - ``preview`` for the Highlighted-debounced fetcher.
@@ -157,7 +157,7 @@ class HomeScreen(Screen[None]):
             return
         klass = getattr(item, "_rf_klass", "?")
         preview = self.query_one("#main-panel", WantlistPreview)
-        # Cancel pending debounce regardless of class — new highlight supersedes.
+        # Cancel pending debounce regardless of class - new highlight supersedes.
         if self._preview_timer is not None:
             self._preview_timer.stop()
             self._preview_timer = None
@@ -184,7 +184,7 @@ class HomeScreen(Screen[None]):
             preview.show_ready(shortname, list(hit.titles), True, counts)
             return
 
-        # Miss / stale → show loading + schedule debounced worker.
+        # Miss / stale -> show loading + schedule debounced worker.
         preview.show_loading(shortname)
         self._preview_timer = self.set_timer(
             self._PREVIEW_DEBOUNCE_MS / 1000.0,
@@ -211,7 +211,7 @@ class HomeScreen(Screen[None]):
         self.post_message(WantlistReady(shortname, titles, from_cache))
 
     # ------------------------------------------------------------------
-    # Message handlers — run on UI thread
+    # Message handlers - run on UI thread
     # ------------------------------------------------------------------
     def on_wantlist_ready(self, message: WantlistReady) -> None:
         # Only accept if the highlighted console still matches, to avoid
@@ -259,14 +259,14 @@ class HomeScreen(Screen[None]):
         if self._preview_timer is not None:
             self._preview_timer.stop()
             self._preview_timer = None
-        # Retry kicks immediately (no debounce — user explicitly asked).
+        # Retry kicks immediately (no debounce - user explicitly asked).
         self._kick_preview_fetch(entry)
 
     # ------------------------------------------------------------------
     # Existing Enter handler (unchanged)
     # ------------------------------------------------------------------
     def on_list_view_selected(self, event: ListView.Selected) -> None:
-        """Enter on an item — post ConsoleSelected ONLY for class A/B/C."""
+        """Enter on an item - post ConsoleSelected ONLY for class A/B/C."""
         item = event.item
         klass = getattr(item, "_rf_klass", "?")
         if klass in ("D", "E", "F"):

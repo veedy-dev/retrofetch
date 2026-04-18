@@ -1,4 +1,4 @@
-cache_file=C:\Users\vidif\AppData\Local\Temp\tmpw5bprshb\cache\wantlists\nes.json
+cache_file=C:\Users\vidif\AppData\Local\Temp\tmpwjobc2ro\cache\wantlists\nes.json
 load_cached=None
 from_cache=False
 call_count=1

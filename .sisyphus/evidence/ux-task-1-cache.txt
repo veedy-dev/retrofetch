@@ -1,4 +1,4 @@
-cache_file=C:\Users\vidif\AppData\Local\Temp\tmpodcarpf5\cache\wantlists\nes.json
+cache_file=C:\Users\vidif\AppData\Local\Temp\tmpb8832gw5\cache\wantlists\nes.json
 first_from_cache=False
 second_from_cache=True
 third_from_cache=False

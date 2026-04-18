@@ -466,4 +466,8 @@ def tui(
     return_code = tui_app.run()
     if return_code == 2 and first_run:
         console.print("Setup cancelled. Run `retrofetch tui` again when ready.")
-    raise typer.Exit(return_code if return_code is not None else 0)
+    # Clamp App[int] return value to the repo's allowed CLI exit codes (0, 1, 2).
+    # Anything unexpected is treated as exit 1.
+    if return_code not in (0, 1, 2):
+        return_code = 0 if return_code is None else 1
+    raise typer.Exit(return_code)

@@ -1,4 +1,4 @@
-"""Wantlist curation screen — DataTable multi-select + save to overrides.yml.
+"""Wantlist curation screen - DataTable multi-select + save to overrides.yml.
 
 Pushed from HomeScreen when the user presses 'w' on a selected Class A/B/C console.
 Displays up to 200 ranked titles with include/exclude state, paginated 50 rows/page
@@ -203,7 +203,7 @@ class WantlistScreen(Screen[None]):
             consoles[self.shortname] = entry
         entry["include"] = sorted(self._include)
         entry["exclude"] = sorted(self._exclude)
-        # Preserve existing limit/region_priority if present — untouched.
+        # Preserve existing limit/region_priority if present - untouched.
         try:
             save_overrides(overrides_path, raw)
             self._set_status(f"saved overrides.yml (include={len(self._include)}, exclude={len(self._exclude)})")
