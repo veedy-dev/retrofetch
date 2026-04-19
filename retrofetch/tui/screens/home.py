@@ -15,6 +15,9 @@ Workers all carry explicit ``group=`` names per Metis K.6:
 """
 from __future__ import annotations
 
+# pyright: reportAttributeAccessIssue=false
+
+from pathlib import Path
 from typing import Any
 
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
@@ -59,7 +62,8 @@ class HomeScreen(Screen[None]):
         Binding("d", "open_download", "Download", show=True),
         Binding("s", "open_state", "State", show=True),
         Binding("C", "open_coverage", "Coverage", show=True),
-        Binding("ctrl+r", "retry_fetch", "Retry", show=True),
+        Binding("r", "retry_fetch", "Refresh", show=True),
+        Binding("ctrl+r", "retry_fetch", "Refresh", show=False),
         # Left/right are unused by ListView (only up/down navigate rows); binding
         # them at the Screen level means the focused Input still gets cursor
         # movement inside its text field, but the ListView forwards to us.
@@ -451,3 +455,5 @@ class HomeScreen(Screen[None]):
     def action_open_coverage(self) -> None:
         from retrofetch.tui.screens.coverage import CoverageScreen
         self.app.push_screen(CoverageScreen())
+
+

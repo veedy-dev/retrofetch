@@ -9,9 +9,12 @@ the specific console's include/exclude lists, save via save_overrides() (atomic 
 """
 from __future__ import annotations
 
+# pyright: reportAttributeAccessIssue=false
+
 from pathlib import Path
 from typing import Any
 
+from rich.text import Text
 from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
@@ -39,7 +42,7 @@ class WantlistScreen(Screen[None]):
         Binding("pagedown", "page_next", "Next page", show=True),
     ]
 
-    _PAGE_SIZE = 50
+    _PAGE_SIZE = 500
 
     def __init__(
         self,
@@ -155,8 +158,8 @@ class WantlistScreen(Screen[None]):
         end = start + self._PAGE_SIZE
         page_rows = self._wantlist[start:end]
         for offset, title in enumerate(page_rows):
-            inc = "[x]" if title in self._include else "[ ]"
-            exc = "[x]" if title in self._exclude else "[ ]"
+            inc = Text("[x]" if title in self._include else "[ ]")
+            exc = Text("[x]" if title in self._exclude else "[ ]")
             table.add_row(
                 str(start + offset + 1),
                 inc,

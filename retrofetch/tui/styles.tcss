@@ -32,6 +32,9 @@ Input#filter {
  * Anything else (class D/E/F, or Class A/B/C with no provider) is
  * unavailable - shown dim + italic so the user knows not to expect games.
  */
+.class-a { color: $success; }
+.class-b { color: $success; }
+.class-c { color: $success; }
 .class-available   { color: $success; }
 .class-unavailable { color: $text-muted; text-style: italic; }
 

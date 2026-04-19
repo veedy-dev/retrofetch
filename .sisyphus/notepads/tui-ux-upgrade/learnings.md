@@ -73,3 +73,31 @@ Files:
 ## [2026-04-18T06:28:31.618458+00:00] Task U1
 - Wantlist cache files should mirror config atomic writes: tmp + fsync + os.replace.
 - QA scripts under .sisyphus need runtime importlib loading to keep Pyright clean while importing repo modules from an ignored directory.
+
+
+## [2026-04-18 session] U4 findings (recorded by orchestrator; subagent stalled mid-task)
+
+- The visual-engineering subagent stalled mid-task and corrupted `retrofetch/cli.py` (replaced `download` command body with TUI launch code, lost the `tui` command entirely, duplicated `_try_load_config`). Orchestrator reverted cli.py and applied the surgical edits directly.
+- Clean artifacts the subagent DID produce correctly: `retrofetch/tui/screens/setup.py`, `retrofetch/tui/app.py` (first_run flag + on_mount branch + _on_setup_done callback), the three QA scripts under `.sisyphus/qa/wave5-task4-*.py`.
+- Textual API gotchas discovered (future subagents beware):
+  - `Label.renderable` does NOT exist in this Textual version. Use `str(label.render())` when reading label text.
+  - `App[int].exit(2)` sets `app.return_value = 2` (the ReturnType result), NOT `app.return_code` (OS exit code). Tests on cancel path must assert `app.return_value == 2`. `cli.py` then propagates it via `typer.Exit(return_code if return_code is not None else 0)`.
+  - `App.run_test()` teardown: inside a validation-error test, call `app.exit(0)` before exiting the context so the pilot cleans up without hanging.
+- `.sisyphus/` is in `.git/info/exclude` (local excludes). Any commit including QA scripts / evidence under `.sisyphus/` MUST use `git add -f` explicitly. Plain `git add` silently skips them with a warning.
+- For future Wave 3/4/5 delegations: ALWAYS include the "git add -f for .sisyphus paths" instruction explicitly in the prompt. Recommend subagents `git diff --staged --stat` before committing to verify artifacts actually made it in.
+- `RetrofetchApp.on_mount` now branches on `self._first_run`. Home-screen callers unchanged (default `first_run=False`).
+- `cli.py::tui` flow (post-U4): consoles.yml + overrides load first, then `_try_load_config` decides wizard vs direct HomeScreen. On cancel (`return_value == 2`), CLI prints "Setup cancelled..." and exits 2. Cleanroom TTY-guard still exits 2 before wizard logic when stdout is not a TTY (wave3-task12 regression still passes).
+
+
+## [2026-04-18 session] U5 findings (orchestrator implemented directly)
+
+- CRITICAL Textual gotcha: Static widgets parse Rich markup by default. Any text containing `[x]`/`[w]`/`[d]` etc. will be interpreted as markup style tags and stripped. Mitigation: wrap body text in `rich.text.Text(...)` before passing to `Static.update()`. That bypasses markup entirely.
+- Do NOT override a method called `_render` on a Widget subclass — `Widget._render()` is a built-in zero-arg method called by layout. My first draft used `_render(body)` and Textual blew up with a TypeError during layout. Renamed to `_set_body(body)` as the internal helper.
+- Static exposes the last-set renderable via `self.renderable`? NO — on this Textual version, Static does NOT expose a `renderable` attribute (the attribute returns None). Use `str(widget.render())` in tests, or keep a module-local cache. For the U5 QA I used `getattr(widget, 'renderable', None)` with fallback to `widget.render()`.
+- Action hints string `[w] wantlist  [d] download  [s] state  [C] coverage  [?] help  [q] quit` is always rendered at the bottom of the panel across ALL four modes. Centralize in module constant `_HINTS`.
+- State snapshot display keys matched per plan/U6 spec: `acquired`, `failed`, `pending` (state.py also defines `unverified` but plan only surfaces the three). Widget accepts the full dict and shows the three plan-specified counts.
+- Truncation beyond 20 titles shows `... (N more)` marker line.
+
+## 2026-04-19 19:45:17 tui-retry-and-pagesize-fix
+- DataTable.add_row accepts rich.text.Text cells, which bypass Rich markup parsing for bracketed labels like [x] and [ ].
+- Same escape pattern as Static.update(Text(...)).

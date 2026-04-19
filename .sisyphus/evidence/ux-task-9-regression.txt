@@ -1,4 +1,4 @@
-total=47 passed=47 failed=0
+total=55 passed=55 failed=0
 [PASS] rc=0 wave1-task5-deps.py :: T5 deps: OK
 [PASS] rc=0 wave1-task6-goldens.py :: goldens ok
 [PASS] rc=0 wave1-task7-events-unsub.py :: T7 unsubscribe-mid-dispatch: OK
@@ -20,7 +20,7 @@ total=47 passed=47 failed=0
 [PASS] rc=0 wave3-task15-sidebar.py :: T15 sidebar: OK (178 items, nintendo-filter yields valid subset)
 [PASS] rc=0 wave3-task15-skip-class-def.py :: T15 skip-class-def: OK (class D/E/F items don't emit ConsoleSelected)
 [PASS] rc=0 wave3-task16-tcss.py :: T16 tcss: OK (sidebar width=32, class-tier rules loaded, no emoji)
-[PASS] rc=0 wave4-task17-wantlist.py :: T17 wantlist: OK (saved 125 bytes to overrides.yml)
+[PASS] rc=0 wave4-task17-wantlist.py :: T17 wantlist: OK (saved 160 bytes to overrides.yml)
 [PASS] rc=0 wave4-task18-cancel.py :: T18 cancel: OK (summary='Cancelled. Press esc to return.')
 [PASS] rc=0 wave4-task18-download.py :: T18 download: OK (summary='Done. attempted=2 acquired=0 failed=0 unverified=0. Press esc to return.')
 [PASS] rc=0 wave4-task19-state.py :: T19 state: OK (3 rows, status classes applied)
@@ -46,3 +46,11 @@ total=47 passed=47 failed=0
 [PASS] rc=0 wave5-task7-wantlist-nonblocking.py :: OK: wantlist screen nonblocking load (tabs responsive during sleep)
 [PASS] rc=0 wave5-task8-download-nonblocking.py :: OK: download screen nonblocking load (tabs responsive during sleep)
 [PASS] rc=0 wave5-task9-preview-class-def.py :: OK: class E console 'adam' shows IDLE (no fetch)
+[PASS] rc=0 wave6-bug1-empty-no-cache.py :: OK: empty result skips cache; non-empty result persists
+[PASS] rc=0 wave6-bug2-html-entities.py :: OK: wantlist_cache decodes HTML entities (return + persist)
+[PASS] rc=0 wave6-bug3-slug-audit.py ::   wonderswancolor
+[PASS] rc=0 wave6-p1-archive-audit.py :: wonderswancolor|Bandai WonderSwan Color|A|wonderswan-library|ok|304|One Piece Grand Battle Swan Colloseum (J); Girl Demo by Dox (PD); Dragonball (J)
+[PASS] rc=0 wave6-p2-vimm.py :: wave6-p2-vimm: OK
+[PASS] rc=0 wave6-p3-coolrom.py :: wave6-p3-coolrom: OK
+[PASS] rc=0 wave6-p4-integration.py :: wave6-p4-integration: OK
+[PASS] rc=0 wave7-preview-pagination.py :: OK: wave7 pagination + availability + title rename
