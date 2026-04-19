@@ -25,6 +25,9 @@ PreviewState = Literal["IDLE", "LOADING", "READY", "FAILED"]
 
 _HINTS = "[w] wantlist  [d] download  [s] state  [C] coverage  [?] help  [q] quit"
 
+_SPINNER_FRAMES = ("|", "/", "-", "\\")
+_SPINNER_INTERVAL_S = 0.12
+
 _IDLE_BODY = (
     "Select a console from the sidebar.\n"
     "\n"
@@ -60,9 +63,34 @@ class WantlistPreview(Static):
         self._current_console: str = ""
         self._from_cache: bool = False
         self._counts: dict[str, int] = {}
+        # Spinner animation state - an interval Timer that we start on
+        # show_loading and cancel when leaving the LOADING state.
+        self._spinner_timer = None
+        self._spinner_index: int = 0
 
     def on_mount(self) -> None:
         self.show_idle()
+
+    def _cancel_spinner(self) -> None:
+        if self._spinner_timer is not None:
+            try:
+                self._spinner_timer.stop()
+            except Exception:
+                pass
+            self._spinner_timer = None
+
+    def _tick_spinner(self) -> None:
+        if self.state != "LOADING":
+            self._cancel_spinner()
+            return
+        self._spinner_index = (self._spinner_index + 1) % len(_SPINNER_FRAMES)
+        self._render_loading_body()
+
+    def _render_loading_body(self) -> None:
+        frame = _SPINNER_FRAMES[self._spinner_index]
+        self._set_body(
+            f"Fetching wantlist for {self._current_console}...  {frame}\n\n{_HINTS}"
+        )
 
     # -- internal helpers --------------------------------------------------
 
@@ -119,15 +147,27 @@ class WantlistPreview(Static):
     # -- public API --------------------------------------------------------
 
     def show_idle(self) -> None:
+        self._cancel_spinner()
         self._reset_state()
         self.state = "IDLE"
         self._set_body(_IDLE_BODY)
 
     def show_loading(self, console: str) -> None:
+        self._cancel_spinner()
         self._reset_state()
         self.state = "LOADING"
         self._current_console = console
-        self._set_body(f"Fetching wantlist for {console}...\n\n{_HINTS}")
+        self._spinner_index = 0
+        self._render_loading_body()
+        # set_interval runs the callback on the UI thread at the given cadence
+        try:
+            self._spinner_timer = self.set_interval(
+                _SPINNER_INTERVAL_S, self._tick_spinner
+            )
+        except Exception:
+            # set_interval may raise if the widget is not yet mounted; the
+            # static "Fetching..." text is still readable without animation.
+            self._spinner_timer = None
 
     def show_ready(
         self,
@@ -136,6 +176,7 @@ class WantlistPreview(Static):
         from_cache: bool,
         state_counts: dict[str, int],
     ) -> None:
+        self._cancel_spinner()
         self.state = "READY"
         self._current_console = console
         self._titles = list(titles)
@@ -145,6 +186,7 @@ class WantlistPreview(Static):
         self._render_current_page()
 
     def show_failed(self, console: str, reason: str) -> None:
+        self._cancel_spinner()
         self._reset_state()
         self.state = "FAILED"
         self._current_console = console

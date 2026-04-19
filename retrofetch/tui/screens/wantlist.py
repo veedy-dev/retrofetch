@@ -24,6 +24,10 @@ from retrofetch.tui.messages import WantlistFailed, WantlistReady
 from retrofetch.wantlist_cache import get_or_fetch_wantlist
 
 
+_SPINNER_FRAMES = ("|", "/", "-", "\\")
+_SPINNER_INTERVAL_S = 0.12
+
+
 class WantlistScreen(Screen[None]):
     BINDINGS = [
         Binding("space", "toggle_include", "Include", show=True),
@@ -55,6 +59,8 @@ class WantlistScreen(Screen[None]):
         self._status = ""
         self._primary_source: str = "-"
         self._loaded_source: str = ""  # "cached" / "fresh" / "error" / ""
+        self._spinner_timer = None
+        self._spinner_index: int = 0
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -74,8 +80,41 @@ class WantlistScreen(Screen[None]):
         ranking_sources = self.app.config.ranking_sources_by_class.get(klass, [])  # pyright: ignore[reportAttributeAccessIssue]
         self._primary_source = ranking_sources[0] if ranking_sources else "-"
         # Kick background loader. UI remains responsive; handler fills the table.
-        self._set_status("Loading wantlist...")
+        self._start_loading_spinner()
         self._kick_load()
+
+    def _start_loading_spinner(self) -> None:
+        self._spinner_index = 0
+        self._update_loading_status_line()
+        if self._spinner_timer is None:
+            try:
+                self._spinner_timer = self.set_interval(
+                    _SPINNER_INTERVAL_S, self._tick_spinner
+                )
+            except Exception:
+                self._spinner_timer = None
+
+    def _stop_loading_spinner(self) -> None:
+        if self._spinner_timer is not None:
+            try:
+                self._spinner_timer.stop()
+            except Exception:
+                pass
+            self._spinner_timer = None
+
+    def _tick_spinner(self) -> None:
+        # Stop ticking once the load finishes (either way, the status line
+        # gets overwritten by _refresh_status_line on WantlistReady or
+        # _set_status on WantlistFailed).
+        if self._loaded_source:
+            self._stop_loading_spinner()
+            return
+        self._spinner_index = (self._spinner_index + 1) % len(_SPINNER_FRAMES)
+        self._update_loading_status_line()
+
+    def _update_loading_status_line(self) -> None:
+        frame = _SPINNER_FRAMES[self._spinner_index]
+        self._set_status(f"Loading wantlist for {self.shortname}...  {frame}")
 
     @work(thread=True, exclusive=True, group="wantlist-load")
     def _kick_load(self) -> None:
@@ -97,6 +136,7 @@ class WantlistScreen(Screen[None]):
         self._wantlist = list(message.titles)
         self._loaded_source = "cached" if message.from_cache else "fresh"
         self._page = 0
+        self._stop_loading_spinner()
         self._render_page()
 
     def on_wantlist_failed(self, message: WantlistFailed) -> None:
@@ -104,6 +144,7 @@ class WantlistScreen(Screen[None]):
             return
         self._wantlist = []
         self._loaded_source = "error"
+        self._stop_loading_spinner()
         self._set_status(f"error: {message.reason}")
         self._render_page()
 
@@ -210,8 +251,8 @@ class WantlistScreen(Screen[None]):
         self._wantlist = []
         self._loaded_source = ""
         self._page = 0
-        self._set_status(f"Refreshing wantlist for {self.shortname}...")
         self._render_page()
+        self._start_loading_spinner()
         self._kick_load()
 
     def action_cancel(self) -> None:
