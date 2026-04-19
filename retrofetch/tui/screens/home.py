@@ -135,6 +135,8 @@ class HomeScreen(Screen[None]):
         consoles = self.app.consoles_yml.get("consoles", []) or []
         list_view: ListView = self.query_one("#console-list", ListView)
         cache_dir = self.app.config.cache_dir  # pyright: ignore[reportAttributeAccessIssue]
+        total_count = 0
+        available_count = 0
         for entry in consoles:
             shortname = str(entry.get("shortname", "?"))
             display_name = str(entry.get("display_name", shortname))
@@ -151,7 +153,16 @@ class HomeScreen(Screen[None]):
             item._rf_available = available  # type: ignore[attr-defined]
             list_view.append(item)
             self._all_items.append((entry, item))
+            total_count += 1
+            if available:
+                available_count += 1
         # Preview starts in IDLE state (WantlistPreview.on_mount handles it).
+        # Use the header's sub_title slot to show a live coverage stat - that
+        # fills the empty top-right corner with something useful.
+        try:
+            self.app.sub_title = f"{available_count}/{total_count} consoles available"
+        except Exception:
+            pass
 
     def _update_row_availability(self, shortname: str, available: bool) -> None:
         """Recolor a single sidebar row after a live fetch outcome.
@@ -160,9 +171,13 @@ class HomeScreen(Screen[None]):
         turns grey immediately, and a console whose retry succeeded turns
         green again without waiting for the next app launch.
         """
+        changed = False
         for entry, item in self._all_items:
             if str(entry.get("shortname", "")) != shortname:
                 continue
+            prior = getattr(item, "_rf_available", False)
+            if prior == available:
+                return
             item._rf_available = available  # type: ignore[attr-defined]
             try:
                 if available:
@@ -174,7 +189,17 @@ class HomeScreen(Screen[None]):
             except Exception:
                 # Textual may not have mounted the item yet; ignore.
                 pass
-            return
+            changed = True
+            break
+        if changed:
+            # Re-emit the coverage stat so the header reflects the new count.
+            available_count = sum(
+                1 for _, item in self._all_items if getattr(item, "_rf_available", False)
+            )
+            try:
+                self.app.sub_title = f"{available_count}/{len(self._all_items)} consoles available"
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # Filter debounce (unchanged)

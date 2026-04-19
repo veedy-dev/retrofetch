@@ -29,6 +29,7 @@ class WantlistScreen(Screen[None]):
         Binding("space", "toggle_include", "Include", show=True),
         Binding("x", "toggle_exclude", "Exclude", show=True),
         Binding("s", "save", "Save", show=True),
+        Binding("r", "refresh", "Refresh", show=True),
         Binding("escape", "cancel", "Cancel", show=True),
         Binding("pageup", "page_prev", "Prev page", show=True),
         Binding("pagedown", "page_next", "Next page", show=True),
@@ -53,16 +54,16 @@ class WantlistScreen(Screen[None]):
         self._page = 0
         self._status = ""
         self._primary_source: str = "-"
+        self._loaded_source: str = ""  # "cached" / "fresh" / "error" / ""
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
         with Vertical(id="main-panel"):
-            yield Label(f"Wantlist: {self.shortname}  (space=include, x=exclude, s=save, esc=cancel)")
+            yield Label(
+                f"Wantlist: {self.shortname}  (space=include, x=exclude, s=save, r=refresh, esc=cancel)"
+            )
             yield Label("", id="status-line")
             yield DataTable(id="wantlist-table")
-            with Horizontal():
-                yield Label("", id="page-indicator")
-                yield Static("", id="filler")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -94,14 +95,15 @@ class WantlistScreen(Screen[None]):
         if message.console != self.shortname:
             return
         self._wantlist = list(message.titles)
-        indicator = "cached" if message.from_cache else "fresh"
-        self._set_status(f"{len(self._wantlist)} titles loaded ({indicator})")
+        self._loaded_source = "cached" if message.from_cache else "fresh"
+        self._page = 0
         self._render_page()
 
     def on_wantlist_failed(self, message: WantlistFailed) -> None:
         if message.console != self.shortname:
             return
         self._wantlist = []
+        self._loaded_source = "error"
         self._set_status(f"error: {message.reason}")
         self._render_page()
 
@@ -122,10 +124,30 @@ class WantlistScreen(Screen[None]):
                 "yes" if title in self._include else "",
                 "yes" if title in self._exclude else "",
             )
-        total_pages = max(1, (len(self._wantlist) + self._PAGE_SIZE - 1) // self._PAGE_SIZE)
-        self.query_one("#page-indicator", Label).update(
-            f"page {self._page + 1} / {total_pages}  ({len(self._wantlist)} items)"
+        # Reset the viewport to the top on each page render so rows are never
+        # stranded mid-scroll.
+        try:
+            if page_rows:
+                table.cursor_coordinate = (0, 0)
+                table.scroll_home(animate=False)
+        except Exception:
+            # Textual API variant: scroll_home might differ
+            pass
+        self._refresh_status_line()
+
+    def _refresh_status_line(self) -> None:
+        total = len(self._wantlist)
+        total_pages = max(1, (total + self._PAGE_SIZE - 1) // self._PAGE_SIZE)
+        if total == 0 and self._status:
+            # Preserve an error/failure status when the list is empty
+            return
+        source = self._loaded_source or "loading"
+        status = (
+            f"{total} titles ({source})  |  "
+            f"page {self._page + 1}/{total_pages}  |  "
+            f"included: {len(self._include)}  excluded: {len(self._exclude)}"
         )
+        self._set_status(status)
 
     def _set_status(self, msg: str) -> None:
         self._status = msg
@@ -176,6 +198,21 @@ class WantlistScreen(Screen[None]):
         if self._page < total_pages - 1:
             self._page += 1
             self._render_page()
+
+    def action_refresh(self) -> None:
+        """Force a fresh fetch: invalidate cache + re-kick the worker."""
+        from retrofetch.wantlist_cache import invalidate
+        try:
+            cache_dir = self.app.config.cache_dir  # pyright: ignore[reportAttributeAccessIssue]
+            invalidate(cache_dir, self.shortname)
+        except Exception:
+            pass
+        self._wantlist = []
+        self._loaded_source = ""
+        self._page = 0
+        self._set_status(f"Refreshing wantlist for {self.shortname}...")
+        self._render_page()
+        self._kick_load()
 
     def action_cancel(self) -> None:
         self.dismiss(None)

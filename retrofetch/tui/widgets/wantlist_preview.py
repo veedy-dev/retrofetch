@@ -109,7 +109,9 @@ class WantlistPreview(Static):
 
         lines = [header, "", listing, "", counts_line, ""]
         if total_pages > 1:
-            lines.append(f"Page {self._page + 1}/{total_pages}    [  prev    ]  next")
+            lines.append(
+                f"Page {self._page + 1}/{total_pages}    <- prev    -> next"
+            )
             lines.append("")
         lines.append(_HINTS)
         self._set_body("\n".join(lines))
