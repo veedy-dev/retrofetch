@@ -67,7 +67,7 @@ class WantlistScreen(Screen[None]):
 
     def on_mount(self) -> None:
         table: DataTable = self.query_one("#wantlist-table", DataTable)
-        table.add_columns("sel", "Title", "Source", "Included", "Excluded")
+        table.add_columns("#", "sel", "Title", "Source", "Included", "Excluded")
         table.cursor_type = "row"
         klass = str(self.console_entry.get("class", "?"))
         ranking_sources = self.app.config.ranking_sources_by_class.get(klass, [])  # pyright: ignore[reportAttributeAccessIssue]
@@ -111,10 +111,11 @@ class WantlistScreen(Screen[None]):
         start = self._page * self._PAGE_SIZE
         end = start + self._PAGE_SIZE
         page_rows = self._wantlist[start:end]
-        for title in page_rows:
+        for offset, title in enumerate(page_rows):
             inc = "[x]" if title in self._include else "[ ]"
             exc = "[x]" if title in self._exclude else "[ ]"
             table.add_row(
+                str(start + offset + 1),
                 inc,
                 title,
                 self._primary_source,

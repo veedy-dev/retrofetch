@@ -32,6 +32,7 @@ from retrofetch.wantlist_cache import (
     cache_path,
     get_or_fetch_wantlist,
     invalidate,
+    is_recently_empty,
     load_cached,
 )
 
@@ -59,8 +60,11 @@ class HomeScreen(Screen[None]):
         Binding("s", "open_state", "State", show=True),
         Binding("C", "open_coverage", "Coverage", show=True),
         Binding("ctrl+r", "retry_fetch", "Retry", show=True),
-        Binding("bracket_left", "preview_prev_page", "Prev", show=True, key_display="["),
-        Binding("bracket_right", "preview_next_page", "Next", show=True, key_display="]"),
+        # Left/right are unused by ListView (only up/down navigate rows); binding
+        # them at the Screen level means the focused Input still gets cursor
+        # movement inside its text field, but the ListView forwards to us.
+        Binding("left", "preview_prev_page", "Prev page", show=True, key_display="<-"),
+        Binding("right", "preview_next_page", "Next page", show=True, key_display="->"),
     ]
 
     # Debounce for filter Input.Changed events, per T2 spike.
@@ -99,25 +103,43 @@ class HomeScreen(Screen[None]):
     )
 
     @classmethod
-    def _is_available(cls, entry: dict[str, Any]) -> bool:
-        """A console is 'available' iff its class is A/B/C and at least one
-        ranking source slug is populated. Anything else (skipped class or no
-        provider) shows dim in the sidebar.
-        """
+    def _has_slug(cls, entry: dict[str, Any]) -> bool:
         klass = str(entry.get("class", ""))
         if klass not in ("A", "B", "C"):
             return False
         return any(entry.get(field) for field in cls._RANKING_SLUG_FIELDS)
 
+    @classmethod
+    def _is_available(cls, entry: dict[str, Any], cache_dir: Path | None = None) -> bool:
+        """A console is 'available' iff:
+        - its class is A/B/C, AND
+        - at least one ranking source slug is populated, AND
+        - no recent empty-marker exists (i.e. last fetch did not come back
+          empty within EMPTY_MARKER_TTL_HOURS).
+
+        ``cache_dir`` is optional so unit tests (and pre-mount callers) can
+        invoke the classifier without requiring a config. When omitted, only
+        the slug check is applied.
+        """
+        if not cls._has_slug(entry):
+            return False
+        if cache_dir is None:
+            return True
+        shortname = str(entry.get("shortname", ""))
+        if not shortname:
+            return False
+        return not is_recently_empty(cache_dir, shortname)
+
     def on_mount(self) -> None:
         """Populate the ListView from self.app.consoles_yml (loaded by cli.py)."""
         consoles = self.app.consoles_yml.get("consoles", []) or []
         list_view: ListView = self.query_one("#console-list", ListView)
+        cache_dir = self.app.config.cache_dir  # pyright: ignore[reportAttributeAccessIssue]
         for entry in consoles:
             shortname = str(entry.get("shortname", "?"))
             display_name = str(entry.get("display_name", shortname))
             klass = str(entry.get("class", "?"))
-            available = self._is_available(entry)
+            available = self._is_available(entry, cache_dir)
             badge = f"[{klass}]" if klass else "[?]"
             label = Label(f"{badge} {display_name}")
             css_class = "class-available" if available else "class-unavailable"
@@ -130,6 +152,29 @@ class HomeScreen(Screen[None]):
             list_view.append(item)
             self._all_items.append((entry, item))
         # Preview starts in IDLE state (WantlistPreview.on_mount handles it).
+
+    def _update_row_availability(self, shortname: str, available: bool) -> None:
+        """Recolor a single sidebar row after a live fetch outcome.
+
+        Used by the message handlers so a console that just returned 0 titles
+        turns grey immediately, and a console whose retry succeeded turns
+        green again without waiting for the next app launch.
+        """
+        for entry, item in self._all_items:
+            if str(entry.get("shortname", "")) != shortname:
+                continue
+            item._rf_available = available  # type: ignore[attr-defined]
+            try:
+                if available:
+                    item.remove_class("class-unavailable")
+                    item.add_class("class-available")
+                else:
+                    item.remove_class("class-available")
+                    item.add_class("class-unavailable")
+            except Exception:
+                # Textual may not have mounted the item yet; ignore.
+                pass
+            return
 
     # ------------------------------------------------------------------
     # Filter debounce (unchanged)
@@ -236,6 +281,11 @@ class HomeScreen(Screen[None]):
     # Message handlers - run on UI thread
     # ------------------------------------------------------------------
     def on_wantlist_ready(self, message: WantlistReady) -> None:
+        # Empty results downgrade the sidebar row to grey (in-session), so the
+        # user knows this console is effectively unavailable. We still render
+        # the (empty) preview so the user sees the outcome. Non-empty results
+        # guarantee the row is green.
+        self._update_row_availability(message.console, bool(message.titles))
         # Only accept if the highlighted console still matches, to avoid
         # stale worker results clobbering a newer highlight.
         if self._last_highlighted and message.console != self._last_highlighted:
@@ -252,6 +302,9 @@ class HomeScreen(Screen[None]):
         )
 
     def on_wantlist_failed(self, message: WantlistFailed) -> None:
+        # Fetch failure also downgrades the row so the user sees the state
+        # without needing to re-scroll.
+        self._update_row_availability(message.console, False)
         if self._last_highlighted and message.console != self._last_highlighted:
             return
         try:

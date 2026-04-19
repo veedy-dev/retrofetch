@@ -18,6 +18,11 @@ from retrofetch import ranker as _ranker
 log = logging.getLogger(__name__)
 
 DEFAULT_TTL_HOURS: int = 24
+# How long an "empty result" marker stays active before we retry the fetch.
+# Shorter than DEFAULT_TTL_HOURS so users see their consoles recover quickly
+# after a transient outage, but long enough that the sidebar stays accurately
+# dim across a normal session.
+EMPTY_MARKER_TTL_HOURS: int = 2
 
 
 @dataclass(frozen=True)
@@ -111,6 +116,75 @@ def invalidate(cache_dir: Path, shortname: str) -> None:
         path.unlink()
     except FileNotFoundError:
         return
+    # Clearing the cache also clears any prior empty-marker so the user's
+    # manual retry starts from a clean slate.
+    clear_empty_marker(cache_dir, shortname)
+
+
+def _empty_marker_path(cache_dir: Path, shortname: str) -> Path:
+    return cache_dir / "empty_marks" / f"{shortname}.json"
+
+
+def mark_empty(cache_dir: Path, shortname: str) -> None:
+    """Record that a recent fetch for ``shortname`` returned zero titles.
+
+    The UI reads this via ``is_recently_empty`` to color the sidebar row grey.
+    Silently swallows I/O errors so a failed marker write never blocks the
+    fetch path.
+    """
+    path = _empty_marker_path(cache_dir, shortname)
+    payload = {
+        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "ttl_hours": EMPTY_MARKER_TTL_HOURS,
+        "console": shortname,
+    }
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(json.dumps(payload, indent=2, ensure_ascii=False))
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+    except OSError as exc:
+        log.debug("wantlist_cache: mark_empty failed for %s: %s", shortname, exc)
+
+
+def clear_empty_marker(cache_dir: Path, shortname: str) -> None:
+    """Idempotent delete of any prior empty-marker for ``shortname``."""
+    try:
+        _empty_marker_path(cache_dir, shortname).unlink()
+    except FileNotFoundError:
+        return
+    except OSError as exc:
+        log.debug(
+            "wantlist_cache: clear_empty_marker failed for %s: %s", shortname, exc
+        )
+
+
+def is_recently_empty(cache_dir: Path, shortname: str) -> bool:
+    """Return True iff a recent empty-marker exists and is within TTL."""
+    path = _empty_marker_path(cache_dir, shortname)
+    if not path.exists():
+        return False
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return False
+    if not isinstance(raw, dict):
+        return False
+    recorded_raw = raw.get("recorded_at")
+    ttl_hours = raw.get("ttl_hours", EMPTY_MARKER_TTL_HOURS)
+    if not isinstance(recorded_raw, str) or not isinstance(ttl_hours, int):
+        return False
+    try:
+        recorded = datetime.fromisoformat(recorded_raw)
+    except ValueError:
+        return False
+    if recorded.tzinfo is None:
+        return False
+    now = datetime.now(timezone.utc)
+    return now <= recorded + timedelta(hours=ttl_hours)
 
 
 def get_or_fetch_wantlist(
@@ -134,14 +208,20 @@ def get_or_fetch_wantlist(
     )
     # Decode HTML entities from scraped HTML sources.
     titles = [html.unescape(t) for t in raw_titles]
-    # Empty list = likely transient failure (Cloudflare block, source down, etc).
-    # Do NOT persist an empty wantlist for 24h - let the next visit retry.
+    # Empty list = no provider carries this console (or transient outage).
+    # We do NOT persist an empty wantlist as a normal cache file (that would
+    # block retries for 24h). Instead we write a short-lived empty-marker so
+    # the UI can grey out the sidebar row without permanently pinning it.
     if not titles:
         log.info(
-            "wantlist_cache: empty result for %s - not persisting (transient failure)",
+            "wantlist_cache: empty result for %s - recording short-lived marker",
             shortname,
         )
+        mark_empty(cache_dir, shortname)
         return (titles, False)
+    # Non-empty result: clear any stale empty-marker from a prior run so the
+    # UI recovers the green state immediately.
+    clear_empty_marker(cache_dir, shortname)
     entry = CachedWantlist(
         console=shortname,
         titles=list(titles),
