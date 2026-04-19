@@ -19,6 +19,7 @@ from textual import work  # pyright: ignore[reportMissingImports, reportAttribut
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Horizontal, Vertical  # pyright: ignore[reportMissingImports]
+from textual.coordinate import Coordinate  # pyright: ignore[reportMissingImports]
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
 from textual.widgets import DataTable, Footer, Header, Label, Static  # pyright: ignore[reportMissingImports]
 
@@ -172,11 +173,27 @@ class WantlistScreen(Screen[None]):
         # stranded mid-scroll.
         try:
             if page_rows:
-                table.cursor_coordinate = (0, 0)
+                table.cursor_coordinate = Coordinate(0, 0)
                 table.scroll_home(animate=False)
         except Exception:
             # Textual API variant: scroll_home might differ
             pass
+        self._refresh_status_line()
+
+    def _update_current_row_cells(self, title: str) -> None:
+        table: DataTable = self.query_one("#wantlist-table", DataTable)
+        row = table.cursor_row
+        inc_text = Text("[x]" if title in self._include else "[ ]")
+        exc_text = Text("[x]" if title in self._exclude else "[ ]")
+        included = "yes" if title in self._include else ""
+        excluded = "yes" if title in self._exclude else ""
+        try:
+            table.update_cell_at(Coordinate(row, 1), inc_text)
+            table.update_cell_at(Coordinate(row, 4), included)
+            table.update_cell_at(Coordinate(row, 5), excluded)
+        except Exception:
+            self._render_page()
+            return
         self._refresh_status_line()
 
     def _refresh_status_line(self) -> None:
@@ -219,7 +236,7 @@ class WantlistScreen(Screen[None]):
         else:
             self._include.add(title)
             self._exclude.discard(title)
-        self._render_page()
+        self._update_current_row_cells(title)
 
     def action_toggle_exclude(self) -> None:
         title = self._current_title()
@@ -230,7 +247,7 @@ class WantlistScreen(Screen[None]):
         else:
             self._exclude.add(title)
             self._include.discard(title)
-        self._render_page()
+        self._update_current_row_cells(title)
 
     def action_page_prev(self) -> None:
         if self._page > 0:
