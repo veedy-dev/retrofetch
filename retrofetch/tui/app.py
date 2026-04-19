@@ -37,6 +37,8 @@ from retrofetch.config import Config, ConfigError, ConsoleOverride, load_config,
 
 class RetrofetchApp(App[int]):
     CSS_PATH = "styles.tcss"
+    TITLE = "Retrofetch"
+    SUB_TITLE = "ROM collection filler"
 
     BINDINGS = [
         ("q", "quit", "Quit"),

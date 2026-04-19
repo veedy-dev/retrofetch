@@ -25,13 +25,15 @@ Input#filter {
     margin: 0;
 }
 
-/* Class-tier colors. Stock Textual provides $success (green), $primary (blue/cyan),
- * $warning (yellow/orange). We use $text-muted for skipped classes.
+/* Simplified availability coloring. A console is "available" iff:
+ *   class is A/B/C AND it has at least one ranking-source slug populated
+ *   (romsfun_slug, romsretro_slug, archive_org_identifier, vimm_slug,
+ *   coolrom_slug).
+ * Anything else (class D/E/F, or Class A/B/C with no provider) is
+ * unavailable - shown dim + italic so the user knows not to expect games.
  */
-.class-a { color: $success; }
-.class-b { color: $primary; }
-.class-c { color: $warning; }
-.class-def { color: $text-muted; text-style: italic; }
+.class-available   { color: $success; }
+.class-unavailable { color: $text-muted; text-style: italic; }
 
 /* Status colors for downstream screens (state browser, download progress, etc.). */
 .status-acquired  { color: $success; }

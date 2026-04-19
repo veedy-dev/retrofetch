@@ -68,16 +68,27 @@ async def main() -> None:
         assert "pending=2" in ready_text
         assert "[w] wantlist" in ready_text
 
-        # READY fresh with >20 titles (truncation)
+        # READY fresh with >20 titles: pagination (page 1/2, 20 titles visible)
         big_titles = [f"Title {i}" for i in range(25)]
         preview.show_ready("snes", big_titles, from_cache=False, state_counts={"acquired": 0, "failed": 0, "pending": 25})
         await pilot.pause(0.05)
         big_text = _read_text(preview)
         assert "snes - 25 titles (fresh)" in big_text
-        assert "Title 0" in big_text  # first shown
-        assert "Title 19" in big_text  # 20th shown
-        assert "Title 20" not in big_text  # 21st truncated
-        assert "5 more" in big_text  # truncation marker
+        assert "Title 0" in big_text  # first shown on page 1
+        assert "Title 19" in big_text  # 20th shown on page 1
+        assert "Title 20" not in big_text  # on page 2, not shown yet
+        assert "Page 1/2" in big_text, f"missing page indicator, got: {big_text[:300]!r}"
+        # Next page shows remaining 5 titles with global numbering 21..25
+        preview.next_page()
+        await pilot.pause(0.05)
+        page2_text = _read_text(preview)
+        assert "Title 20" in page2_text
+        assert "Title 24" in page2_text  # 25th global
+        assert "Page 2/2" in page2_text
+        # Prev back to page 1
+        preview.prev_page()
+        await pilot.pause(0.05)
+        assert "Page 1/2" in _read_text(preview)
 
         # FAILED
         preview.show_failed("nes", "network unreachable")

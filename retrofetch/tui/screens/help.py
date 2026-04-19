@@ -8,7 +8,7 @@ from textual.screen import ModalScreen  # pyright: ignore[reportMissingImports]
 from textual.widgets import Label, Static  # pyright: ignore[reportMissingImports]
 
 
-HELP_TEXT = """retrofetch TUI - keyboard reference
+HELP_TEXT = """Retrofetch TUI - keyboard reference
 
 Global
   q          quit
@@ -24,6 +24,13 @@ Home screen
   d          download screen
   s          state browser
   C          coverage viewer
+  Ctrl+R     retry fetch (invalidate cache + re-fetch)
+  [          previous page in preview
+  ]          next page in preview
+
+Sidebar color legend
+  green      console has a ranking provider (you can browse games)
+  grey       no provider for this console - skipped or unsupported
 
 Editors
   Ctrl+S     save

@@ -59,14 +59,18 @@ class HomeScreen(Screen[None]):
         Binding("s", "open_state", "State", show=True),
         Binding("C", "open_coverage", "Coverage", show=True),
         Binding("ctrl+r", "retry_fetch", "Retry", show=True),
+        Binding("bracket_left", "preview_prev_page", "Prev", show=True, key_display="["),
+        Binding("bracket_right", "preview_next_page", "Next", show=True, key_display="]"),
     ]
 
     # Debounce for filter Input.Changed events, per T2 spike.
     _FILTER_DEBOUNCE_MS = 200
     # Debounce for ListView.Highlighted auto-fetch, per UX plan (U6).
     _PREVIEW_DEBOUNCE_MS = 400
-    # Cap preview listing at 20 titles (shown by WantlistPreview).
-    _PREVIEW_LIMIT = 20
+    # Upper bound on titles we ask any source for. The preview paginates
+    # internally at WantlistPreview.PAGE_SIZE; the wantlist screen wants all
+    # of them. 500 is practically "everything the source has".
+    _PREVIEW_FETCH_LIMIT = 500
 
     def __init__(self) -> None:
         super().__init__()
@@ -86,6 +90,25 @@ class HomeScreen(Screen[None]):
             yield WantlistPreview(id="main-panel")
         yield Footer()
 
+    _RANKING_SLUG_FIELDS = (
+        "romsfun_slug",
+        "romsretro_slug",
+        "archive_org_identifier",
+        "vimm_slug",
+        "coolrom_slug",
+    )
+
+    @classmethod
+    def _is_available(cls, entry: dict[str, Any]) -> bool:
+        """A console is 'available' iff its class is A/B/C and at least one
+        ranking source slug is populated. Anything else (skipped class or no
+        provider) shows dim in the sidebar.
+        """
+        klass = str(entry.get("class", ""))
+        if klass not in ("A", "B", "C"):
+            return False
+        return any(entry.get(field) for field in cls._RANKING_SLUG_FIELDS)
+
     def on_mount(self) -> None:
         """Populate the ListView from self.app.consoles_yml (loaded by cli.py)."""
         consoles = self.app.consoles_yml.get("consoles", []) or []
@@ -94,15 +117,16 @@ class HomeScreen(Screen[None]):
             shortname = str(entry.get("shortname", "?"))
             display_name = str(entry.get("display_name", shortname))
             klass = str(entry.get("class", "?"))
+            available = self._is_available(entry)
             badge = f"[{klass}]" if klass else "[?]"
             label = Label(f"{badge} {display_name}")
-            classes = ["console-row", f"class-{klass.lower()}"]
-            if klass in ("D", "E", "F"):
-                classes.append("class-def")
+            css_class = "class-available" if available else "class-unavailable"
+            classes = ["console-row", css_class]
             item = ListItem(label, classes=" ".join(classes))
             item._rf_shortname = shortname  # type: ignore[attr-defined]
             item._rf_display_name = display_name  # type: ignore[attr-defined]
             item._rf_klass = klass  # type: ignore[attr-defined]
+            item._rf_available = available  # type: ignore[attr-defined]
             list_view.append(item)
             self._all_items.append((entry, item))
         # Preview starts in IDLE state (WantlistPreview.on_mount handles it).
@@ -162,7 +186,7 @@ class HomeScreen(Screen[None]):
             self._preview_timer.stop()
             self._preview_timer = None
 
-        if klass in ("D", "E", "F"):
+        if not getattr(item, "_rf_available", False):
             # Skipped classes: no fetch, show IDLE placeholder.
             self._last_highlighted = None
             preview.show_idle()
@@ -196,14 +220,12 @@ class HomeScreen(Screen[None]):
         """Background worker: fetch wantlist via cache, post result to self."""
         shortname = str(entry.get("shortname", ""))
         override = self.app.overrides.get(shortname)
-        default_limit = self.app.config.default_limit
-        limit = max(self._PREVIEW_LIMIT, min(default_limit, 40))
         try:
             titles, from_cache = get_or_fetch_wantlist(
                 console_entry=entry,
                 overrides=override,
                 config=self.app.config,
-                limit=limit,
+                limit=self._PREVIEW_FETCH_LIMIT,
             )
         except Exception as exc:
             self.post_message(WantlistFailed(shortname, str(exc)))
@@ -220,9 +242,11 @@ class HomeScreen(Screen[None]):
             return
         counts = self._compute_state_counts(message.console)
         preview = self.query_one("#main-panel", WantlistPreview)
+        # Pass the FULL title list - WantlistPreview handles pagination
+        # internally (20 per page via PAGE_SIZE).
         preview.show_ready(
             message.console,
-            message.titles[: self._PREVIEW_LIMIT],
+            list(message.titles),
             message.from_cache,
             counts,
         )
@@ -241,6 +265,20 @@ class HomeScreen(Screen[None]):
     # ------------------------------------------------------------------
     # Retry binding (Ctrl+R)
     # ------------------------------------------------------------------
+    def action_preview_next_page(self) -> None:
+        try:
+            preview = self.query_one("#main-panel", WantlistPreview)
+        except Exception:
+            return
+        preview.next_page()
+
+    def action_preview_prev_page(self) -> None:
+        try:
+            preview = self.query_one("#main-panel", WantlistPreview)
+        except Exception:
+            return
+        preview.prev_page()
+
     def action_retry_fetch(self) -> None:
         shortname = self._last_highlighted
         if not shortname:
@@ -269,7 +307,7 @@ class HomeScreen(Screen[None]):
         """Enter on an item - post ConsoleSelected ONLY for class A/B/C."""
         item = event.item
         klass = getattr(item, "_rf_klass", "?")
-        if klass in ("D", "E", "F"):
+        if not getattr(item, "_rf_available", False):
             return
         shortname = getattr(item, "_rf_shortname", "?")
         display_name = getattr(item, "_rf_display_name", "?")
@@ -291,7 +329,7 @@ class HomeScreen(Screen[None]):
         if item is None:
             return
         klass = getattr(item, "_rf_klass", "?")
-        if klass in ("D", "E", "F"):
+        if not getattr(item, "_rf_available", False):
             return
         shortname = getattr(item, "_rf_shortname", "?")
         entry = self._lookup_entry(shortname)
@@ -307,7 +345,7 @@ class HomeScreen(Screen[None]):
         if item is None:
             return
         klass = getattr(item, "_rf_klass", "?")
-        if klass in ("D", "E", "F"):
+        if not getattr(item, "_rf_available", False):
             return
         shortname = getattr(item, "_rf_shortname", "?")
         entry = self._lookup_entry(shortname)
@@ -323,7 +361,7 @@ class HomeScreen(Screen[None]):
         if item is None:
             return
         klass = getattr(item, "_rf_klass", "?")
-        if klass in ("D", "E", "F"):
+        if not getattr(item, "_rf_available", False):
             return
         shortname = getattr(item, "_rf_shortname", "?")
         entry = self._lookup_entry(shortname)
