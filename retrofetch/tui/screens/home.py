@@ -434,8 +434,8 @@ class HomeScreen(Screen[None]):
         if entry is None:
             return
         override = self.app.overrides.get(shortname)
-        from retrofetch.tui.screens.download import DownloadScreen
-        self.app.push_screen(DownloadScreen(console_entry=entry, override=override))
+        from retrofetch.tui.screens.download_confirm import DownloadConfirmScreen
+        self.app.push_screen(DownloadConfirmScreen(console_entry=entry, override=override))
 
     def action_open_state(self) -> None:
         list_view = self.query_one("#console-list")

@@ -37,7 +37,7 @@ Skip the rest of this section if the launcher worked. The manual steps below are
 
 1. Clone and install
 ```powershell
-git clone https://github.com/user/retrofetch D:\retrofetch
+git clone https://github.com/veedy-dev/retrofetch D:\retrofetch
 cd D:\retrofetch
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
@@ -74,7 +74,7 @@ retrofetch report
 <summary>Linux / macOS instructions</summary>
 
 ```bash
-git clone https://github.com/user/retrofetch ~/retrofetch
+git clone https://github.com/veedy-dev/retrofetch ~/retrofetch
 cd ~/retrofetch
 python3 -m venv .venv
 source .venv/bin/activate
@@ -106,8 +106,8 @@ The home screen features a 178-console sidebar. As you scroll through consoles, 
 | q | Quit (exit 0) |
 | / | Focus filter input (sidebar) |
 | ? | Help modal (key reference) |
-| w | Wantlist curation (DataTable, space=include, x=exclude, s=save) |
-| d | Download screen (live progress, Enter=start, c=cancel) |
+| w | Wantlist curation (DataTable, space=include, a/Ctrl+A=include page, x=exclude, s=save) |
+| d | Download confirm screen (Enter=save and open progress, c=cancel) |
 | s | State browser (read-only .retrofetch-state.json viewer) |
 | C | Coverage viewer (async compute, e=export) |
 | Ctrl+R | Retry fetch (invalidates cache and re-fetches) |
@@ -115,6 +115,19 @@ The home screen features a 178-console sidebar. As you scroll through consoles, 
 | Enter | Select / Activate |
 | Esc | Back / Close modal |
 | Ctrl+S | Global save (where applicable) |
+
+### Download flow
+Pressing `d` on a Class A/B/C console opens the **Download confirm screen**:
+- Shows the cached wantlist count and a `Dry run` toggle (Space toggles).
+- Press `Enter` to commit the wantlist, dismiss confirm, and open the **Download progress screen**.
+- Press `Esc` to return to home without starting.
+
+The **Download progress screen** shows:
+- An overall progress block at the top (`X / N games done`).
+- The currently active downloads (top section).
+- Recently completed entries (scrollable middle section).
+- A summary line on completion (`acquired=N, failed=N, unverified=N`).
+- Press `Esc` or `c` while running to open the **Cancel confirm modal**; pressing `y` stops the run gracefully (current file finishes, then dismiss).
 
 ### Prerequisites
 A real terminal is required. The TUI will not launch in MSYS2, PowerShell ISE, or non-TTY pipes.
@@ -293,7 +306,10 @@ retrofetch/
 |       |-- messages.py
 |       |-- styles.tcss
 |       |-- screens/
-|       |   `-- setup.py       # First-run configuration wizard
+|       |   |-- setup.py             # First-run configuration wizard
+|       |   |-- download_confirm.py  # Download confirm screen
+|       |   |-- download_progress.py # Download progress screen
+|       |   `-- cancel_confirm.py    # Cancel confirm modal
 |       |-- widgets/
 |       |   `-- wantlist_preview.py # Live preview panel
 |       `-- workers/

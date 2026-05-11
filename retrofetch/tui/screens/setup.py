@@ -9,7 +9,7 @@ from textual.containers import Vertical  # pyright: ignore[reportMissingImports]
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
 from textual.widgets import Footer, Header, Input, Label, Static  # pyright: ignore[reportMissingImports]
 
-from retrofetch.cli import _REPO_DIR
+from retrofetch import _resources
 from retrofetch.config import _yaml_rt, save_config
 from retrofetch.tui.messages import SetupComplete
 
@@ -66,7 +66,7 @@ class SetupScreen(Screen[bool]):
             self._set_status("region_priority must not be empty")
             return
 
-        example_path = _REPO_DIR / "config.yml.example"
+        example_path = _resources.find_data_file("config.yml.example")
         try:
             data = _yaml_rt.load(example_path.read_text(encoding="utf-8"))
         except Exception as exc:

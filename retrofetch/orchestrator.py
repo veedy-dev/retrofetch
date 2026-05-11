@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from retrofetch import _resources
 from retrofetch.config import Config
 from retrofetch.dat import DatEntry, parse_dat
 from retrofetch.dat_fetch import find_dat_for_console
@@ -104,7 +105,7 @@ def run_console(
     dat: DatEntry | None = None
     dats_dir = Path("dats")
     if not dats_dir.exists():
-        dats_dir = Path(__file__).resolve().parent.parent / "dats"
+        dats_dir = _resources.find_data_file("dats")
     dat_path = find_dat_for_console(short, consoles_yml, dats_dir)
     if event_bus is not None:
         event_bus.publish(

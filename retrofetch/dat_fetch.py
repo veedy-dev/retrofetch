@@ -9,8 +9,11 @@ from typing import Any
 def find_dat_for_console(
     shortname: str,
     consoles_yml: dict[str, Any],
-    dats_dir: Path = Path("dats"),
+    dats_dir: Path | None = None,
 ) -> Path | None:
+    if dats_dir is None:
+        from retrofetch import _resources
+        dats_dir = _resources.find_data_file("dats")
     consoles = consoles_yml.get("consoles", [])
     entry = next((c for c in consoles if c.get("shortname") == shortname), None)
     if entry is None:

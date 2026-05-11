@@ -9,6 +9,7 @@ import typer
 from rich.console import Console
 
 from retrofetch import __version__
+from retrofetch import _resources
 from retrofetch.config import (
     Config,
     ConfigError,
@@ -166,9 +167,9 @@ def init(
     """Create config.yml, overrides.yml, .env.example, and bootstrap dats/ layout."""
 
     targets = {
-        "config.yml": _REPO_DIR / "config.yml.example",
-        "overrides.yml": _REPO_DIR / "overrides.yml.example",
-        ".env.example": _REPO_DIR / ".env.example",
+        "config.yml": _resources.find_data_file("config.yml.example"),
+        "overrides.yml": _resources.find_data_file("overrides.yml.example"),
+        ".env.example": _resources.find_data_file(".env.example"),
     }
     for dest_name, example_path in targets.items():
         dest = Path.cwd() / dest_name
@@ -187,7 +188,7 @@ def init(
     bootstrap_dats(dats_dir)
     console.print(f"[green]ensured[/green] {dats_dir}/ structure")
 
-    consoles_src = _REPO_DIR / "consoles.yml"
+    consoles_src = _resources.find_data_file("consoles.yml")
     consoles_dst = Path.cwd() / "consoles.yml"
     if consoles_src.exists() and not consoles_dst.exists():
         shutil.copyfile(consoles_src, consoles_dst)
@@ -227,7 +228,7 @@ def download(
     setup_logging(config.log_file)
     consoles_yml_path = Path.cwd() / "consoles.yml"
     if not consoles_yml_path.exists():
-        consoles_yml_path = _REPO_DIR / "consoles.yml"
+        consoles_yml_path = _resources.find_data_file("consoles.yml")
     try:
         consoles_yml = _load_consoles(consoles_yml_path)
     except ConfigError as exc:
@@ -331,11 +332,11 @@ def verify(
     setup_logging(config.log_file)
     consoles_yml_path = Path.cwd() / "consoles.yml"
     if not consoles_yml_path.exists():
-        consoles_yml_path = _REPO_DIR / "consoles.yml"
+        consoles_yml_path = _resources.find_data_file("consoles.yml")
     consoles_yml = _load_consoles(consoles_yml_path)
     dats_dir = Path.cwd() / "dats"
     if not dats_dir.exists():
-        dats_dir = _REPO_DIR / "dats"
+        dats_dir = _resources.find_data_file("dats")
 
     verify_entries: list[dict[str, Any]] = list(consoles_yml.get("consoles", []) or [])
     if console_name:
@@ -399,7 +400,7 @@ def report(
     config = _resolve_config(config_path)
     consoles_yml_path = Path.cwd() / "consoles.yml"
     if not consoles_yml_path.exists():
-        consoles_yml_path = _REPO_DIR / "consoles.yml"
+        consoles_yml_path = _resources.find_data_file("consoles.yml")
     path = generate_coverage_report(consoles_yml_path, config.roms_root, output)
     console.print(f"[green]Report written:[/green] {path}")
 
@@ -430,7 +431,7 @@ def tui(
 
     consoles_yml_path = Path.cwd() / "consoles.yml"
     if not consoles_yml_path.exists():
-        consoles_yml_path = _REPO_DIR / "consoles.yml"
+        consoles_yml_path = _resources.find_data_file("consoles.yml")
     if not consoles_yml_path.exists():
         console.print(
             f"[red]consoles.yml not found at {consoles_yml_path} or repo dir[/red]"

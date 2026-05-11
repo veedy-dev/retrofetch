@@ -7,10 +7,14 @@ __pycache__/
 dist/
 build/
 .env
-ROMs/*/.retrofetch-state.json
+ROMs/
 coverage.md
 .sisyphus/evidence/
 .sisyphus/boulder.json
 .sisyphus/notepads/
 .serena/
 .ruff_cache/
+
+# Bundled data not tracked
+BIOS/
+tmp/
