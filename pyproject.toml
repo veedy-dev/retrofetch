@@ -61,3 +61,11 @@ packages = ["retrofetch"]
 "config.yml.example" = "retrofetch/config.yml.example"
 "overrides.yml.example" = "retrofetch/overrides.yml.example"
 ".env.example" = "retrofetch/.env.example"
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.13"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
