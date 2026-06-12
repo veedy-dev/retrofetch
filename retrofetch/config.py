@@ -32,6 +32,7 @@ class ConfigError(Exception):
 
 class Config(BaseModel):
     roms_root: Path
+    bios_root: Path = Path("BIOS")
     cache_dir: Path = Path(".cache")
     log_file: Path = Path("retrofetch.log")
     default_limit: int = 75
@@ -54,16 +55,16 @@ class Config(BaseModel):
     extract_archives: bool = False
     source_fallback_by_class: dict[str, list[str]] = Field(
         default_factory=lambda: {
-            "A": ["archive_org", "minerva_http", "minerva_torrent", "romsfun"],
-            "B": ["minerva_torrent", "minerva_http", "archive_org", "romsretro"],
-            "C": ["romsfun", "romsretro", "archive_org"],
+            "A": ["minerva_http", "archive_org", "romsfun", "romsretro"],
+            "B": ["minerva_http", "archive_org", "romsretro"],
+            "C": ["minerva_http", "archive_org", "romsfun", "romsretro"],
         }
     )
     ranking_sources_by_class: dict[str, list[str]] = Field(
         default_factory=lambda: {
-            "A": ["romsfun", "romsretro", "archive_org", "vimm", "coolrom"],
-            "B": ["archive_org", "romsretro", "vimm", "coolrom"],
-            "C": ["romsfun", "romsretro", "vimm"],
+            "A": ["minerva_http", "archive_org", "romsfun", "romsretro", "vimm", "coolrom"],
+            "B": ["minerva_http", "archive_org", "romsretro", "vimm", "coolrom"],
+            "C": ["minerva_http", "archive_org", "romsfun", "romsretro", "vimm"],
         }
     )
 

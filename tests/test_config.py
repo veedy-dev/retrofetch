@@ -9,6 +9,7 @@ def test_extract_archives_defaults_false() -> None:
     config = Config(roms_root=Path("ROMs"))
 
     assert config.extract_archives is False
+    assert config.bios_root == Path("BIOS")
 
 
 def test_extract_archives_can_be_enabled(scratch_path) -> None:
@@ -30,3 +31,4 @@ def test_example_config_documents_keep_archive_default() -> None:
     text = Path("config.yml.example").read_text(encoding="utf-8")
 
     assert "extract_archives: false" in text
+    assert "bios_root:" in text

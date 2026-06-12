@@ -249,7 +249,7 @@ def test_download_game_keeps_archive_by_default(scratch_path) -> None:
         console="snes",
     )
 
-    assert result.status == "acquired"
+    assert result.status == "unverified"
     assert (scratch_path / "Game (USA).zip").exists()
     assert not (scratch_path / "Game.sfc").exists()
 
@@ -273,7 +273,7 @@ def test_download_game_extracts_when_enabled(scratch_path) -> None:
         extract_archives=True,
     )
 
-    assert result.status == "acquired"
+    assert result.status == "unverified"
     assert not (scratch_path / "Game (USA).zip").exists()
     assert (scratch_path / "Game.sfc").exists()
 

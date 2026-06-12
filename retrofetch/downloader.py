@@ -4,11 +4,14 @@ import logging
 import os
 import zipfile
 import hashlib
+import threading
+import time
 import zlib
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Protocol
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -20,15 +23,24 @@ from retrofetch.events import (
     GameFailedEvent,
     GameSkippedEvent,
     GameStartEvent,
+    GameUnverifiedEvent,
+    RateLimitEvent,
 )
+
+from retrofetch.sources import DownloadCandidate, SourceUnavailable
 from retrofetch.extractor import ExtractionError, extract_archive, is_archive
 from retrofetch.sanitize import sanitize_filename
-from retrofetch.sources import DownloadCandidate, SourceUnavailable
 from retrofetch.state import GameAttempt, State, update_game
 
 _log = logging.getLogger(__name__)
 
 MAX_ATTEMPTS_PER_SOURCE = 3
+USER_AGENT = "retrofetch/2.0 (+https://github.com/veedy-dev/retrofetch)"
+_HOST_MIN_INTERVAL_S = 0.25
+_HOST_LOCK = threading.Lock()
+_HOST_LAST_REQUEST: dict[str, float] = {}
+_HOST_FAILURES: dict[str, int] = {}
+_HOST_CIRCUIT_UNTIL: dict[str, float] = {}
 
 
 class Source(Protocol):
@@ -113,6 +125,45 @@ def _content_length(headers: httpx.Headers) -> int | None:
         return None
 
 
+def _host_for_url(url: str) -> str:
+    parts = urlsplit(url)
+    return parts.netloc.casefold()
+
+
+def _wait_for_host_slot(url: str, source_name: str) -> None:
+    host = _host_for_url(url)
+    if not host:
+        return
+    with _HOST_LOCK:
+        until = _HOST_CIRCUIT_UNTIL.get(host, 0.0)
+        now = time.monotonic()
+        if now < until:
+            raise SourceUnavailable(
+                f"{source_name} host circuit open for {until - now:.1f}s"
+            )
+        last = _HOST_LAST_REQUEST.get(host, 0.0)
+        wait_for = max(0.0, _HOST_MIN_INTERVAL_S - (now - last))
+        if wait_for:
+            time.sleep(wait_for)
+        _HOST_LAST_REQUEST[host] = time.monotonic()
+
+
+def _record_http_status(url: str, status_code: int) -> None:
+    host = _host_for_url(url)
+    if not host:
+        return
+    with _HOST_LOCK:
+        if status_code in (403, 429):
+            failures = _HOST_FAILURES.get(host, 0) + 1
+            _HOST_FAILURES[host] = failures
+            if failures >= 5:
+                _HOST_CIRCUIT_UNTIL[host] = time.monotonic() + 60.0
+            return
+        if status_code < 400:
+            _HOST_FAILURES[host] = 0
+            _HOST_CIRCUIT_UNTIL.pop(host, None)
+
+
 def stream_http_download(
     url: str,
     final_path: Path,
@@ -136,7 +187,9 @@ def stream_http_download(
         with httpx.Client(timeout=timeout, follow_redirects=True) as client:
             if resume_from:
                 try:
-                    head = client.head(url)
+                    _wait_for_host_slot(url, source_name)
+                    head = client.head(url, headers={"User-Agent": USER_AGENT})
+                    _record_http_status(url, head.status_code)
                     if head.status_code < 400:
                         accept_ranges = head.headers.get("Accept-Ranges", "")
                         supports_range = "bytes" in accept_ranges.lower()
@@ -148,17 +201,30 @@ def stream_http_download(
                     part.unlink(missing_ok=True)
                     resume_from = 0
 
-            headers: dict[str, str] = {}
+            headers: dict[str, str] = {"User-Agent": USER_AGENT}
             mode = "wb"
             downloaded = 0
             resumed = False
+            range_requested = False
             if resume_from and supports_range:
                 headers["Range"] = f"bytes={resume_from}-"
                 mode = "ab"
                 downloaded = resume_from
                 resumed = True
+                range_requested = True
 
+            _wait_for_host_slot(url, source_name)
             with client.stream("GET", url, headers=headers) as resp:
+                _record_http_status(url, resp.status_code)
+                if resp.status_code == 429 and event_bus is not None:
+                    retry_after = resp.headers.get("Retry-After")
+                    try:
+                        retry_after_s = float(retry_after) if retry_after else 60.0
+                    except ValueError:
+                        retry_after_s = 60.0
+                    event_bus.publish(
+                        RateLimitEvent(source=source_name, retry_after=retry_after_s)
+                    )
                 if resp.status_code == 416:
                     part.unlink(missing_ok=True)
                     resp.close()
@@ -171,11 +237,11 @@ def stream_http_download(
                         source_name=source_name,
                         expected_size=expected_size,
                     )
-                if resp.status_code == 200 and headers:
+                if resp.status_code == 200 and range_requested:
                     mode = "wb"
                     downloaded = 0
                     resumed = False
-                elif resp.status_code == 206 and headers:
+                elif resp.status_code == 206 and range_requested:
                     resumed = True
                 elif resp.status_code != 200:
                     raise SourceUnavailable(f"{source_name} HTTP {resp.status_code}")
@@ -352,16 +418,41 @@ def download_game(
     console: str,
     event_bus: EventBus | None = None,
     extract_archives: bool = False,
+    verification_available: bool = True,
+    state_lock: threading.Lock | None = None,
 ) -> DownloadResult:
     target_dir = Path(target_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    skipped = skip_if_acquired(
-        state,
-        game_title,
-        target_dir,
-        event_bus=event_bus,
-    )
+    def record_attempt(result: str) -> None:
+        if state_lock is None:
+            _record_attempt(state, game_title, source.name, result)
+            return
+        with state_lock:
+            _record_attempt(state, game_title, source.name, result)
+
+    def update_status(status: str, **kwargs: object) -> None:
+        if state_lock is None:
+            update_game(state, game_title, status=status, **kwargs)
+            return
+        with state_lock:
+            update_game(state, game_title, status=status, **kwargs)
+
+    if state_lock is None:
+        skipped = skip_if_acquired(
+            state,
+            game_title,
+            target_dir,
+            event_bus=event_bus,
+        )
+    else:
+        with state_lock:
+            skipped = skip_if_acquired(
+                state,
+                game_title,
+                target_dir,
+                event_bus=event_bus,
+            )
     if skipped is not None:
         return skipped
 
@@ -371,7 +462,6 @@ def download_game(
         )
 
     last_reason: str | None = None
-    had_verify_failure = False
     for attempt_num in range(1, MAX_ATTEMPTS_PER_SOURCE + 1):
         try:
             downloaded = source.download(candidate, target_dir, event_bus=event_bus)
@@ -385,20 +475,31 @@ def download_game(
                 source.name,
                 exc,
             )
-            _record_attempt(state, game_title, source.name, f"download_failed: {exc}")
+            record_attempt(f"download_failed: {exc}")
+            if attempt_num < MAX_ATTEMPTS_PER_SOURCE:
+                time.sleep(min(2 ** (attempt_num - 1), 5))
             continue
         except Exception as exc:
             last_reason = f"unexpected: {exc}"
             _log.exception("unexpected download error for %s", game_title)
-            _record_attempt(state, game_title, source.name, last_reason)
+            record_attempt(last_reason)
             continue
 
         verified = True
         verify_reason: str | None = None
         verification_status = "verified"
-        if game is not None:
+        if not verification_available:
+            verification_status = "unverified"
+            verify_reason = "DAT not available; download is unverified"
+        elif game is None:
+            verification_status = "unverified"
+            verify_reason = "DAT entry not found; download is unverified"
+        else:
             rom = _rom_for_verification(game, downloaded.name)
-            if rom is not None and (rom.sha1 or rom.crc32 or rom.md5):
+            if rom is None or not (rom.sha1 or rom.crc32 or rom.md5):
+                verification_status = "unverified"
+                verify_reason = "DAT hash not available; download is unverified"
+            else:
                 verification_status, verify_reason = _verify_downloaded(
                     downloaded,
                     rom,
@@ -407,7 +508,6 @@ def download_game(
                 verified = verification_status != "failed"
 
         if not verified:
-            had_verify_failure = True
             last_reason = verify_reason or "hash mismatch"
             _log.warning(
                 "verify failed for %s attempt %s: %s",
@@ -415,9 +515,7 @@ def download_game(
                 attempt_num,
                 last_reason,
             )
-            _record_attempt(
-                state, game_title, source.name, f"verify_failed: {last_reason}"
-            )
+            record_attempt(f"verify_failed: {last_reason}")
             try:
                 downloaded.unlink()
             except OSError:
@@ -425,23 +523,40 @@ def download_game(
             continue
 
         if verification_status == "unverified":
-            final_filename = sanitize_filename(downloaded.name)
-            _record_attempt(
-                state,
-                game_title,
-                source.name,
-                f"unverified: {verify_reason or 'not verified'}",
-            )
-            update_game(
-                state,
-                game_title,
-                status="unverified",
+            final_filename = downloaded.name
+            if extract_archives and is_archive(downloaded):
+                try:
+                    extracted = extract_archive(downloaded, target_dir)
+                except ExtractionError as exc:
+                    last_reason = f"extract_failed: {exc}"
+                    record_attempt(last_reason)
+                    continue
+                try:
+                    downloaded.unlink()
+                except OSError:
+                    pass
+                if len(extracted) == 1:
+                    final_filename = extracted[0].name
+                else:
+                    final_filename = ",".join(p.name for p in extracted)
+            final_filename = sanitize_filename(final_filename)
+            record_attempt(f"unverified: {verify_reason or 'not verified'}")
+            update_status(
+                "unverified",
                 source=source.name,
                 filename=final_filename,
                 sha1=candidate.expected_sha1,
                 crc32=candidate.expected_crc32,
                 size_bytes=candidate.expected_size,
             )
+            if event_bus is not None:
+                event_bus.publish(
+                    GameUnverifiedEvent(
+                        game=game_title,
+                        source=source.name,
+                        reason=verify_reason,
+                    )
+                )
             return DownloadResult(
                 status="unverified",
                 filename=final_filename,
@@ -455,7 +570,7 @@ def download_game(
                 extracted = extract_archive(downloaded, target_dir)
             except ExtractionError as exc:
                 last_reason = f"extract_failed: {exc}"
-                _record_attempt(state, game_title, source.name, last_reason)
+                record_attempt(last_reason)
                 continue
             try:
                 downloaded.unlink()
@@ -467,11 +582,9 @@ def download_game(
                 final_filename = ",".join(p.name for p in extracted)
 
         sanitized = sanitize_filename(final_filename)
-        _record_attempt(state, game_title, source.name, "success")
-        update_game(
-            state,
-            game_title,
-            status="acquired",
+        record_attempt("success")
+        update_status(
+            "acquired",
             source=source.name,
             filename=sanitized,
             sha1=candidate.expected_sha1,
@@ -489,18 +602,12 @@ def download_game(
             )
         return DownloadResult(status="acquired", filename=sanitized, source=source.name)
 
-    final_status = "unverified" if had_verify_failure else "failed"
-    update_game(
-        state,
-        game_title,
-        status=final_status,
-        source=source.name,
-    )
+    update_status("failed", source=source.name)
     final_reason = last_reason or "exhausted attempts"
     if event_bus is not None:
         event_bus.publish(GameFailedEvent(game=game_title, reason=final_reason))
     return DownloadResult(
-        status=final_status,
+        status="failed",
         source=source.name,
         reason=final_reason,
     )
