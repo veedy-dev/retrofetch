@@ -214,28 +214,45 @@ def is_recently_empty(cache_dir: Path, shortname: str) -> bool:
     return is_fresh
 
 
+def _filter_and_limit_titles(
+    titles: list[str], overrides: ConsoleOverride | None, limit: int | None
+) -> list[str]:
+    excluded = {title.casefold() for title in (overrides.exclude if overrides else [])}
+    filtered = [title for title in titles if title.casefold() not in excluded]
+    if limit is not None and limit > 0:
+        return filtered[:limit]
+    return filtered
+
+
 def get_or_fetch_wantlist(
     console_entry: dict[str, object],
     overrides: ConsoleOverride | None,
     config: Config,
-    limit: int,
+    limit: int | None,
 ) -> tuple[list[str], bool]:
     shortname = str(console_entry.get("shortname", ""))
     cache_dir = Path(config.cache_dir)
     hit = load_cached(cache_dir, shortname)
     if hit is not None:
-        return ([html.unescape(t) for t in hit.titles], True)
+        titles = [html.unescape(t) for t in hit.titles]
+        return (_filter_and_limit_titles(titles, overrides, limit), True)
+
+    ranking_override = None
+    if overrides is not None and overrides.region_priority:
+        ranking_override = ConsoleOverride(region_priority=list(overrides.region_priority))
 
     # Re-resolve through the module to honor monkey-patches at call time.
+    # Always fetch/cache the full raw browse catalog; callers apply their own
+    # preview/download limits so a short preview never poisons the cache.
     raw_titles = _ranker.get_wantlist(
         console_entry=console_entry,
-        overrides=overrides,
+        overrides=ranking_override,
         config=config,
-        limit=limit,
+        limit=0,
     )
     # Decode HTML entities from scraped HTML sources.
     titles = [html.unescape(t) for t in raw_titles]
-    # Empty list = no provider carries this console (or transient outage).
+
     # We do NOT persist an empty wantlist as a normal cache file (that would
     # block retries for 24h). Instead we write a short-lived empty-marker so
     # the UI can grey out the sidebar row without permanently pinning it.
@@ -259,4 +276,4 @@ def get_or_fetch_wantlist(
         save_cached(cache_dir, entry)
     except OSError as exc:
         log.warning("wantlist_cache: save failed for %s: %s", shortname, exc)
-    return (titles, False)
+    return (_filter_and_limit_titles(titles, overrides, limit), False)
