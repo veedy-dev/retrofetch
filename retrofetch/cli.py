@@ -35,9 +35,11 @@ from retrofetch.events import (
 )
 from retrofetch.logging_setup import setup_logging
 from retrofetch.orchestrator import run_console
-from retrofetch.ranker import get_wantlist
+from retrofetch.ranker import get_wantlist, resolve_download_set
 from retrofetch.report import generate_coverage_report
 from retrofetch.signals import install_signal_handlers
+from retrofetch.sources import SourceUnavailable
+from retrofetch.sources.bios import BiosSource
 from retrofetch.state import load_state, save_state, update_game
 from retrofetch.ui import console
 
@@ -146,10 +148,13 @@ def _verbose_formatter(cons: Console) -> Callable[[ProgressEvent], None]:
                 f"[dim]... Loading DAT for {event.console}: {event.dat_name}[/dim]"
             )
         elif isinstance(event, DatLoadDoneEvent):
-            cons.print(
-                f"[dim]... DAT loaded for {event.console}: "
-                f"{event.games_loaded} games[/dim]"
-            )
+            if event.detail:
+                cons.print(f"[yellow]... {event.detail}[/yellow]")
+            else:
+                cons.print(
+                    f"[dim]... DAT loaded for {event.console}: "
+                    f"{event.games_loaded} games[/dim]"
+                )
         elif isinstance(event, ExtractionStartEvent):
             cons.print(
                 f"[dim]... Extracting {event.filename} ({event.format})[/dim]"
@@ -273,12 +278,13 @@ def download(
         if per_limit is None:
             per_limit = config.default_limit
 
-        wantlist = get_wantlist(
+        ranked_titles = get_wantlist(
             console_entry=entry,
             overrides=override,
             config=config,
             limit=per_limit,
         )
+        wantlist = resolve_download_set(ranked_titles, override, per_limit)
 
         console.print(
             f"[cyan]Console:[/cyan] {short} (Class {klass}) - wantlist: {len(wantlist)} games"
@@ -317,6 +323,48 @@ def download(
             consoles_yml_path, config.roms_root, Path.cwd() / "coverage.md"
         )
         console.print(f"[green]Report:[/green] {coverage}")
+
+
+@app.command()
+def bios(
+    console_name: str = typer.Option(
+        ..., "--console", help="Console shortname (e.g. psx, ps2, saturn)"
+    ),
+    limit: Optional[int] = typer.Option(
+        None,
+        "--limit",
+        help="Limit BIOS files for a small probe run; default downloads all listed files.",
+    ),
+    config_path: Path = typer.Option(Path("config.yml"), "--config"),
+) -> None:
+    """Opt-in BIOS download to BIOS/{console}."""
+
+    config = _resolve_config(config_path)
+    setup_logging(config.log_file)
+    source = BiosSource()
+    try:
+        catalog = source.list_files(console_name)
+    except SourceUnavailable as exc:
+        console.print(f"[red]BIOS unavailable for {console_name}:[/red] {exc}")
+        raise typer.Exit(2) from exc
+    files = catalog.files[:limit] if limit is not None and limit > 0 else catalog.files
+    if not files:
+        console.print(f"[yellow]No BIOS files found for {catalog.console}[/yellow]")
+        raise typer.Exit(1)
+    target = Path(config.bios_root) / catalog.console
+    console.print(
+        f"[cyan]BIOS:[/cyan] {catalog.console} - {len(files)} file(s) -> {target}"
+    )
+    for bios_file in files[:10]:
+        console.print(f"  - {bios_file.filename} [{bios_file.source}]")
+    if len(files) > 10:
+        console.print(f"  ... and {len(files) - 10} more")
+    try:
+        paths = source.download(catalog.console, config.bios_root, limit=limit)
+    except SourceUnavailable as exc:
+        console.print(f"[red]BIOS download failed:[/red] {exc}")
+        raise typer.Exit(1) from exc
+    console.print(f"[green]BIOS complete:[/green] {len(paths)} file(s) in {target}")
 
 
 @app.command()
