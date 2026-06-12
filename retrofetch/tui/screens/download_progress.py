@@ -23,6 +23,7 @@ from retrofetch.tui.messages import (
     GameFailed,
     GameSkipped,
     GameStart,
+    GameUnverified,
     RateLimit,
     SourceDead,
 )
@@ -55,6 +56,7 @@ class DownloadProgressScreen(Screen[None]):
         self._acquired: int = 0
         self._failed: int = 0
         self._skipped: int = 0
+        self._unverified: int = 0
         self._worker: DownloadWorker | None = None
         self._stop_event: threading.Event | None = None
         self._cancel_pending: bool = False
@@ -69,7 +71,7 @@ class DownloadProgressScreen(Screen[None]):
                 id="dl-title",
             )
             with Vertical(id="progress-overall"):
-                yield Label(f"Overall: 0 / {total} games", id="progress-overall-text")
+                yield Label(f"Overall: 0 / {total} games (0 failed)", id="progress-overall-text")
                 yield ProgressBar(
                     total=max(total, 1),
                     show_eta=False,
@@ -95,12 +97,18 @@ class DownloadProgressScreen(Screen[None]):
         )
         self.run_worker(self._worker.run, thread=True, exclusive=True, group="download")
 
+    def _attempted(self) -> int:
+        return self._acquired + self._failed + self._unverified + self._skipped
+
     def _bump_overall(self) -> None:
         total = max(len(self.wantlist), 1)
         self.query_one("#progress-overall-text", Label).update(
             f"Overall: {self._acquired} / {len(self.wantlist)} games ({self._failed} failed)"
         )
-        self.query_one("#progress-overall-bar", ProgressBar).update(progress=self._acquired, total=total)
+        self.query_one("#progress-overall-bar", ProgressBar).update(
+            progress=min(self._acquired, total),
+            total=total,
+        )
 
     def _trim_completed(self) -> None:
         completed = self.query_one("#progress-completed", ScrollableContainer)
@@ -169,6 +177,20 @@ class DownloadProgressScreen(Screen[None]):
         self._trim_completed()
         self._bump_overall()
 
+    def on_game_unverified(self, message: GameUnverified) -> None:
+        self._unverified += 1
+        self._drop_active(message.game)
+        completed = self.query_one("#progress-completed", ScrollableContainer)
+        reason = f": {message.reason}" if message.reason else ""
+        completed.mount(
+            Label(
+                f"~ {message.game}{reason}",
+                classes="status-unverified dl-status-row",
+            )
+        )
+        self._trim_completed()
+        self._bump_overall()
+
     def on_source_dead(self, message: SourceDead) -> None:
         completed = self.query_one("#progress-completed", ScrollableContainer)
         completed.mount(
@@ -205,6 +227,9 @@ class DownloadProgressScreen(Screen[None]):
         )
 
     def on_dat_load_done(self, message: DatLoadDone) -> None:
+        if message.detail:
+            self.query_one("#summary-line", Label).update(message.detail)
+            return
         self.query_one("#summary-line", Label).update(
             f"DAT loaded: {message.games_loaded} games. Starting downloads..."
         )
@@ -230,21 +255,15 @@ class DownloadProgressScreen(Screen[None]):
         self._trim_completed()
 
     def on_download_complete(self, message: DownloadComplete) -> None:
-        r = message.report
-        self._acquired = r.acquired
-        self._failed = r.failed
-        self._skipped = r.skipped
         self._bump_overall()
+        attempted = self._attempted()
         if self.dry_run:
-            summary = (
-                f"Dry run done. attempted={r.attempted}. No files downloaded. "
-                "Press Esc to return."
-            )
+            summary = f"Dry run done. attempted={attempted}. No files downloaded. Press Esc to return."
         else:
-            skipped = f" skipped={r.skipped}" if r.skipped else ""
             summary = (
-                f"Done. attempted={r.attempted} acquired={r.acquired} "
-                f"failed={r.failed} unverified={r.unverified}{skipped}. Press Esc to return."
+                f"Done. attempted={attempted} acquired={self._acquired} "
+                f"failed={self._failed} unverified={self._unverified}"
+                f"{f' skipped={self._skipped}' if self._skipped else ''}. Press Esc to return."
             )
         self.query_one("#summary-line", Label).update(summary)
         self._summary_complete = True
