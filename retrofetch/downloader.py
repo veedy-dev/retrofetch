@@ -246,6 +246,15 @@ def stream_http_download(
                 elif resp.status_code != 200:
                     raise SourceUnavailable(f"{source_name} HTTP {resp.status_code}")
 
+                content_type = resp.headers.get("Content-Type", "")
+                if (
+                    "text/html" in content_type.lower()
+                    and final.suffix.lower() not in (".html", ".htm")
+                ):
+                    raise SourceUnavailable(
+                        f"{source_name} returned HTML page instead of file content"
+                    )
+
                 content_length = _content_length(resp.headers)
                 if resp.status_code == 206:
                     total = remote_size or (

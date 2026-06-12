@@ -1,0 +1,8 @@
+Kill-and-resume integrity (real network, archive.org Range-supporting URL)
+url=https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.ogv
+killed child at part_size=7274496
+part exists=True final exists=False
+rerun stdout: resumed=True bytes_written=46935223
+final exists=True size=46935223 expected=46935223
+stale part remains=False
+PASS

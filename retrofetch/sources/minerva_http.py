@@ -27,6 +27,7 @@ _SIZE_RE = re.compile(
     r"(?P<num>\d+(?:\.\d+)?)\s*(?P<unit>B|KiB|MiB|GiB|KB|MB|GB)",
     re.IGNORECASE,
 )
+_ARCHIVE_SUFFIXES = (".zip", ".7z", ".rar")
 _FALLBACK_FILE_SUFFIXES = (
     ".7z",
     ".zip",
@@ -174,8 +175,12 @@ class MinervaHttpSource:
 
     def _is_supported_file(self, name: str) -> bool:
         name_lc = name.lower()
+        if name_lc.endswith(_ARCHIVE_SUFFIXES):
+            return True
         if self.extensions:
-            return any(name_lc.endswith(ext.lower()) for ext in self.extensions)
+            return any(
+                name_lc.endswith("." + ext.lower().lstrip(".")) for ext in self.extensions
+            )
         return any(name_lc.endswith(ext) for ext in _FALLBACK_FILE_SUFFIXES)
 
     def _list_directory(self, url: str) -> list[_DirectoryEntry]:

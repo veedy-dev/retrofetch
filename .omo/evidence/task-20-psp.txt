@@ -1,0 +1,4 @@
+PSP headline catalog via MinervaHttpSource (real consoles.yml entry)
+count=2180
+first5=['-8', '0-ji no Kane to Cinderella - Halloween Wedding', '007 - From Russia with Love', '007 - Russia yori Ai o Komete', '100-Man Ton no Barabara']
+assert count>=1000: PASS
