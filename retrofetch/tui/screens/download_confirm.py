@@ -66,6 +66,9 @@ class DownloadConfirmScreen(Screen[None]):
             return
         self.post_message(WantlistReady(self.shortname, titles, from_cache))
 
+    def _has_selection(self) -> bool:
+        return self.override is not None and bool(self.override.include)
+
     def on_wantlist_ready(self, message: WantlistReady) -> None:
         if message.console != self.shortname:
             return
@@ -80,9 +83,14 @@ class DownloadConfirmScreen(Screen[None]):
             limit,
         )
         self._loaded = True
+        if not self._has_selection():
+            self.query_one("#summary-line", Label).update(
+                "No games selected. Press Esc, then use [w] to select games."
+            )
+            return
         indicator = "cached" if message.from_cache else "fresh"
         self.query_one("#summary-line", Label).update(
-            f"Ready to download {len(self._wantlist)} games ({indicator}). Press Enter to confirm."
+            f"Ready to download {len(self._wantlist)} selected games ({indicator}). Press Enter to confirm."
         )
         preview = self.query_one("#wantlist-preview", ScrollableContainer)
         for title in self._wantlist[:20]:
@@ -99,6 +107,11 @@ class DownloadConfirmScreen(Screen[None]):
         )
 
     def action_start(self) -> None:
+        if not self._has_selection():
+            self.query_one("#summary-line", Label).update(
+                "No games selected. Press Esc, then use [w] to select games."
+            )
+            return
         if not self._loaded or not self._wantlist:
             self.query_one("#summary-line", Label).update(
                 "Wantlist not ready yet. Wait for load to complete."

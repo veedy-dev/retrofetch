@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "retrofetch"
-version = "1.0.0"
+version = "2.0.0"
 description = "Automated ROM collection filler for retro console emulation"
 requires-python = ">=3.10,<3.14"
 license = { text = "MIT" }
