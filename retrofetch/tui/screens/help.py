@@ -41,6 +41,12 @@ Download screen
   c          cancel in-flight download
   Esc        back to Home
 
+Wantlist screen
+  Space      include / uninclude selected title
+  x          exclude / unexclude selected title
+  Enter      save and return
+  Esc        cancel without saving
+
 Exit codes
   0          graceful quit
   2          preflight failure (bad terminal, missing config)
@@ -49,8 +55,8 @@ Exit codes
 
 class HelpScreen(ModalScreen[None]):
     BINDINGS = [
-        Binding("escape", "dismiss", "Close", show=True),
-        Binding("question_mark", "dismiss", "Close", show=True, key_display="?"),
+        Binding("escape", "close", "Close", show=True),
+        Binding("question_mark", "close", "Close", show=True, key_display="?"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -59,5 +65,5 @@ class HelpScreen(ModalScreen[None]):
             yield Static(HELP_TEXT, id="help-body")
             yield Label("press esc or ? to close", id="help-footer")
 
-    def action_dismiss(self) -> None:
+    def action_close(self) -> None:
         self.dismiss(None)

@@ -72,7 +72,7 @@ class CoolROMSource:
     def _extract_titles(self, body: str) -> list[str]:
         slug = re.escape(str(self.slug or ""))
         section_match = re.search(
-            rf'Top 25 .*? ROMs</b></font></center><br>(.*?)(?:</font>\s*</td></tr></table>|<br>\s*</font>\s*</td></tr></table>)',
+            r'Top 25 .*? ROMs</b></font></center><br>(.*?)(?:</font>\s*</td></tr></table>|<br>\s*</font>\s*</td></tr></table>)',
             body,
             re.IGNORECASE | re.DOTALL,
         )

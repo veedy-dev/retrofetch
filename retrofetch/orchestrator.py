@@ -41,7 +41,7 @@ class RunReport:
     acquired: int = 0
     failed: int = 0
     unverified: int = 0
-    skipped: bool = False
+    skipped: int = 0
     skip_reason: str | None = None
     error: str | None = None
 
@@ -89,7 +89,7 @@ def run_console(
     report = RunReport(console=short)
 
     if klass in ("D", "E", "F"):
-        report.skipped = True
+        report.skipped = 1
         report.skip_reason = str(console_entry.get("skip_reason") or "out of scope")
         return report
 
@@ -166,11 +166,14 @@ def run_console(
                 state=state,
                 console=short,
                 event_bus=event_bus,
+                extract_archives=config.extract_archives,
             )
             if result.status == "acquired":
                 acquired_any = True
             elif result.status == "unverified":
                 report.unverified += 1
+            elif result.status == "skipped":
+                report.skipped += 1
             else:
                 report.failed += 1
             if not dry_run:

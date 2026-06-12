@@ -16,6 +16,7 @@ from retrofetch.events import (
     GameBytesEvent,
     GameDoneEvent,
     GameFailedEvent,
+    GameSkippedEvent,
     GameStartEvent,
     ProgressEvent,
     RateLimitEvent,
@@ -53,6 +54,14 @@ class GameFailed(Message):
     def __init__(self, game: str, reason: str) -> None:
         self.game = game
         self.reason = reason
+        super().__init__()
+
+
+class GameSkipped(Message):
+    def __init__(self, game: str, reason: str, filename: str | None = None) -> None:
+        self.game = game
+        self.reason = reason
+        self.filename = filename
         super().__init__()
 
 
@@ -116,6 +125,7 @@ class EventBusBridge:
         (GameBytesEvent, GameBytes),
         (GameDoneEvent, GameDone),
         (GameFailedEvent, GameFailed),
+        (GameSkippedEvent, GameSkipped),
         (SourceDeadEvent, SourceDead),
         (RateLimitEvent, RateLimit),
         (CloudflareBlockEvent, CloudflareBlock),

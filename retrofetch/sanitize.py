@@ -11,6 +11,7 @@ _FORBIDDEN = re.compile(r'[<>"/\\|?*]')
 _COLON = re.compile(r"\s*:\s*")
 _MULTI_DASH = re.compile(r"-{2,}")
 _MULTI_SPACE = re.compile(r"\s{2,}")
+_REGION_SUFFIX = re.compile(r"(\s+\([^)]+\))$")
 _RESERVED = {
     "CON",
     "PRN",
@@ -39,13 +40,24 @@ def sanitize_filename(name: str) -> str:
     cleaned = _MULTI_SPACE.sub(" ", cleaned)
     cleaned = cleaned.rstrip(". ").strip()
     if cleaned.upper() in _RESERVED:
-        cleaned = "_" + cleaned
+        cleaned = cleaned + "_"
     max_stem = _MAX_NAME_LEN - len(ext)
     if max_stem < 1:
         ext = ext[: _MAX_NAME_LEN // 2]
         max_stem = _MAX_NAME_LEN - len(ext)
     if len(cleaned) > max_stem:
-        cleaned = cleaned[:max_stem]
+        region = ""
+        match = _REGION_SUFFIX.search(cleaned)
+        if match:
+            region = match.group(1)
+            title_part = cleaned[: match.start()]
+        else:
+            title_part = cleaned
+        max_title = max_stem - len(region)
+        if max_title < 1:
+            max_title = 1
+            region = ""
+        cleaned = title_part[:max_title].rstrip(". ") + region
     if not cleaned:
         cleaned = "_"
     return cleaned + ext

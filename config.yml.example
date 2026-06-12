@@ -16,6 +16,8 @@ exclude_keywords:
   - "(Trade Demo)"
 max_game_size_gb: null
 max_concurrent_downloads: 3
+# Most emulators read .zip/.7z archives directly. Keep archives by default.
+extract_archives: false
 source_fallback_by_class:
   A: [archive_org, minerva_http, minerva_torrent, romsfun]
   B: [minerva_torrent, minerva_http, archive_org, romsretro]

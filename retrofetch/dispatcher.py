@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from retrofetch.dat import GameEntry
-from retrofetch.downloader import DownloadResult, Source, download_game
+from retrofetch.downloader import DownloadResult, Source, download_game, skip_if_acquired
 from retrofetch.events import CloudflareBlockEvent, EventBus, SourceDeadEvent
 from retrofetch.sources import DownloadCandidate, SourceUnavailable
 from retrofetch.sources._cloudflare_base import is_dead as is_source_dead
@@ -65,7 +65,16 @@ class SourceDispatcher:
         *,
         console: str,
         event_bus: EventBus | None = None,
+        extract_archives: bool = False,
     ) -> DownloadResult:
+        skipped = skip_if_acquired(
+            state,
+            game_title,
+            target_dir,
+            event_bus=event_bus,
+        )
+        if skipped is not None:
+            return skipped
         attempts_summary: list[str] = []
         published_dead_sources: set[str] = set()
         for source_name in self.source_names:
@@ -106,13 +115,14 @@ class SourceDispatcher:
                 state=state,
                 console=console,
                 event_bus=event_bus,
+                extract_archives=extract_archives,
             )
             if event_bus is not None and result.reason:
                 if "cloudflare" in result.reason.lower():
                     event_bus.publish(
                         CloudflareBlockEvent(source=source_name, status=0)
                     )
-            if result.status == "acquired":
+            if result.status in ("acquired", "skipped"):
                 result.reason = ";".join(attempts_summary + [f"{source_name}:acquired"])
                 return result
             attempts_summary.append(f"{source_name}:{result.status}")

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Typed progress events and a small synchronous event bus.
 
 Example:
@@ -10,6 +8,8 @@ Example:
     >>> seen[0]
     GameStartEvent(game='Mario', source='archive_org', console='nes')
 """
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 import threading
@@ -47,6 +47,13 @@ class GameDoneEvent(ProgressEvent):
 class GameFailedEvent(ProgressEvent):
     game: str
     reason: str
+
+
+@dataclass(frozen=True)
+class GameSkippedEvent(ProgressEvent):
+    game: str
+    reason: str
+    filename: str | None = None
 
 
 @dataclass(frozen=True)

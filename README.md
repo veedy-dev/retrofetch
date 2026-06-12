@@ -106,7 +106,7 @@ The home screen features a 178-console sidebar. As you scroll through consoles, 
 | q | Quit (exit 0) |
 | / | Focus filter input (sidebar) |
 | ? | Help modal (key reference) |
-| w | Wantlist curation (DataTable, space=include, a/Ctrl+A=include page, x=exclude, s=save) |
+| w | Wantlist curation (DataTable, space=include, a/Ctrl+A=include page, x=exclude, Enter=save) |
 | d | Download confirm screen (Enter=save and open progress, c=cancel) |
 | s | State browser (read-only .retrofetch-state.json viewer) |
 | C | Coverage viewer (async compute, e=export) |

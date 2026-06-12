@@ -18,10 +18,10 @@ from rich.text import Text
 from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
-from textual.containers import Horizontal, Vertical  # pyright: ignore[reportMissingImports]
+from textual.containers import Vertical  # pyright: ignore[reportMissingImports]
 from textual.coordinate import Coordinate  # pyright: ignore[reportMissingImports]
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import DataTable, Footer, Header, Label, Static  # pyright: ignore[reportMissingImports]
+from textual.widgets import DataTable, Footer, Header, Label  # pyright: ignore[reportMissingImports]
 
 from retrofetch.config import ConsoleOverride, _yaml_rt, save_overrides
 from retrofetch.tui.messages import WantlistFailed, WantlistReady
@@ -36,7 +36,7 @@ class WantlistScreen(Screen[None]):
     BINDINGS = [
         Binding("space", "toggle_include", "Include", show=True),
         Binding("x", "toggle_exclude", "Exclude", show=True),
-        Binding("s", "save", "Save", show=True),
+        Binding("enter", "save", "Save", show=True, priority=True),
         Binding("r", "refresh", "Refresh", show=True),
         Binding("escape", "cancel", "Cancel", show=True),
         Binding("pageup", "page_prev", "Prev page", show=True),
@@ -70,7 +70,7 @@ class WantlistScreen(Screen[None]):
         yield Header(show_clock=False)
         with Vertical(id="main-panel"):
             yield Label(
-                f"Wantlist: {self.shortname}  (space=include, x=exclude, s=save, r=refresh, esc=cancel)"
+                f"Wantlist: {self.shortname}  (space=include, x=exclude, enter=save, r=refresh, esc=cancel)"
             )
             yield Label("", id="status-line")
             yield DataTable(id="wantlist-table")
@@ -160,7 +160,6 @@ class WantlistScreen(Screen[None]):
         page_rows = self._wantlist[start:end]
         for offset, title in enumerate(page_rows):
             inc = Text("[x]" if title in self._include else "[ ]")
-            exc = Text("[x]" if title in self._exclude else "[ ]")
             table.add_row(
                 str(start + offset + 1),
                 inc,
@@ -184,7 +183,6 @@ class WantlistScreen(Screen[None]):
         table: DataTable = self.query_one("#wantlist-table", DataTable)
         row = table.cursor_row
         inc_text = Text("[x]" if title in self._include else "[ ]")
-        exc_text = Text("[x]" if title in self._exclude else "[ ]")
         included = "yes" if title in self._include else ""
         excluded = "yes" if title in self._exclude else ""
         try:
@@ -279,6 +277,10 @@ class WantlistScreen(Screen[None]):
         self.dismiss(None)
 
     def action_save(self) -> None:
+        if self._save_overrides():
+            self.dismiss(None)
+
+    def _save_overrides(self) -> bool:
         overrides_path = Path("overrides.yml")
         if not overrides_path.exists():
             # Fall back to the example file as a template; we still save to overrides.yml
@@ -306,5 +308,7 @@ class WantlistScreen(Screen[None]):
         try:
             save_overrides(overrides_path, raw)
             self._set_status(f"saved overrides.yml (include={len(self._include)}, exclude={len(self._exclude)})")
+            return True
         except Exception as exc:
             self._set_status(f"save failed: {exc}")
+            return False

@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin
 
-from retrofetch.events import EventBus, GameBytesEvent
+from retrofetch.downloader import stream_http_download
+from retrofetch.events import EventBus
 from retrofetch.sources import DownloadCandidate, SourceUnavailable
 from retrofetch.sources._cloudflare_base import (
     CloudflareBlocked,
@@ -137,40 +138,24 @@ class RomsfunSource:
     ) -> Path:
         if is_dead(self.name):
             raise SourceUnavailable(f"{self.name} marked dead for session")
-        scraper = self._scraper_session()
         dest_dir = Path(dest_dir)
         dest_dir.mkdir(parents=True, exist_ok=True)
         final = dest_dir / candidate.filename
-        part = final.with_suffix(final.suffix + ".part")
         try:
-            with scraper.get(candidate.url, stream=True, timeout=60) as resp:
-                if resp.status_code != 200:
-                    health(self.name).record_failure()
-                    raise SourceUnavailable(
-                        f"{self.name} download HTTP {resp.status_code}"
-                    )
-                total_raw = resp.headers.get("Content-Length")
-                total = int(total_raw) if total_raw else None
-                downloaded = 0
-                with open(part, "wb") as fh:
-                    for chunk in resp.iter_content(chunk_size=64 * 1024):
-                        if not chunk:
-                            continue
-                        fh.write(chunk)
-                        downloaded += len(chunk)
-                        if event_bus is not None:
-                            event_bus.publish(
-                                GameBytesEvent(
-                                    game=candidate.filename,
-                                    downloaded=downloaded,
-                                    total=total or downloaded,
-                                )
-                            )
+            result = stream_http_download(
+                candidate.url,
+                final,
+                event_bus=event_bus,
+                event_game=candidate.filename,
+                timeout=60.0,
+                source_name=self.name,
+                expected_size=candidate.expected_size,
+            )
         except SourceUnavailable:
+            health(self.name).record_failure()
             raise
         except Exception as exc:
             health(self.name).record_failure()
             raise SourceUnavailable(f"{self.name} download failed: {exc}") from exc
-        part.replace(final)
         health(self.name).record_success()
-        return final
+        return result.path

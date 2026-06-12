@@ -251,7 +251,7 @@ consoles:
     class: A
     igdb_platform_id: 59
     dat_system: Atari - 2600
-    minerva_path: No-Intro/Atari - 2600
+    minerva_path: No-Intro/Atari - Atari 2600
     archive_org_identifier: atari_2600_library
     romsfun_slug: atari-2600
     romsretro_slug: atari-2600
@@ -269,7 +269,7 @@ consoles:
     class: A
     igdb_platform_id: 66
     dat_system: Atari - 5200
-    minerva_path: No-Intro/Atari - 5200
+    minerva_path: No-Intro/Atari - Atari 5200
     archive_org_identifier: atari_5200_library
     romsfun_slug: atari-5200
     romsretro_slug: atari-5200
@@ -287,7 +287,7 @@ consoles:
     class: A
     igdb_platform_id: 60
     dat_system: Atari - 7800
-    minerva_path: No-Intro/Atari - 7800
+    minerva_path: No-Intro/Atari - Atari 7800 (BIN)
     archive_org_identifier: atari_7800_library
     romsfun_slug: atari-7800
     romsretro_slug: atari-7800
@@ -322,7 +322,7 @@ consoles:
     class: A
     igdb_platform_id: 62
     dat_system: Atari - Jaguar
-    minerva_path: No-Intro/Atari - Jaguar
+    minerva_path: No-Intro/Atari - Atari Jaguar (J64)
     archive_org_identifier:
     romsfun_slug: atari-jaguar
     romsretro_slug: atari-jaguar
@@ -340,7 +340,7 @@ consoles:
     class: A
     igdb_platform_id: 61
     dat_system: Atari - Lynx
-    minerva_path: No-Intro/Atari - Lynx
+    minerva_path: No-Intro/Atari - Atari Lynx (LNX)
     archive_org_identifier: lynx-library
     romsfun_slug: atari-lynx
     romsretro_slug: atari-lynx
@@ -775,7 +775,7 @@ consoles:
     class: A
     igdb_platform_id: 18
     dat_system: Nintendo - Nintendo Entertainment System
-    minerva_path: No-Intro/Nintendo - Nintendo Entertainment System
+    minerva_path: No-Intro/Nintendo - Nintendo Entertainment System (Headered)
     archive_org_identifier:
     romsfun_slug: famicom
     romsretro_slug: famicom
@@ -823,7 +823,7 @@ consoles:
     class: A
     igdb_platform_id: 51
     dat_system: Nintendo - Family Computer Disk System
-    minerva_path: No-Intro/Nintendo - Family Computer Disk System
+    minerva_path: No-Intro/Nintendo - Family Computer Disk System (FDS)
     archive_org_identifier:
     romsfun_slug: famicom-disk-system
     romsretro_slug: famicom-disk-system
@@ -995,7 +995,7 @@ consoles:
     class: B
     igdb_platform_id: 21
     dat_system: Nintendo - GameCube
-    minerva_path: Redump/Nintendo - GameCube
+    minerva_path: Redump/Nintendo - GameCube - NKit RVZ [zstd-19-128k]
     archive_org_identifier:
     romsfun_slug: gamecube
     romsretro_slug: gamecube
@@ -1239,7 +1239,7 @@ consoles:
     class: B
     igdb_platform_id:
     dat_system:
-    minerva_path:
+    minerva_path: Redump/Sega - Mega CD & Sega CD
     archive_org_identifier:
     romsfun_slug: sega-cd
     romsretro_slug: sega-cd
@@ -1281,7 +1281,7 @@ consoles:
     class: A
     igdb_platform_id:
     dat_system:
-    minerva_path:
+    minerva_path: No-Intro/Sega - Mega Drive - Genesis
     archive_org_identifier: sega_genesis_library
     romsfun_slug: sega-genesis
     romsretro_slug: sega-genesis
@@ -1303,7 +1303,7 @@ consoles:
     class: A
     igdb_platform_id:
     dat_system: Creatronic - Mega Duck
-    minerva_path: No-Intro/Creatronic - Mega Duck
+    minerva_path: No-Intro/Welback - Mega Duck
     archive_org_identifier: megaduck_library
     romsfun_slug: mega-duck
     romsretro_slug: mega-duck
@@ -1440,7 +1440,7 @@ consoles:
     class: A
     igdb_platform_id:
     dat_system: Tsukuda - Othello Multivision
-    minerva_path: No-Intro/Tsukuda - Othello Multivision
+    minerva_path: No-Intro/Sega - SG-1000
     archive_org_identifier:
     romsfun_slug: othello-multivision
     romsretro_slug: othello-multivision
@@ -1455,7 +1455,7 @@ consoles:
     class: C
     igdb_platform_id: 37
     dat_system: Nintendo - Nintendo 3DS
-    minerva_path: No-Intro/Nintendo - Nintendo 3DS
+    minerva_path: No-Intro/Nintendo - Nintendo 3DS (Encrypted)
     archive_org_identifier:
     romsfun_slug: nintendo-3ds
     romsretro_slug: 3ds-cia
@@ -1473,7 +1473,7 @@ consoles:
     class: A
     igdb_platform_id: 4
     dat_system: Nintendo - Nintendo 64
-    minerva_path: No-Intro/Nintendo - Nintendo 64
+    minerva_path: No-Intro/Nintendo - Nintendo 64 (BigEndian)
     archive_org_identifier:
     romsfun_slug: nintendo-64
     romsretro_slug: nintendo-64
@@ -1555,7 +1555,7 @@ consoles:
     class: A
     igdb_platform_id: 20
     dat_system: Nintendo - Nintendo DS
-    minerva_path: No-Intro/Nintendo - Nintendo DS
+    minerva_path: No-Intro/Nintendo - Nintendo DS (Decrypted)
     archive_org_identifier:
     romsfun_slug: nintendo-ds
     romsretro_slug: nds
@@ -1571,7 +1571,7 @@ consoles:
     class: A
     igdb_platform_id: 80
     dat_system: SNK - Neo Geo
-    minerva_path: No-Intro/SNK - Neo Geo
+    minerva_path: Internet Archive/megaarch1996/neo-geo-aes-romset
     archive_org_identifier:
     romsfun_slug: neo-geo
     romsretro_slug: neo-geo
@@ -1607,7 +1607,7 @@ consoles:
     class: B
     igdb_platform_id:
     dat_system:
-    minerva_path:
+    minerva_path: Redump/SNK - Neo Geo CD
     archive_org_identifier:
     romsfun_slug: neo-geo-cd
     romsretro_slug: neo-geo-cd
@@ -1628,7 +1628,7 @@ consoles:
     class: A
     igdb_platform_id: 18
     dat_system: Nintendo - Nintendo Entertainment System
-    minerva_path: No-Intro/Nintendo - Nintendo Entertainment System
+    minerva_path: No-Intro/Nintendo - Nintendo Entertainment System (Headered)
     archive_org_identifier:
     romsfun_slug: nes
     romsretro_slug: nes
@@ -1661,7 +1661,7 @@ consoles:
     class: A
     igdb_platform_id: 119
     dat_system: SNK - Neo Geo Pocket
-    minerva_path: No-Intro/SNK - Neo Geo Pocket
+    minerva_path: No-Intro/SNK - NeoGeo Pocket
     archive_org_identifier: ngp_library
     romsfun_slug: neo-geo-pocket
     romsretro_slug: neo-geo-pocket
@@ -1677,7 +1677,7 @@ consoles:
     class: A
     igdb_platform_id: 120
     dat_system: SNK - Neo Geo Pocket Color
-    minerva_path: No-Intro/SNK - Neo Geo Pocket Color
+    minerva_path: No-Intro/SNK - NeoGeo Pocket Color
     archive_org_identifier: ngp_library
     romsfun_slug: snk-neo-geo-pocket-color
     romsretro_slug: neo-geo-pocket-color
@@ -1815,7 +1815,7 @@ consoles:
     class: A
     igdb_platform_id: 86
     dat_system: NEC - PC Engine - TurboGrafx 16
-    minerva_path: No-Intro/NEC - PC Engine - TurboGrafx 16
+    minerva_path: No-Intro/NEC - PC Engine - TurboGrafx-16
     archive_org_identifier: tg16_library
     romsfun_slug: pc-engine
     romsretro_slug: pc-engine
@@ -1948,7 +1948,7 @@ consoles:
     class: C
     igdb_platform_id: 9
     dat_system: Sony - PlayStation 3
-    minerva_path: No-Intro/Sony - PlayStation 3
+    minerva_path: Redump/Sony - PlayStation 3
     archive_org_identifier:
     romsfun_slug: ps3
     romsretro_slug: ps3
@@ -1985,7 +1985,7 @@ consoles:
     class: C
     igdb_platform_id: 46
     dat_system: Sony - PlayStation Vita
-    minerva_path: No-Intro/Sony - PlayStation Vita
+    minerva_path: No-Intro/Sony - PlayStation Vita (PSN) (Content)
     archive_org_identifier:
     romsfun_slug: ps-vita
     romsretro_slug: ps-vita
@@ -2103,7 +2103,7 @@ consoles:
     class: B
     igdb_platform_id:
     dat_system:
-    minerva_path:
+    minerva_path: Redump/Sega - Saturn
     archive_org_identifier:
     romsfun_slug: sega-saturn
     romsretro_slug: saturn
@@ -2172,7 +2172,7 @@ consoles:
     class: A
     igdb_platform_id:
     dat_system:
-    minerva_path:
+    minerva_path: No-Intro/Sega - 32X
     archive_org_identifier: sega_genesis_library
     romsfun_slug: 32x
     romsretro_slug: sega-32x
@@ -2191,7 +2191,7 @@ consoles:
     class: A
     igdb_platform_id:
     dat_system:
-    minerva_path:
+    minerva_path: No-Intro/Sega - 32X
     archive_org_identifier: sega_genesis_library
     romsfun_slug: 32x
     romsretro_slug: sega-32x
@@ -2262,7 +2262,7 @@ consoles:
     class: A
     igdb_platform_id: 307
     dat_system: Nintendo - Super Game Boy
-    minerva_path: No-Intro/Nintendo - Super Game Boy
+    minerva_path: No-Intro/Nintendo - Game Boy
     archive_org_identifier:
     romsfun_slug: super-game-boy
     romsretro_slug: super-game-boy
@@ -2297,7 +2297,7 @@ consoles:
     class: A
     igdb_platform_id:
     dat_system:
-    minerva_path:
+    minerva_path: No-Intro/Nintendo - Super Nintendo Entertainment System
     archive_org_identifier:
     romsfun_slug: super-nintendo
     romsretro_slug: snes
@@ -2424,7 +2424,8 @@ consoles:
     class: C
     igdb_platform_id: 130
     dat_system: Nintendo - Switch
-    minerva_path: No-Intro/Nintendo - Switch
+    # minerva: not available in Minerva browse as of 2026-06-12; use explicit no-source/fallback handling
+    minerva_path:
     archive_org_identifier:
     romsfun_slug: switch
     romsretro_slug: switch
@@ -2489,7 +2490,7 @@ consoles:
     class: A
     igdb_platform_id: 86
     dat_system: NEC - PC Engine - TurboGrafx 16
-    minerva_path: No-Intro/NEC - PC Engine - TurboGrafx 16
+    minerva_path: No-Intro/NEC - PC Engine - TurboGrafx-16
     archive_org_identifier: tg16_library
     romsfun_slug: turbografx
     romsretro_slug: turbografx-16
@@ -2707,7 +2708,7 @@ consoles:
     class: B
     igdb_platform_id: 5
     dat_system: Nintendo - Wii
-    minerva_path: Redump/Nintendo - Wii
+    minerva_path: Redump/Nintendo - Wii - NKit RVZ [zstd-19-128k]
     archive_org_identifier:
     romsfun_slug: nintendo-wii
     romsretro_slug: wii
@@ -2726,7 +2727,7 @@ consoles:
     class: C
     igdb_platform_id: 41
     dat_system: Nintendo - Wii U
-    minerva_path: No-Intro/Nintendo - Wii U
+    minerva_path: Redump/Nintendo - Wii U - WUX
     archive_org_identifier:
     romsfun_slug: wii-u
     romsretro_slug: wii-u

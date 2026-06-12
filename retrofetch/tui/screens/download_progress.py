@@ -21,6 +21,7 @@ from retrofetch.tui.messages import (
     GameBytes,
     GameDone,
     GameFailed,
+    GameSkipped,
     GameStart,
     RateLimit,
     SourceDead,
@@ -51,7 +52,9 @@ class DownloadProgressScreen(Screen[None]):
         self.wantlist = list(wantlist)
         self.dry_run = bool(dry_run)
         self._active: dict[str, Label] = {}
-        self._done: int = 0
+        self._acquired: int = 0
+        self._failed: int = 0
+        self._skipped: int = 0
         self._worker: DownloadWorker | None = None
         self._stop_event: threading.Event | None = None
         self._cancel_pending: bool = False
@@ -95,9 +98,9 @@ class DownloadProgressScreen(Screen[None]):
     def _bump_overall(self) -> None:
         total = max(len(self.wantlist), 1)
         self.query_one("#progress-overall-text", Label).update(
-            f"Overall: {self._done} / {len(self.wantlist)} games"
+            f"Overall: {self._acquired} / {len(self.wantlist)} games ({self._failed} failed)"
         )
-        self.query_one("#progress-overall-bar", ProgressBar).update(progress=self._done, total=total)
+        self.query_one("#progress-overall-bar", ProgressBar).update(progress=self._acquired, total=total)
 
     def _trim_completed(self) -> None:
         completed = self.query_one("#progress-completed", ScrollableContainer)
@@ -131,7 +134,7 @@ class DownloadProgressScreen(Screen[None]):
         label.update(f"- {message.game} ({pct:.0f}%)")
 
     def on_game_done(self, message: GameDone) -> None:
-        self._done += 1
+        self._acquired += 1
         self._drop_active(message.game)
         completed = self.query_one("#progress-completed", ScrollableContainer)
         if message.source == "dry-run":
@@ -144,11 +147,24 @@ class DownloadProgressScreen(Screen[None]):
         self._bump_overall()
 
     def on_game_failed(self, message: GameFailed) -> None:
-        self._done += 1
+        self._failed += 1
         self._drop_active(message.game)
         completed = self.query_one("#progress-completed", ScrollableContainer)
         completed.mount(
             Label(f"[X] {message.game}: {message.reason}", classes="status-failed dl-status-row")
+        )
+        self._trim_completed()
+        self._bump_overall()
+
+    def on_game_skipped(self, message: GameSkipped) -> None:
+        self._skipped += 1
+        self._drop_active(message.game)
+        completed = self.query_one("#progress-completed", ScrollableContainer)
+        completed.mount(
+            Label(
+                f"SKIP: {message.game}: {message.reason}",
+                classes="status-unverified dl-status-row",
+            )
         )
         self._trim_completed()
         self._bump_overall()
@@ -215,17 +231,20 @@ class DownloadProgressScreen(Screen[None]):
 
     def on_download_complete(self, message: DownloadComplete) -> None:
         r = message.report
-        total = len(self.wantlist)
-        self.query_one("#progress-overall-bar", ProgressBar).update(progress=total, total=max(total, 1))
+        self._acquired = r.acquired
+        self._failed = r.failed
+        self._skipped = r.skipped
+        self._bump_overall()
         if self.dry_run:
             summary = (
                 f"Dry run done. attempted={r.attempted}. No files downloaded. "
                 "Press Esc to return."
             )
         else:
+            skipped = f" skipped={r.skipped}" if r.skipped else ""
             summary = (
                 f"Done. attempted={r.attempted} acquired={r.acquired} "
-                f"failed={r.failed} unverified={r.unverified}. Press Esc to return."
+                f"failed={r.failed} unverified={r.unverified}{skipped}. Press Esc to return."
             )
         self.query_one("#summary-line", Label).update(summary)
         self._summary_complete = True

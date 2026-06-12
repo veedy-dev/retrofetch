@@ -32,7 +32,6 @@ from retrofetch.state import load_state
 from retrofetch.tui.messages import WantlistFailed, WantlistReady
 from retrofetch.tui.widgets.wantlist_preview import WantlistPreview
 from retrofetch.wantlist_cache import (
-    cache_path,
     get_or_fetch_wantlist,
     invalidate,
     is_recently_empty,
@@ -253,7 +252,6 @@ class HomeScreen(Screen[None]):
         item = event.item
         if item is None:
             return
-        klass = getattr(item, "_rf_klass", "?")
         preview = self.query_one("#main-panel", WantlistPreview)
         # Cancel pending debounce regardless of class - new highlight supersedes.
         if self._preview_timer is not None:
@@ -410,7 +408,6 @@ class HomeScreen(Screen[None]):
         item = list_view.highlighted_child
         if item is None:
             return
-        klass = getattr(item, "_rf_klass", "?")
         if not getattr(item, "_rf_available", False):
             return
         shortname = getattr(item, "_rf_shortname", "?")
@@ -426,7 +423,6 @@ class HomeScreen(Screen[None]):
         item = list_view.highlighted_child
         if item is None:
             return
-        klass = getattr(item, "_rf_klass", "?")
         if not getattr(item, "_rf_available", False):
             return
         shortname = getattr(item, "_rf_shortname", "?")
@@ -442,7 +438,6 @@ class HomeScreen(Screen[None]):
         item = list_view.highlighted_child
         if item is None:
             return
-        klass = getattr(item, "_rf_klass", "?")
         if not getattr(item, "_rf_available", False):
             return
         shortname = getattr(item, "_rf_shortname", "?")

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import importlib
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
+from retrofetch.downloader import stream_http_download
 from retrofetch.events import EventBus
 from retrofetch.sources import DownloadCandidate, SourceUnavailable
 
@@ -122,38 +122,19 @@ class ArchiveOrgSource:
         *,
         event_bus: EventBus | None = None,
     ) -> Path:
-        ia = self._internetarchive()
         identifier = (candidate.extra or {}).get("identifier", self.identifier)
         if not identifier:
             raise SourceUnavailable("archive.org candidate missing identifier")
         dest_dir = Path(dest_dir)
         dest_dir.mkdir(parents=True, exist_ok=True)
-        download_fn: Any = ia.download
-        try:
-            results = download_fn(
-                str(identifier),
-                files=[candidate.filename],
-                destdir=str(dest_dir),
-                no_directory=True,
-                retries=3,
-                silent=True,
-            )
-        except Exception as exc:
-            raise SourceUnavailable(f"archive.org download failed: {exc}") from exc
         final = dest_dir / candidate.filename
-        if not final.exists():
-            nested = dest_dir / str(identifier) / candidate.filename
-            if nested.exists():
-                os.replace(nested, final)
-        if not final.exists():
-            raise SourceUnavailable(
-                f"archive.org reported success but file not found: {final} (results={results})"
-            )
-        if event_bus is not None:
-            from retrofetch.events import GameBytesEvent
-
-            size = final.stat().st_size
-            event_bus.publish(
-                GameBytesEvent(game=candidate.filename, downloaded=size, total=size)
-            )
-        return final
+        result = stream_http_download(
+            candidate.url,
+            final,
+            event_bus=event_bus,
+            event_game=candidate.filename,
+            timeout=60.0,
+            source_name=self.name,
+            expected_size=candidate.expected_size,
+        )
+        return result.path

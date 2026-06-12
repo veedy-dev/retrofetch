@@ -8,7 +8,8 @@ from urllib.parse import unquote, urljoin
 
 import httpx
 
-from retrofetch.events import EventBus, GameBytesEvent
+from retrofetch.downloader import stream_http_download
+from retrofetch.events import EventBus
 from retrofetch.sources import DownloadCandidate, SourceUnavailable
 
 _log = logging.getLogger(__name__)
@@ -123,64 +124,13 @@ class MinervaHttpSource:
         dest_dir = Path(dest_dir)
         dest_dir.mkdir(parents=True, exist_ok=True)
         final = dest_dir / candidate.filename
-        part = final.with_suffix(final.suffix + ".part")
-        resume_from = part.stat().st_size if part.exists() else 0
-        headers: dict[str, str] = {}
-        if resume_from:
-            headers["Range"] = f"bytes={resume_from}-"
-        mode = "ab" if resume_from else "wb"
-        downloaded = resume_from
-        total: int | None = None
-        try:
-            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
-                with client.stream("GET", candidate.url, headers=headers) as resp:
-                    if resp.status_code == 416:
-                        resp.close()
-                        with client.stream("GET", candidate.url) as resp2:
-                            if resp2.status_code != 200:
-                                raise SourceUnavailable(
-                                    f"minerva HTTP {resp2.status_code} on restart"
-                                )
-                            total_header = resp2.headers.get("Content-Length")
-                            total = int(total_header) if total_header else None
-                            downloaded = 0
-                            with open(part, "wb") as fh:
-                                for chunk in resp2.iter_bytes(chunk_size=64 * 1024):
-                                    fh.write(chunk)
-                                    downloaded += len(chunk)
-                                    if event_bus is not None:
-                                        event_bus.publish(
-                                            GameBytesEvent(
-                                                game=candidate.filename,
-                                                downloaded=downloaded,
-                                                total=total or downloaded,
-                                            )
-                                        )
-                    else:
-                        if resp.status_code not in (200, 206):
-                            raise SourceUnavailable(
-                                f"minerva HTTP {resp.status_code} for {candidate.filename}"
-                            )
-                        total_header = resp.headers.get("Content-Length")
-                        if total_header:
-                            try:
-                                content_len = int(total_header)
-                                total = downloaded + content_len
-                            except ValueError:
-                                total = None
-                        with open(part, mode) as fh:
-                            for chunk in resp.iter_bytes(chunk_size=64 * 1024):
-                                fh.write(chunk)
-                                downloaded += len(chunk)
-                                if event_bus is not None:
-                                    event_bus.publish(
-                                        GameBytesEvent(
-                                            game=candidate.filename,
-                                            downloaded=downloaded,
-                                            total=total or downloaded,
-                                        )
-                                    )
-        except httpx.HTTPError as exc:
-            raise SourceUnavailable(f"minerva download error: {exc}") from exc
-        part.replace(final)
-        return final
+        result = stream_http_download(
+            candidate.url,
+            final,
+            event_bus=event_bus,
+            event_game=candidate.filename,
+            timeout=self.timeout,
+            source_name=self.name,
+            expected_size=candidate.expected_size,
+        )
+        return result.path

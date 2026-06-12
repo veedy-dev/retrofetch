@@ -51,6 +51,7 @@ class Config(BaseModel):
     )
     max_game_size_gb: float | None = None
     max_concurrent_downloads: int = 3
+    extract_archives: bool = False
     source_fallback_by_class: dict[str, list[str]] = Field(
         default_factory=lambda: {
             "A": ["archive_org", "minerva_http", "minerva_torrent", "romsfun"],
