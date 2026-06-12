@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import signal
-import sys
 import threading
 
 _log = logging.getLogger(__name__)
@@ -19,11 +18,6 @@ class ShutdownCoordinator:
         if not self.stop_event.is_set():
             _log.warning(
                 "shutdown requested (signal=%s); finishing current task", signum
-            )
-            print(
-                "\nGraceful shutdown in progress. Finalizing current download... "
-                "rerun the same command to resume.",
-                file=sys.stderr,
             )
         self.stop_event.set()
 
