@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import os
 import re
 import shutil
 from pathlib import Path
@@ -15,7 +14,6 @@ _log = logging.getLogger(__name__)
 
 _DISC_PATTERN = re.compile(r"\s*\((?:Disc|Disk)\s*\d+[^)]*\)", re.IGNORECASE)
 _REGION_SUFFIX = re.compile(r"(\s+\([^)]+\))$")
-_MAX_WINDOWS_PATH = 240
 
 
 class PlaceResult:
@@ -40,45 +38,9 @@ def _file_sha1(path: Path) -> str:
     return h.hexdigest()
 
 
-def _absolute_len(path: Path) -> int:
-    return len(os.path.abspath(str(path)))
-
-
-def _truncate_filename_for_path(target_dir: Path, safe_name: str) -> str:
-    candidate = target_dir / safe_name
-    overflow = _absolute_len(candidate) - _MAX_WINDOWS_PATH
-    if overflow <= 0:
-        return safe_name
-
-    stem = candidate.stem
-    ext = candidate.suffix
-    region = ""
-    match = _REGION_SUFFIX.search(stem)
-    if match:
-        region = match.group(1)
-        stem = stem[: match.start()]
-
-    max_name_len = len(safe_name) - overflow
-    max_stem_len = max_name_len - len(ext) - len(region)
-    if max_stem_len < 1:
-        max_stem_len = 1
-    truncated = stem[:max_stem_len].rstrip(". ")
-    if not truncated:
-        truncated = "_"
-    result = f"{truncated}{region}{ext}"
-    _log.warning(
-        "target path exceeded %s chars; truncated %s to %s",
-        _MAX_WINDOWS_PATH,
-        safe_name,
-        result,
-    )
-    return result
-
-
 def safe_target_path(target_dir: Path, canonical_name: str) -> Path:
     target_dir = Path(target_dir)
-    safe_name = sanitize_filename(canonical_name)
-    safe_name = _truncate_filename_for_path(target_dir, safe_name)
+    safe_name = sanitize_filename(canonical_name, str(target_dir))
     return target_dir / safe_name
 
 
@@ -103,9 +65,14 @@ def place_file(
             return PlaceResult(status="already_present", final_path=final)
         stem = final.stem
         ext = final.suffix
+        region = ""
+        match = _REGION_SUFFIX.search(stem)
+        if match:
+            region = match.group(1)
+            stem = stem[: match.start()]
         suffix_num = 2
         while True:
-            candidate = target_dir / f"{stem} ({suffix_num}){ext}"
+            candidate = safe_target_path(target_dir, f"{stem} ({suffix_num}){region}{ext}")
             if not candidate.exists():
                 final = candidate
                 final_long = make_long_path(final)

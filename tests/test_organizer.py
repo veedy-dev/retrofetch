@@ -9,13 +9,14 @@ from retrofetch.sanitize import sanitize_filename
 @pytest.mark.parametrize(
     ("raw", "expected"),
     [
-        ("Game: Special.zip", "Game - Special.zip"),
-        ("Game <Special>.zip", "Game -Special-.zip"),
-        ("Game? Name*.zip", "Game- Name-.zip"),
+        ("Game: Special Edition (USA).zip", "Game - Special Edition (USA).zip"),
+        ("Game <Version> (USA).zip", "Game -Version- (USA).zip"),
+        ("Game? (USA).zip", "Game- (USA).zip"),
         ("Game/Name\\Part.zip", "Game-Name-Part.zip"),
-        ("Game. .zip", "Game.zip"),
-        ("CON.zip", "CON_.zip"),
-        ("LPT1.bin", "LPT1_.bin"),
+        ("Game. (USA).zip", "Game (USA).zip"),
+        ("CON (USA).zip", "CON_ (USA).zip"),
+        ("NUL (Japan).zip", "NUL_ (Japan).zip"),
+        ("Game\x07Title.zip", "Game-Title.zip"),
         ("Legend of Zelda, The (USA).zip", "Legend of Zelda, The (USA).zip"),
     ],
 )
@@ -39,6 +40,18 @@ def test_hostile_filename_can_be_written_to_disk(scratch_path) -> None:
 
     assert target.exists()
     assert not any(char in target.name for char in '<>:"/\\|?*')
+    assert target.name.endswith("(USA).zip")
+
+
+def test_long_path_write_stays_within_guard(scratch_path) -> None:
+    target = safe_target_path(scratch_path, "B" * 300 + " (USA).zip")
+
+    target.write_bytes(b"x")
+
+    assert target.exists()
+    assert len(str(target.resolve())) <= 240
+    assert target.name.endswith(".zip")
+    assert "(USA)" in target.name
 
 
 def test_place_file_uses_sanitized_target(scratch_path) -> None:
