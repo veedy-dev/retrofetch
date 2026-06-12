@@ -1,4 +1,4 @@
-"""Download confirm screen: validates wantlist + dry-run toggle, then pushes Progress."""
+"""Download confirm screen: validates selected wantlist, then pushes Progress."""
 from __future__ import annotations
 
 from typing import Any
@@ -8,9 +8,10 @@ from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import ScrollableContainer, Vertical  # pyright: ignore[reportMissingImports]
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import Checkbox, Footer, Header, Label  # pyright: ignore[reportMissingImports]
+from textual.widgets import Footer, Header, Label  # pyright: ignore[reportMissingImports]
 
 from retrofetch.config import ConsoleOverride
+from retrofetch.ranker import resolve_download_set
 from retrofetch.tui.screens.download_progress import DownloadProgressScreen
 from retrofetch.tui.messages import WantlistFailed, WantlistReady
 from retrofetch.wantlist_cache import get_or_fetch_wantlist
@@ -43,11 +44,6 @@ class DownloadConfirmScreen(Screen[None]):
                 f"Download: {self.shortname}. Enter=start, c=cancel, esc=back.",
                 id="dl-title",
             )
-            yield Checkbox(
-                "Dry run (no real downloads; Space toggles)",
-                id="dry-run-toggle",
-                value=self.app.config.dry_run,  # pyright: ignore[reportAttributeAccessIssue]
-            )
             yield Label("", id="summary-line")
             yield ScrollableContainer(id="wantlist-preview")
         yield Footer()
@@ -58,17 +54,12 @@ class DownloadConfirmScreen(Screen[None]):
 
     @work(thread=True, exclusive=True, group="confirm-load")
     def _kick_load(self) -> None:
-        limit = (
-            self.override.limit
-            if (self.override and self.override.limit)
-            else self.app.config.default_limit  # pyright: ignore[reportAttributeAccessIssue]
-        )
         try:
             titles, from_cache = get_or_fetch_wantlist(
                 console_entry=self.console_entry,
                 overrides=self.override,
                 config=self.app.config,  # pyright: ignore[reportAttributeAccessIssue]
-                limit=limit,
+                limit=0,
             )
         except Exception as exc:
             self.post_message(WantlistFailed(self.shortname, str(exc)))
@@ -78,7 +69,16 @@ class DownloadConfirmScreen(Screen[None]):
     def on_wantlist_ready(self, message: WantlistReady) -> None:
         if message.console != self.shortname:
             return
-        self._wantlist = list(message.titles)
+        limit = (
+            self.override.limit
+            if (self.override and self.override.limit)
+            else self.app.config.default_limit  # pyright: ignore[reportAttributeAccessIssue]
+        )
+        self._wantlist = resolve_download_set(
+            list(message.titles),
+            self.override,
+            limit,
+        )
         self._loaded = True
         indicator = "cached" if message.from_cache else "fresh"
         self.query_one("#summary-line", Label).update(
@@ -104,13 +104,12 @@ class DownloadConfirmScreen(Screen[None]):
                 "Wantlist not ready yet. Wait for load to complete."
             )
             return
-        dry = bool(self.query_one("#dry-run-toggle", Checkbox).value)
-        self.app.config.dry_run = dry  # pyright: ignore[reportAttributeAccessIssue]
+        self.app.config.dry_run = False  # pyright: ignore[reportAttributeAccessIssue]
         self.app.switch_screen(
             DownloadProgressScreen(
                 console_entry=self.console_entry,
                 wantlist=self._wantlist,
-                dry_run=dry,
+                dry_run=False,
             )
         )
 

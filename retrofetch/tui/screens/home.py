@@ -59,6 +59,7 @@ class HomeScreen(Screen[None]):
         Binding("tab", "focus_next", "Next", show=False),
         Binding("w", "open_wantlist", "Wantlist", show=True),
         Binding("d", "open_download", "Download", show=True),
+        Binding("b", "open_bios", "BIOS", show=True),
         Binding("s", "open_state", "State", show=True),
         Binding("C", "open_coverage", "Coverage", show=True),
         Binding("r", "retry_fetch", "Refresh", show=True),
@@ -101,6 +102,7 @@ class HomeScreen(Screen[None]):
         "romsfun_slug",
         "romsretro_slug",
         "archive_org_identifier",
+        "minerva_path",
         "vimm_slug",
         "coolrom_slug",
     )
@@ -432,6 +434,21 @@ class HomeScreen(Screen[None]):
         override = self.app.overrides.get(shortname)
         from retrofetch.tui.screens.download_confirm import DownloadConfirmScreen
         self.app.push_screen(DownloadConfirmScreen(console_entry=entry, override=override))
+
+    def action_open_bios(self) -> None:
+        list_view = self.query_one("#console-list", ListView)
+        item = list_view.highlighted_child
+        if item is None:
+            return
+        klass = str(getattr(item, "_rf_klass", "?"))
+        if klass not in ("A", "B", "C"):
+            return
+        shortname = getattr(item, "_rf_shortname", "?")
+        entry = self._lookup_entry(shortname)
+        if entry is None:
+            return
+        from retrofetch.tui.screens.bios import BiosScreen
+        self.app.push_screen(BiosScreen(console_entry=entry))
 
     def action_open_state(self) -> None:
         list_view = self.query_one("#console-list")
