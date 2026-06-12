@@ -44,6 +44,13 @@ class GameDoneEvent(ProgressEvent):
 
 
 @dataclass(frozen=True)
+class GameUnverifiedEvent(ProgressEvent):
+    game: str
+    source: str
+    reason: str | None = None
+
+
+@dataclass(frozen=True)
 class GameFailedEvent(ProgressEvent):
     game: str
     reason: str
@@ -84,6 +91,8 @@ class DatLoadStartEvent(ProgressEvent):
 class DatLoadDoneEvent(ProgressEvent):
     console: str
     games_loaded: int
+    status: str = "loaded"
+    detail: str | None = None
 
 
 @dataclass(frozen=True)

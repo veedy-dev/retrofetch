@@ -5,13 +5,14 @@ import re
 import shutil
 import threading
 from collections import defaultdict
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from retrofetch import _resources
 from retrofetch.config import Config
-from retrofetch.dat import DatEntry, parse_dat
+from retrofetch.dat import DatEntry, GameEntry as DatGameEntry, parse_dat
 from retrofetch.dat_fetch import find_dat_for_console
 from retrofetch.dispatcher import SourceDispatcher
 from retrofetch.events import (
@@ -114,37 +115,71 @@ def run_console(
                 dat_name=dat_path.name if dat_path is not None else "(none)",
             )
         )
+    dat_status = "missing"
+    dat_detail = f"DAT not available for {short}; downloads are unverified."
     if dat_path is not None:
         try:
             dat = parse_dat(dat_path)
+            if dat.games:
+                dat_status = "loaded"
+                dat_detail = None
+            else:
+                dat = None
+                dat_status = "empty"
+                dat_detail = (
+                    f"DAT for {short} parsed but contains 0 games; "
+                    "downloads are unverified."
+                )
         except Exception as exc:
             _log.warning("failed to parse DAT for %s: %s", short, exc)
             dat = None
+            dat_status = "corrupt"
+            dat_detail = f"DAT for {short} could not be parsed; downloads are unverified."
     if event_bus is not None:
         event_bus.publish(
-            DatLoadDoneEvent(console=short, games_loaded=len(dat.games) if dat else 0)
+            DatLoadDoneEvent(
+                console=short,
+                games_loaded=len(dat.games) if dat else 0,
+                status=dat_status,
+                detail=dat_detail,
+            )
         )
 
     source_names = config.source_fallback_by_class.get(klass, [])
-    dispatcher = SourceDispatcher(
-        console_entry=console_entry,
-        source_names=source_names,
-        allow_torrent=allow_torrent,
-    )
-
     state = load_state(short, config.roms_root)
+    verification_available = dat is not None and bool(dat.games)
+    max_workers = max(1, min(3, int(config.max_concurrent_downloads or 1)))
+    report_lock = threading.Lock()
+    state_lock = threading.Lock()
 
-    groups = group_by_base_title(wantlist)
-    for base_title, variants in groups.items():
+    def find_game_entry(base_title: str) -> DatGameEntry | None:
+        if dat is None:
+            return None
+        for game in dat.games:
+            if strip_disc_marker(game.name).lower() == base_title.lower():
+                return game
+        return None
+
+    def record_result(status: str) -> None:
+        with report_lock:
+            if status == "unverified":
+                report.unverified += 1
+            elif status == "skipped":
+                report.skipped += 1
+            elif status != "acquired":
+                report.failed += 1
+
+    def process_group(base_title: str, variants: list[str]) -> bool:
         if stop_event is not None and stop_event.is_set():
-            break
-        report.attempted += 1
-        game_entry = None
-        if dat is not None:
-            for g in dat.games:
-                if strip_disc_marker(g.name).lower() == base_title.lower():
-                    game_entry = g
-                    break
+            return False
+        with report_lock:
+            report.attempted += 1
+        game_entry = find_game_entry(base_title)
+        dispatcher = SourceDispatcher(
+            console_entry=console_entry,
+            source_names=source_names,
+            allow_torrent=allow_torrent,
+        )
         acquired_any = False
         for variant in variants:
             if stop_event is not None and stop_event.is_set():
@@ -167,20 +202,69 @@ def run_console(
                 console=short,
                 event_bus=event_bus,
                 extract_archives=config.extract_archives,
+                verification_available=verification_available,
+                state_lock=state_lock,
             )
             if result.status == "acquired":
                 acquired_any = True
-            elif result.status == "unverified":
-                report.unverified += 1
-            elif result.status == "skipped":
-                report.skipped += 1
-            else:
-                report.failed += 1
+            record_result(result.status)
             if not dry_run:
-                save_state(state, config.roms_root)
-        if acquired_any:
-            report.acquired += 1
+                with state_lock:
+                    save_state(state, config.roms_root)
+        return acquired_any
+
+    groups = group_by_base_title(wantlist)
+    work_items = list(groups.items())
+    if max_workers == 1 or len(work_items) <= 1:
+        for base_title, variants in work_items:
+            try:
+                acquired = process_group(base_title, variants)
+            except Exception:
+                _log.exception("download worker failed for %s", base_title)
+                acquired = False
+                with report_lock:
+                    report.failed += 1
+            if acquired:
+                with report_lock:
+                    report.acquired += 1
+            if stop_event is not None and stop_event.is_set():
+                break
+    else:
+        iterator = iter(work_items)
+        futures: dict[Future[bool], tuple[str, list[str]]] = {}
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for _ in range(max_workers):
+                if stop_event is not None and stop_event.is_set():
+                    break
+                try:
+                    item = next(iterator)
+                except StopIteration:
+                    break
+                futures[executor.submit(process_group, item[0], item[1])] = item
+
+            while futures:
+                done, _pending = wait(futures, return_when=FIRST_COMPLETED)
+                for future in done:
+                    item = futures.pop(future, None)
+                    try:
+                        acquired = future.result()
+                    except Exception:
+                        _log.exception("download worker failed for %s", item)
+                        acquired = False
+                        with report_lock:
+                            report.failed += 1
+                    if acquired:
+                        with report_lock:
+                            report.acquired += 1
+                    if stop_event is not None and stop_event.is_set():
+                        continue
+                    try:
+                        item = next(iterator)
+                    except StopIteration:
+                        continue
+                    futures[executor.submit(process_group, item[0], item[1])] = item
 
     if not dry_run:
-        save_state(state, config.roms_root)
+        with state_lock:
+            save_state(state, config.roms_root)
     return report

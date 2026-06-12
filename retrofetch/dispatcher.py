@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+import threading
 from typing import Any
 
 from retrofetch.dat import GameEntry
@@ -66,13 +67,24 @@ class SourceDispatcher:
         console: str,
         event_bus: EventBus | None = None,
         extract_archives: bool = False,
+        verification_available: bool = True,
+        state_lock: threading.Lock | None = None,
     ) -> DownloadResult:
-        skipped = skip_if_acquired(
-            state,
-            game_title,
-            target_dir,
-            event_bus=event_bus,
-        )
+        if state_lock is None:
+            skipped = skip_if_acquired(
+                state,
+                game_title,
+                target_dir,
+                event_bus=event_bus,
+            )
+        else:
+            with state_lock:
+                skipped = skip_if_acquired(
+                    state,
+                    game_title,
+                    target_dir,
+                    event_bus=event_bus,
+                )
         if skipped is not None:
             return skipped
         attempts_summary: list[str] = []
@@ -116,14 +128,16 @@ class SourceDispatcher:
                 console=console,
                 event_bus=event_bus,
                 extract_archives=extract_archives,
+                verification_available=verification_available,
+                state_lock=state_lock,
             )
             if event_bus is not None and result.reason:
                 if "cloudflare" in result.reason.lower():
                     event_bus.publish(
                         CloudflareBlockEvent(source=source_name, status=0)
                     )
-            if result.status in ("acquired", "skipped"):
-                result.reason = ";".join(attempts_summary + [f"{source_name}:acquired"])
+            if result.status in ("acquired", "skipped", "unverified"):
+                result.reason = ";".join(attempts_summary + [f"{source_name}:{result.status}"])
                 return result
             attempts_summary.append(f"{source_name}:{result.status}")
         return DownloadResult(

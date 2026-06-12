@@ -18,6 +18,7 @@ from retrofetch.events import (
     GameFailedEvent,
     GameSkippedEvent,
     GameStartEvent,
+    GameUnverifiedEvent,
     ProgressEvent,
     RateLimitEvent,
     SourceDeadEvent,
@@ -47,6 +48,14 @@ class GameDone(Message):
         self.source = source
         self.size = size
         self.sha1 = sha1
+        super().__init__()
+
+
+class GameUnverified(Message):
+    def __init__(self, game: str, source: str, reason: str | None = None) -> None:
+        self.game = game
+        self.source = source
+        self.reason = reason
         super().__init__()
 
 
@@ -94,9 +103,17 @@ class DatLoadStart(Message):
 
 
 class DatLoadDone(Message):
-    def __init__(self, console: str, games_loaded: int) -> None:
+    def __init__(
+        self,
+        console: str,
+        games_loaded: int,
+        status: str = "loaded",
+        detail: str | None = None,
+    ) -> None:
         self.console = console
         self.games_loaded = games_loaded
+        self.status = status
+        self.detail = detail
         super().__init__()
 
 
@@ -124,6 +141,7 @@ class EventBusBridge:
         (GameStartEvent, GameStart),
         (GameBytesEvent, GameBytes),
         (GameDoneEvent, GameDone),
+        (GameUnverifiedEvent, GameUnverified),
         (GameFailedEvent, GameFailed),
         (GameSkippedEvent, GameSkipped),
         (SourceDeadEvent, SourceDead),
