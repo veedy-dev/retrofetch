@@ -107,7 +107,8 @@ The home screen features a 178-console sidebar. As you scroll through consoles, 
 | / | Focus filter input (sidebar) |
 | ? | Help modal (key reference) |
 | w | Wantlist curation (DataTable, space=include, a/Ctrl+A=include page, x=exclude, Enter=save) |
-| d | Download confirm screen (Enter=save and open progress, c=cancel) |
+| d | Download confirm screen (Enter=start download, c=cancel) |
+| b | BIOS download screen |
 | s | State browser (read-only .retrofetch-state.json viewer) |
 | C | Coverage viewer (async compute, e=export) |
 | Ctrl+R | Retry fetch (invalidates cache and re-fetches) |
@@ -118,9 +119,11 @@ The home screen features a 178-console sidebar. As you scroll through consoles, 
 
 ### Download flow
 Pressing `d` on a Class A/B/C console opens the **Download confirm screen**:
-- Shows the cached wantlist count and a `Dry run` toggle (Space toggles).
-- Press `Enter` to commit the wantlist, dismiss confirm, and open the **Download progress screen**.
+- Shows the count of selected titles queued for download.
+- Press `Enter` to start the download and open the **Download progress screen**.
 - Press `Esc` to return to home without starting.
+
+If you've selected specific titles in the Wantlist screen (`w`), only those titles download. Without a selection, the full ranked wantlist is used.
 
 The **Download progress screen** shows:
 - An overall progress block at the top (`X / N games done`).
@@ -153,6 +156,17 @@ The primary command for fetching ROMs.
 | --no-torrent | FLAG | off | Skip libtorrent sources |
 | --config | PATH | config.yml | Path to configuration file |
 
+### bios
+Downloads BIOS files for a console to `bios_root/{console}/`.
+
+| Option | Type | Default | Meaning |
+|---|---|---|---|
+| --console | TEXT | required | Console shortname (e.g. psx, ps2, saturn) |
+| --limit | INT | all | Limit number of BIOS files (useful for probing) |
+| --config | PATH | config.yml | Path to configuration file |
+
+You can also trigger BIOS downloads from the TUI by pressing `b` on any console.
+
 ### verify
 Rescans existing ROM files and updates local state with verification results.
 
@@ -183,6 +197,7 @@ Defines global paths, region preferences, and source priorities.
 
 ```yaml
 roms_root: "D:/Projects/retrofetch/ROMs"
+bios_root: "D:/Projects/retrofetch/BIOS"
 cache_dir: ".cache"
 log_file: "retrofetch.log"
 default_limit: 75
@@ -200,14 +215,16 @@ exclude_keywords:
   - "(Trade Demo)"
 max_game_size_gb: null
 max_concurrent_downloads: 3
+# Most emulators read .zip/.7z archives directly. Set true only if yours doesn't.
+extract_archives: false
 source_fallback_by_class:
-  A: [archive_org, minerva_http, minerva_torrent, romsfun]
-  B: [minerva_torrent, minerva_http, archive_org, romsretro]
-  C: [romsfun, romsretro, archive_org]
+  A: [minerva_http, archive_org, romsfun, romsretro]
+  B: [minerva_http, archive_org, romsretro]
+  C: [minerva_http, archive_org, romsfun, romsretro]
 ranking_sources_by_class:
-  A: [romsfun, romsretro, archive_org]
-  B: [archive_org, romsretro]
-  C: [romsfun, romsretro]
+  A: [minerva_http, archive_org, romsfun, romsretro]
+  B: [minerva_http, archive_org, romsretro]
+  C: [minerva_http, archive_org, romsfun, romsretro]
 ```
 
 ### overrides.yml
@@ -216,6 +233,7 @@ Force-include specific titles or set custom limits per console.
 ```yaml
 consoles:
   nes:
+    # include: when non-empty, these titles are the EXACT download set (not prepended to the ranked list)
     include:
       - Chrono Trigger
     exclude:
@@ -225,6 +243,15 @@ consoles:
       - USA
       - Japan
 ```
+
+## Source capability matrix
+
+| Source | Rank | Download | Notes |
+|---|---|---|---|
+| minerva_http | yes | partial | minerva-archive.org; catalog listing works (2,180+ PSP titles); direct HTTP downloads limited by torrent-only policy |
+| archive_org | no | yes | Fallback; availability varies by console |
+| romsfun | no | yes | Cloudflare-protected; may block automated requests |
+| romsretro | no | yes | Cloudflare-protected; may block automated requests |
 
 ## Console classes
 retrofetch categorizes systems based on metadata and distribution models.
@@ -245,6 +272,9 @@ retrofetch categorizes systems based on metadata and distribution models.
 |   |-- Game Title (USA).ext          # Verified ROM file
 |   |-- .retrofetch-state.json        # Per-console resume state
 |   `-- ...
+<bios_root>/
+|-- <shortname>/
+|   `-- bios.bin                      # BIOS file(s) for the console
 retrofetch.log                         # Rotating application log
 coverage.md                            # Collection status report
 .cache/                                # Temporary metadata caches
@@ -254,6 +284,9 @@ coverage.md                            # Collection status report
 
 ### Empty wantlist
 The ranker could not reach sources or the collection is missing on the provider side. Check `retrofetch.log` for network errors or Cloudflare blocks.
+
+### Rate-limit halt
+If you see `Rate-limited on <source>, retry in Xs` in verbose output, the source is throttling requests. The downloader backs off automatically. If it halts entirely, wait a few minutes and rerun.
 
 ### Windows long-path errors
 Enable long paths in the registry: `HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled = 1`. Or move `roms_root` closer to the drive root (e.g., `C:\ROMs`).
@@ -274,7 +307,7 @@ Exits with code 2 if the terminal is incompatible. Avoid MSYS2, PowerShell ISE, 
 Safe to interrupt. State is saved in `.retrofetch-state.json`. Rerunning the command will resume from where it stopped.
 
 ## Limitations / non-goals
-- No BIOS: Does not download system BIOS files.
+- BIOS: Available via `retrofetch bios --console <name>` or TUI `b` key. Coverage depends on source availability.
 - No Conversion: Does not handle CHD or zstd compression.
 - No Patching: Does not apply IPS, BPS, or XDelta patches.
 - No Arcade: Skips MAME/FBNeo due to complex versioning.
@@ -307,6 +340,7 @@ retrofetch/
 |       |-- styles.tcss
 |       |-- screens/
 |       |   |-- setup.py             # First-run configuration wizard
+|       |   |-- bios.py              # BIOS download screen
 |       |   |-- download_confirm.py  # Download confirm screen
 |       |   |-- download_progress.py # Download progress screen
 |       |   `-- cancel_confirm.py    # Cancel confirm modal
