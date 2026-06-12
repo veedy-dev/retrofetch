@@ -22,6 +22,7 @@ Home screen
   enter      select console
   w          wantlist curation
   d          download screen
+  b          BIOS download screen
   s          state browser
   C          coverage viewer
   Ctrl+R     retry fetch (invalidate cache + re-fetch)
@@ -44,8 +45,12 @@ Download screen
 Wantlist screen
   Space      include / uninclude selected title
   x          exclude / unexclude selected title
-  Enter      save and return
+  Enter      save and return to Home
   Esc        cancel without saving
+
+BIOS screen
+  Enter      download BIOS files to BIOS/<console>/
+  Esc        back to Home
 
 Exit codes
   0          graceful quit

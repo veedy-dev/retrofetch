@@ -41,6 +41,7 @@ async def _wait_loaded(screen: WantlistScreen, pilot) -> None:
 def test_enter_saves_and_returns(monkeypatch, scratch_path) -> None:
     monkeypatch.chdir(scratch_path)
     Path("overrides.yml").write_text("consoles: {}\n", encoding="utf-8")
+    assert all(getattr(binding, "key", None) != "s" for binding in WantlistScreen.BINDINGS)
     monkeypatch.setattr(
         "retrofetch.tui.screens.wantlist.get_or_fetch_wantlist",
         lambda **kwargs: (["Burnout Dominator", "Ridge Racer"], False),
@@ -68,6 +69,7 @@ def test_s_key_no_longer_saves(monkeypatch, scratch_path) -> None:
     monkeypatch.chdir(scratch_path)
     Path("overrides.yml").write_text("consoles: {}\n", encoding="utf-8")
     before = Path("overrides.yml").read_text(encoding="utf-8")
+    assert all(getattr(binding, "key", None) != "s" for binding in WantlistScreen.BINDINGS)
     monkeypatch.setattr(
         "retrofetch.tui.screens.wantlist.get_or_fetch_wantlist",
         lambda **kwargs: (["Burnout Dominator", "Ridge Racer"], False),
@@ -91,3 +93,37 @@ def test_s_key_no_longer_saves(monkeypatch, scratch_path) -> None:
 
     asyncio.run(run())
     assert Path("overrides.yml").read_text(encoding="utf-8") == before
+
+
+def test_large_catalog_filter_preserves_selection(monkeypatch, scratch_path) -> None:
+    monkeypatch.chdir(scratch_path)
+    Path("overrides.yml").write_text("consoles: {}\n", encoding="utf-8")
+    titles = [f"Game {i:04d}" for i in range(2988)] + [
+        f"Mario Adventure {i:02d}" for i in range(12)
+    ]
+    monkeypatch.setattr(
+        "retrofetch.tui.screens.wantlist.get_or_fetch_wantlist",
+        lambda **kwargs: (titles, False),
+    )
+    screen = WantlistScreen(
+        console_entry={"shortname": "snes", "class": "A"},
+        override=ConsoleOverride(),
+    )
+    app = _WantlistApp(screen)
+
+    async def run() -> None:
+        async with app.run_test() as pilot:
+            await _wait_loaded(screen, pilot)
+            assert len(screen._wantlist) == 3000
+            await pilot.press("/")
+            await pilot.press(*list("mario"))
+            await pilot.pause()
+            assert len(screen._filtered_wantlist) == 12
+            screen.query_one("#wantlist-table").focus()
+            await pilot.press("space")
+            assert len(screen._include) == 1
+            screen.action_page_next()
+            screen.action_page_prev()
+            assert len(screen._include) == 1
+
+    asyncio.run(run())

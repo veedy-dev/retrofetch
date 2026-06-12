@@ -21,7 +21,7 @@ from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Vertical  # pyright: ignore[reportMissingImports]
 from textual.coordinate import Coordinate  # pyright: ignore[reportMissingImports]
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import DataTable, Footer, Header, Label  # pyright: ignore[reportMissingImports]
+from textual.widgets import DataTable, Footer, Header, Input, Label  # pyright: ignore[reportMissingImports]
 
 from retrofetch.config import ConsoleOverride, _yaml_rt, save_overrides
 from retrofetch.tui.messages import WantlistFailed, WantlistReady
@@ -36,7 +36,8 @@ class WantlistScreen(Screen[None]):
     BINDINGS = [
         Binding("space", "toggle_include", "Include", show=True),
         Binding("x", "toggle_exclude", "Exclude", show=True),
-        Binding("enter", "save", "Save", show=True, priority=True),
+        Binding("enter", "enter", "Save", show=True, priority=True),
+        Binding("slash", "focus_filter", "Filter", show=True, key_display="/"),
         Binding("r", "refresh", "Refresh", show=True),
         Binding("escape", "cancel", "Cancel", show=True),
         Binding("pageup", "page_prev", "Prev page", show=True),
@@ -59,6 +60,8 @@ class WantlistScreen(Screen[None]):
         self._include: set[str] = set(self.override.include)
         self._exclude: set[str] = set(self.override.exclude)
         self._wantlist: list[str] = []
+        self._filtered_wantlist: list[str] = []
+        self._filter_query = ""
         self._page = 0
         self._status = ""
         self._primary_source: str = "-"
@@ -70,8 +73,9 @@ class WantlistScreen(Screen[None]):
         yield Header(show_clock=False)
         with Vertical(id="main-panel"):
             yield Label(
-                f"Wantlist: {self.shortname}  (space=include, x=exclude, enter=save, r=refresh, esc=cancel)"
+                f"Wantlist: {self.shortname}  (space=include, x=exclude, /=filter, enter=save, r=refresh, esc=cancel)"
             )
+            yield Input(placeholder="filter titles...", id="wantlist-filter")
             yield Label("", id="status-line")
             yield DataTable(id="wantlist-table")
         yield Footer()
@@ -80,6 +84,7 @@ class WantlistScreen(Screen[None]):
         table: DataTable = self.query_one("#wantlist-table", DataTable)
         table.add_columns("#", "sel", "Title", "Source", "Included", "Excluded")
         table.cursor_type = "row"
+        table.focus()
         klass = str(self.console_entry.get("class", "?"))
         ranking_sources = self.app.config.ranking_sources_by_class.get(klass, [])  # pyright: ignore[reportAttributeAccessIssue]
         self._primary_source = ranking_sources[0] if ranking_sources else "-"
@@ -127,7 +132,7 @@ class WantlistScreen(Screen[None]):
                 console_entry=self.console_entry,
                 overrides=None,  # raw ranking; UI applies user's include/exclude
                 config=self.app.config,  # pyright: ignore[reportAttributeAccessIssue]
-                limit=200,
+                limit=0,
             )
         except Exception as exc:
             self.post_message(WantlistFailed(self.shortname, str(exc)))
@@ -138,6 +143,7 @@ class WantlistScreen(Screen[None]):
         if message.console != self.shortname:
             return
         self._wantlist = list(message.titles)
+        self._apply_title_filter(reset_page=True)
         self._loaded_source = "cached" if message.from_cache else "fresh"
         self._page = 0
         self._stop_loading_spinner()
@@ -147,6 +153,7 @@ class WantlistScreen(Screen[None]):
         if message.console != self.shortname:
             return
         self._wantlist = []
+        self._filtered_wantlist = []
         self._loaded_source = "error"
         self._stop_loading_spinner()
         self._set_status(f"error: {message.reason}")
@@ -157,7 +164,7 @@ class WantlistScreen(Screen[None]):
         table.clear()
         start = self._page * self._PAGE_SIZE
         end = start + self._PAGE_SIZE
-        page_rows = self._wantlist[start:end]
+        page_rows = self._filtered_wantlist[start:end]
         for offset, title in enumerate(page_rows):
             inc = Text("[x]" if title in self._include else "[ ]")
             table.add_row(
@@ -195,14 +202,18 @@ class WantlistScreen(Screen[None]):
         self._refresh_status_line()
 
     def _refresh_status_line(self) -> None:
-        total = len(self._wantlist)
+        total = len(self._filtered_wantlist)
+        raw_total = len(self._wantlist)
         total_pages = max(1, (total + self._PAGE_SIZE - 1) // self._PAGE_SIZE)
         if total == 0 and self._status:
             # Preserve an error/failure status when the list is empty
             return
         source = self._loaded_source or "loading"
+        filter_note = (
+            f" filtered from {raw_total}" if self._filter_query and raw_total != total else ""
+        )
         status = (
-            f"{total} titles ({source})  |  "
+            f"{total} titles{filter_note} ({source})  |  "
             f"page {self._page + 1}/{total_pages}  |  "
             f"included: {len(self._include)}  excluded: {len(self._exclude)}"
         )
@@ -221,9 +232,31 @@ class WantlistScreen(Screen[None]):
         row = table.cursor_row
         start = self._page * self._PAGE_SIZE
         idx = start + row
-        if 0 <= idx < len(self._wantlist):
-            return self._wantlist[idx]
+        if 0 <= idx < len(self._filtered_wantlist):
+            return self._filtered_wantlist[idx]
         return None
+
+    def _apply_title_filter(self, *, reset_page: bool) -> None:
+        query = self._filter_query.casefold().strip()
+        if not query:
+            self._filtered_wantlist = list(self._wantlist)
+        else:
+            self._filtered_wantlist = [
+                title for title in self._wantlist if query in title.casefold()
+            ]
+        if reset_page:
+            self._page = 0
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id != "wantlist-filter":
+            return
+        self._filter_query = event.value
+        self._apply_title_filter(reset_page=True)
+        if self._loaded_source:
+            self._render_page()
+
+    def action_focus_filter(self) -> None:
+        self.query_one("#wantlist-filter", Input).focus()
 
     def action_toggle_include(self) -> None:
         title = self._current_title()
@@ -267,6 +300,7 @@ class WantlistScreen(Screen[None]):
         except Exception:
             pass
         self._wantlist = []
+        self._filtered_wantlist = []
         self._loaded_source = ""
         self._page = 0
         self._render_page()
@@ -276,7 +310,7 @@ class WantlistScreen(Screen[None]):
     def action_cancel(self) -> None:
         self.dismiss(None)
 
-    def action_save(self) -> None:
+    def action_enter(self) -> None:
         if self._save_overrides():
             self.dismiss(None)
 
