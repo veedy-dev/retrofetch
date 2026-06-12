@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import threading
+from time import monotonic
 from typing import Any
 
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
@@ -32,6 +33,14 @@ from retrofetch.tui.workers.download_worker import DownloadWorker
 
 _MAX_ACTIVE_ROWS = 3
 _MAX_COMPLETED_ROWS = 50
+_MIN_SPEED_INTERVAL = 0.1
+_MIN_LABEL_INTERVAL = 0.1
+
+
+def _format_speed(bps: float) -> str:
+    if bps >= 1024 * 1024:
+        return f"{bps / (1024 * 1024):.1f} MB/s"
+    return f"{bps / 1024:.0f} KB/s"
 
 
 class DownloadProgressScreen(Screen[None]):
@@ -53,6 +62,7 @@ class DownloadProgressScreen(Screen[None]):
         self.wantlist = list(wantlist)
         self.dry_run = bool(dry_run)
         self._active: dict[str, Label] = {}
+        self._bytes_tracking: dict[str, dict[str, float]] = {}
         self._acquired: int = 0
         self._failed: int = 0
         self._skipped: int = 0
@@ -118,9 +128,19 @@ class DownloadProgressScreen(Screen[None]):
                 child.remove()
 
     def _drop_active(self, game: str) -> None:
+        self._bytes_tracking.pop(game, None)
         label = self._active.pop(game, None)
         if label is not None:
             label.remove()
+
+    def _new_tracking(self) -> dict[str, float]:
+        return {
+            "downloaded": 0.0,
+            "speed_bps": 0.0,
+            "last_update": 0.0,
+            "last_bytes": 0.0,
+            "last_ts": monotonic(),
+        }
 
     def on_game_start(self, message: GameStart) -> None:
         if message.game in self._active:
@@ -132,14 +152,30 @@ class DownloadProgressScreen(Screen[None]):
         label = Label(f"- [{prefix}] {message.game}", classes="dl-active-row")
         active.mount(label)
         self._active[message.game] = label
+        self._bytes_tracking[message.game] = self._new_tracking()
 
     def on_game_bytes(self, message: GameBytes) -> None:
         label = self._active.get(message.game)
         if label is None:
             return
-        total = max(message.total, 1)
-        pct = max(0.0, min(100.0, 100.0 * message.downloaded / total))
-        label.update(f"- {message.game} ({pct:.0f}%)")
+        tracking = self._bytes_tracking.setdefault(message.game, self._new_tracking())
+        now = monotonic()
+        tracking["downloaded"] = float(message.downloaded)
+        elapsed = now - tracking["last_ts"]
+        if elapsed >= _MIN_SPEED_INTERVAL:
+            delta = float(message.downloaded) - tracking["last_bytes"]
+            tracking["speed_bps"] = max(delta, 0.0) / elapsed
+            tracking["last_bytes"] = float(message.downloaded)
+            tracking["last_ts"] = now
+        if now - tracking["last_update"] < _MIN_LABEL_INTERVAL:
+            return
+        tracking["last_update"] = now
+        speed = _format_speed(tracking["speed_bps"])
+        if not message.total or message.total <= 0:
+            label.update(f"- {message.game} (? bytes) {speed}")
+            return
+        pct = max(0.0, min(100.0, 100.0 * message.downloaded / message.total))
+        label.update(f"- {message.game} ({pct:.0f}%) {speed}")
 
     def on_game_done(self, message: GameDone) -> None:
         self._acquired += 1
