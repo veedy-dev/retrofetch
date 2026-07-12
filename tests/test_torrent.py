@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import os
 import threading
 from pathlib import Path
@@ -689,6 +690,40 @@ def test_selected_casefold_collision_fails_before_add(
     assert not client.added
 
 
+def test_linux_appimage_setup_verifies_and_copies_download(
+    monkeypatch, scratch_path
+) -> None:
+    content = b"official qBittorrent AppImage"
+    name = "qbittorrent-5.2.3_x86_64.AppImage"
+    downloads = scratch_path / "Downloads"
+    downloads.mkdir()
+    (downloads / name).write_bytes(content)
+    root = scratch_path / "app" / "qbittorrent"
+    paths = ManagedPaths(
+        root,
+        root / "profile",
+        root / "profile" / "qBittorrent.conf",
+        root / "managed.lock",
+    )
+    monkeypatch.setattr(torrent_module.sys, "platform", "linux")
+    monkeypatch.setattr(
+        torrent_module,
+        "QBITTORRENT_LINUX_APPIMAGES",
+        {name: hashlib.sha256(content).hexdigest()},
+    )
+    monkeypatch.setattr(torrent_module, "managed_paths", lambda: paths)
+    monkeypatch.setattr(
+        torrent_module,
+        "discover_qbittorrent",
+        lambda explicit=None: Path(explicit).resolve() if explicit else None,
+    )
+
+    executable = torrent_module.install_qbittorrent_appimage(downloads)
+
+    assert executable == (root / "bin" / name).resolve()
+    assert executable.read_bytes() == content
+
+
 def test_setup_decline_is_cached_and_gate_never_accepts_after_stop(
     monkeypatch, scratch_path
 ) -> None:
@@ -700,7 +735,7 @@ def test_setup_decline_is_cached_and_gate_never_accepts_after_stop(
         scratch_path / "runtime" / "profile" / "qBittorrent.ini",
         scratch_path / "runtime" / "lock",
     )
-    monkeypatch.setattr(torrent_module, "windows_managed_paths", lambda: paths)
+    monkeypatch.setattr(torrent_module, "managed_paths", lambda: paths)
     monkeypatch.setattr(torrent_module, "discover_qbittorrent", lambda *_: None)
     calls = 0
 
@@ -755,7 +790,7 @@ def test_managed_runtime_record_reattaches_after_parent_crash(
         encoding="utf-8",
     )
     client = _FakeClient()
-    monkeypatch.setattr(torrent_module, "windows_managed_paths", lambda: paths)
+    monkeypatch.setattr(torrent_module, "managed_paths", lambda: paths)
     monkeypatch.setattr(
         torrent_module, "QbittorrentClient", lambda *_args, **_kwargs: client
     )

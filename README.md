@@ -9,16 +9,16 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/veedy-dev/retrofetch/releases">Download for Windows</a>
-  &middot; <a href="#linux-and-macos">Linux/macOS setup</a>
+  <a href="https://github.com/veedy-dev/retrofetch/releases">Downloads</a>
+  &middot; <a href="#install">Setup guide</a>
   &middot; <a href="#how-it-works">How it works</a>
   &middot; <a href="#development-and-contributing">Develop and contribute</a>
 </p>
 
 <p align="center">
   <img alt="Windows" src="https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows11&logoColor=white">
-  <img alt="Linux" src="https://img.shields.io/badge/Linux-Python%203.10%2B-FCC624?logo=linux&logoColor=black">
-  <img alt="macOS" src="https://img.shields.io/badge/macOS-Python%203.10%2B-000000?logo=apple&logoColor=white">
+  <img alt="Linux" src="https://img.shields.io/badge/Linux-x86__64-FCC624?logo=linux&logoColor=black">
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-13%2B-000000?logo=apple&logoColor=white">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/License-MIT-2ea44f"></a>
 </p>
 
@@ -43,20 +43,27 @@ No Python installation or terminal commands are needed.
 
 Prefer a portable app? Download **`Retrofetch.exe`** from the same Releases page and double-click it.
 
-### Linux and macOS
+### Linux
 
-There is no packaged app for Linux or macOS yet. Install Git and Python 3.10 or newer, then run:
+1. Open the [Releases page](https://github.com/veedy-dev/retrofetch/releases).
+2. Download **`Retrofetch-linux-x86_64.tar.gz`** and extract it.
+3. Open a terminal in the extracted folder and run:
 
 ```bash
-git clone https://github.com/veedy-dev/retrofetch.git
-cd retrofetch
-python3 -m venv .venv
-. .venv/bin/activate
-pip install -e .
-retrofetch tui
+./run-retrofetch.sh
 ```
 
-The guided qBittorrent setup is currently Windows-only, so some torrent-backed downloads require Windows for now.
+No Python installation is needed.
+
+### macOS
+
+1. Open the [Releases page](https://github.com/veedy-dev/retrofetch/releases).
+2. Download **`Retrofetch-macos-arm64.tar.gz`** for Apple Silicon or **`Retrofetch-macos-x86_64.tar.gz`** for an Intel Mac.
+3. Extract it, then Control-click **`Retrofetch.command`** and choose **Open**.
+
+No Python installation is needed. Current builds are unsigned, so macOS may ask you to confirm the first launch.
+
+When a torrent download needs qBittorrent, Retrofetch opens the official download page. Install qBittorrent, return to Retrofetch, and choose **Retry**; the original download then continues.
 
 ## How it works
 
@@ -122,7 +129,13 @@ python -m ruff check .
 pyright
 ```
 
-Build the Windows app with:
+Build a portable app for the current operating system with:
+
+```bash
+python -m PyInstaller --clean --noconfirm packaging/retrofetch.spec
+```
+
+Build the Windows installer with:
 
 ```powershell
 .\packaging\build_windows.ps1 -InstallTools

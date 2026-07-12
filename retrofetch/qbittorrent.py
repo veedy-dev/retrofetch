@@ -9,6 +9,7 @@ import re
 import secrets
 import string
 import subprocess
+import sys
 import threading
 import time
 from dataclasses import dataclass
@@ -17,6 +18,8 @@ from typing import Any, Mapping, Sequence
 from urllib.parse import unquote, urlsplit, urlunsplit
 
 import httpx
+
+from retrofetch.config import user_config_dir
 
 
 QBITTORRENT_PACKAGE_ID = "qBittorrent.qBittorrent"
@@ -29,6 +32,15 @@ QBITTORRENT_INSTALLER_URL = (
 QBITTORRENT_INSTALLER_SHA256 = (
     "ff508e2f912d59c9eabaf03633ebacfd45c2049f38dcac027b8a7d7ad867ab2f"
 )
+QBITTORRENT_DOWNLOAD_URL = "https://www.qbittorrent.org/download"
+QBITTORRENT_LINUX_APPIMAGES = {
+    "qbittorrent-5.2.3_x86_64.AppImage": (
+        "c1467a713929323aaf253e021449992ac299a6c830a933643b023007d8641ed0"
+    ),
+    "qbittorrent-5.2.3_lt20_x86_64.AppImage": (
+        "71b3a861753674d941e517feff72ed47d1a0e5c01a0a39e9c3d7f7ccc3f80c63"
+    ),
+}
 MIN_WEB_API_VERSION = (2, 14, 1)
 MAX_METADATA_BYTES = 32 * 1024 * 1024
 MAX_METADATA_FILES = 50_000
@@ -593,16 +605,17 @@ class WindowsExecutableIdentity:
     signature_status: str
 
 
-def windows_managed_paths(local_app_data: str | Path | None = None) -> ManagedPaths:
-    base_value = local_app_data or os.environ.get("LOCALAPPDATA")
-    if not base_value:
-        raise QbittorrentSecurityError("LOCALAPPDATA is unavailable")
-    base = Path(base_value).expanduser()
+def managed_paths(
+    app_dir: str | Path | None = None, *, platform_name: str | None = None
+) -> ManagedPaths:
+    base = Path(app_dir).expanduser() if app_dir is not None else user_config_dir()
     if not base.is_absolute():
-        raise QbittorrentSecurityError("LOCALAPPDATA must be absolute")
-    root = base / "Retrofetch" / "qbittorrent"
+        raise QbittorrentSecurityError("Retrofetch app data path must be absolute")
+    root = base / "qbittorrent"
     profile = root / "profile"
-    config = profile / "qBittorrent_retrofetch" / "config" / "qBittorrent.ini"
+    platform_name = sys.platform if platform_name is None else platform_name
+    config_name = "qBittorrent.ini" if platform_name.startswith("win") else "qBittorrent.conf"
+    config = profile / "qBittorrent_retrofetch" / "config" / config_name
     return ManagedPaths(root, profile, config, root / "managed.lock")
 
 
@@ -811,17 +824,27 @@ def _validate_windows_executable_identity(identity: WindowsExecutableIdentity) -
         )
 
 
-def _verified_executable(path: Path) -> Path:
+def _verified_executable(path: Path, *, platform_name: str | None = None) -> Path:
     if not path.is_absolute():
         raise QbittorrentSecurityError("qBittorrent executable path must be absolute")
     try:
         resolved = path.resolve(strict=True)
     except OSError as exc:
         raise QbittorrentSecurityError("qBittorrent executable does not exist") from exc
-    if not resolved.is_file() or resolved.name.casefold() != "qbittorrent.exe":
-        raise QbittorrentSecurityError("expected an installed qbittorrent.exe")
-    if os.name == "nt":
+    if not resolved.is_file():
+        raise QbittorrentSecurityError("qBittorrent executable does not exist")
+    platform_name = sys.platform if platform_name is None else platform_name
+    name = resolved.name.casefold()
+    if platform_name.startswith("win"):
+        if name != "qbittorrent.exe":
+            raise QbittorrentSecurityError("expected an installed qbittorrent.exe")
         _validate_windows_executable_identity(_windows_executable_identity(resolved))
+    elif name not in {"qbittorrent", "qbittorrent-nox"} and not (
+        name.startswith("qbittorrent-") and name.endswith(".appimage")
+    ):
+        raise QbittorrentSecurityError("expected an installed qBittorrent executable")
+    elif not os.access(resolved, os.X_OK):
+        raise QbittorrentSecurityError("qBittorrent executable is not runnable")
     return resolved
 
 
@@ -837,27 +860,62 @@ def _validate_managed_paths(paths: ManagedPaths) -> None:
 
 
 def discover_qbittorrent(
-    explicit: str | Path | None = None, *, environ: Mapping[str, str] | None = None
+    explicit: str | Path | None = None,
+    *,
+    environ: Mapping[str, str] | None = None,
+    platform_name: str | None = None,
+    home: str | Path | None = None,
 ) -> Path | None:
-    """Discover only an explicit, known-install, or fixed WinGet-link executable."""
+    """Discover an explicit executable or a known qBittorrent install location."""
 
+    platform_name = sys.platform if platform_name is None else platform_name
     if explicit is not None:
-        return _verified_executable(Path(explicit).expanduser())
+        return _verified_executable(
+            Path(explicit).expanduser(), platform_name=platform_name
+        )
     env = os.environ if environ is None else environ
     candidates: list[Path] = []
-    for key in ("ProgramW6432", "ProgramFiles", "ProgramFiles(x86)"):
-        if root := env.get(key):
-            candidates.append(Path(root) / "qBittorrent" / "qbittorrent.exe")
-    if local := env.get("LOCALAPPDATA"):
+    if platform_name.startswith("win"):
+        for key in ("ProgramW6432", "ProgramFiles", "ProgramFiles(x86)"):
+            if root := env.get(key):
+                candidates.append(Path(root) / "qBittorrent" / "qbittorrent.exe")
+        if local := env.get("LOCALAPPDATA"):
+            candidates.extend(
+                [
+                    Path(local) / "Programs" / "qBittorrent" / "qbittorrent.exe",
+                    Path(local) / "Microsoft" / "WinGet" / "Links" / "qbittorrent.exe",
+                ]
+            )
+    elif platform_name == "darwin":
+        home_path = Path(home).expanduser() if home is not None else Path.home()
         candidates.extend(
             [
-                Path(local) / "Programs" / "qBittorrent" / "qbittorrent.exe",
-                Path(local) / "Microsoft" / "WinGet" / "Links" / "qbittorrent.exe",
+                Path("/Applications/qBittorrent.app/Contents/MacOS/qbittorrent"),
+                home_path
+                / "Applications"
+                / "qBittorrent.app"
+                / "Contents"
+                / "MacOS"
+                / "qbittorrent",
+                Path("/opt/homebrew/bin/qbittorrent"),
+                Path("/usr/local/bin/qbittorrent"),
+            ]
+        )
+    else:
+        home_path = Path(home).expanduser() if home is not None else Path.home()
+        candidates.extend(
+            [
+                Path("/usr/bin/qbittorrent-nox"),
+                Path("/usr/bin/qbittorrent"),
+                Path("/usr/local/bin/qbittorrent-nox"),
+                Path("/usr/local/bin/qbittorrent"),
+                home_path / ".local" / "bin" / "qbittorrent-nox",
+                home_path / ".local" / "bin" / "qbittorrent",
             ]
         )
     for candidate in candidates:
         try:
-            return _verified_executable(candidate)
+            return _verified_executable(candidate, platform_name=platform_name)
         except QbittorrentSecurityError:
             continue
     return None

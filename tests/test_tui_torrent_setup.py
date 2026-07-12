@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import threading
+from pathlib import Path
 
 from textual.app import App
 from textual.widgets import Label, Static
 
 from retrofetch.qbittorrent import (
+    QBITTORRENT_DOWNLOAD_URL,
     QBITTORRENT_INSTALLER_SHA256,
     QBITTORRENT_INSTALLER_URL,
     QBITTORRENT_PACKAGE_ID,
@@ -48,7 +50,7 @@ def test_setup_discloses_exact_package_and_not_now_has_no_side_effect(monkeypatc
         "install_qbittorrent_official",
         lambda: calls.append("official"),
     )
-    screen = TorrentSetupScreen()
+    screen = TorrentSetupScreen(platform_name="windows")
     app = _SetupApp(screen)
 
     async def run() -> None:
@@ -84,12 +86,13 @@ def test_winget_install_is_threaded_and_dismisses_only_after_success(monkeypatch
     started = threading.Event()
     release = threading.Event()
 
-    def install() -> None:
+    def install() -> Path:
         started.set()
         release.wait(2)
+        return Path("qbittorrent.exe")
 
     monkeypatch.setattr(torrent_setup, "install_qbittorrent_winget", install)
-    screen = TorrentSetupScreen()
+    screen = TorrentSetupScreen(platform_name="windows")
     app = _SetupApp(screen)
 
     async def run() -> None:
@@ -119,7 +122,7 @@ def test_official_installer_failure_stays_open_and_can_decline(monkeypatch) -> N
         raise RuntimeError("verified installer failed")
 
     monkeypatch.setattr(torrent_setup, "install_qbittorrent_official", fail)
-    screen = TorrentSetupScreen()
+    screen = TorrentSetupScreen(platform_name="windows")
     app = _SetupApp(screen)
 
     async def run() -> None:
@@ -137,5 +140,40 @@ def test_official_installer_failure_stays_open_and_can_decline(monkeypatch) -> N
             await pilot.press("escape")
             await _wait_for_result(pilot, app)
             assert app.results == [False]
+
+    asyncio.run(run())
+
+
+def test_linux_setup_opens_official_page_then_retries_detection(monkeypatch) -> None:
+    calls: list[str] = []
+    monkeypatch.setattr(
+        torrent_setup,
+        "open_qbittorrent_downloads",
+        lambda: calls.append("open") or True,
+    )
+    monkeypatch.setattr(
+        torrent_setup,
+        "find_qbittorrent",
+        lambda _: calls.append("find") or Path("/usr/bin/qbittorrent"),
+    )
+    screen = TorrentSetupScreen(platform_name="linux")
+    app = _SetupApp(screen)
+
+    async def run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            details = str(screen.query_one("#torrent-setup-details", Static).content)
+            assert QBITTORRENT_DOWNLOAD_URL in details
+            assert "WinGet" not in details
+
+            await pilot.press("enter")
+            assert calls == ["open"]
+            assert app.results == []
+            assert "choose Retry" in _status(screen)
+
+            await pilot.press("down", "enter")
+            await _wait_for_result(pilot, app)
+            assert calls == ["open", "find"]
+            assert app.results == [True]
 
     asyncio.run(run())

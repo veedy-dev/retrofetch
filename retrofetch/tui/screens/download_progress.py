@@ -441,7 +441,12 @@ class DownloadProgressScreen(Screen[None]):
                 resolve(False)
             return
         self._setup_request = message.request
-        self.app.push_screen(TorrentSetupScreen(), self._on_torrent_setup_done)
+        self.app.push_screen(
+            TorrentSetupScreen(
+                qbittorrent_path=self.app.config.qbittorrent_path  # pyright: ignore[reportAttributeAccessIssue]
+            ),
+            self._on_torrent_setup_done,
+        )
 
     def _on_torrent_setup_done(self, result: bool | None) -> None:
         request = self._setup_request
