@@ -27,7 +27,8 @@ VALID_IDENTITY = qb.WindowsExecutableIdentity(
 
 def _test_executable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     name = "qbittorrent.exe" if os.name == "nt" else "qbittorrent"
-    executable = tmp_path / name
+    executable = tmp_path / "bin" / name
+    executable.parent.mkdir()
     executable.touch()
     if os.name == "nt":
         monkeypatch.setattr(qb, "_windows_executable_identity", lambda _: VALID_IDENTITY)
