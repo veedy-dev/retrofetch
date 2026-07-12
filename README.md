@@ -17,8 +17,8 @@
 
 <p align="center">
   <img alt="Windows" src="https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows11&logoColor=white">
-  <img alt="Linux" src="https://img.shields.io/badge/Linux-From%20source-FCC624?logo=linux&logoColor=black">
-  <img alt="macOS" src="https://img.shields.io/badge/macOS-From%20source-000000?logo=apple&logoColor=white">
+  <img alt="Linux" src="https://img.shields.io/badge/Linux-Python%203.10%2B-FCC624?logo=linux&logoColor=black">
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-Python%203.10%2B-000000?logo=apple&logoColor=white">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/License-MIT-2ea44f"></a>
 </p>
 
