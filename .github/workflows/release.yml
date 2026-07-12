@@ -146,4 +146,3 @@ jobs:
           else
             gh release create "$GITHUB_REF_NAME" "${files[@]}" --generate-notes --repo "$GITHUB_REPOSITORY"
           fi
-
