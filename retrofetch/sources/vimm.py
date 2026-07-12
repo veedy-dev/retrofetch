@@ -136,4 +136,4 @@ class VimmSource:
         *,
         event_bus: EventBus | None = None,
     ) -> Path:
-        raise SourceUnavailable("vimm download not implemented in wantlist-only adapter")
+        raise SourceUnavailable("vimm download not implemented in catalog-only adapter")

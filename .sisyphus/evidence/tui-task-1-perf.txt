@@ -1,4 +1,0 @@
-initial_ms=43.2
-scroll_ms_avg=74.6
-filter_ms=561.0
-VERDICT: NO-GO filter>=200ms (561.0ms)

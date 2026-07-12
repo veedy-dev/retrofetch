@@ -14,9 +14,11 @@ from retrofetch.events import (
     ExtractionDoneEvent,
     ExtractionStartEvent,
     GameBytesEvent,
+    GameCancelledEvent,
     GameDoneEvent,
     GameFailedEvent,
     GameSkippedEvent,
+    GameStageEvent,
     GameStartEvent,
     GameUnverifiedEvent,
     ProgressEvent,
@@ -27,50 +29,116 @@ from retrofetch.events import (
 
 
 class GameStart(Message):
-    def __init__(self, game: str, source: str, console: str) -> None:
+    def __init__(
+        self, game: str, source: str, console: str, item_id: str | None = None
+    ) -> None:
         self.game = game
         self.source = source
         self.console = console
+        self.item_id = item_id
         super().__init__()
 
 
 class GameBytes(Message):
-    def __init__(self, game: str, downloaded: int, total: int) -> None:
+    def __init__(
+        self,
+        game: str,
+        downloaded: int,
+        total: int,
+        item_id: str | None = None,
+        speed_bps: int | None = None,
+        eta_seconds: int | None = None,
+        seeds: int | None = None,
+        peers: int | None = None,
+    ) -> None:
         self.game = game
         self.downloaded = downloaded
         self.total = total
+        self.item_id = item_id
+        self.speed_bps = speed_bps
+        self.eta_seconds = eta_seconds
+        self.seeds = seeds
+        self.peers = peers
+        super().__init__()
+
+
+class GameStage(Message):
+    def __init__(
+        self,
+        game: str,
+        stage: str,
+        detail: str | None = None,
+        item_id: str | None = None,
+    ) -> None:
+        self.game = game
+        self.stage = stage
+        self.detail = detail
+        self.item_id = item_id
         super().__init__()
 
 
 class GameDone(Message):
-    def __init__(self, game: str, source: str, size: int, sha1: str | None) -> None:
+    def __init__(
+        self,
+        game: str,
+        source: str,
+        size: int,
+        sha1: str | None,
+        item_id: str | None = None,
+    ) -> None:
         self.game = game
         self.source = source
         self.size = size
         self.sha1 = sha1
+        self.item_id = item_id
         super().__init__()
 
 
 class GameUnverified(Message):
-    def __init__(self, game: str, source: str, reason: str | None = None) -> None:
+    def __init__(
+        self,
+        game: str,
+        source: str,
+        reason: str | None = None,
+        item_id: str | None = None,
+    ) -> None:
         self.game = game
         self.source = source
         self.reason = reason
+        self.item_id = item_id
         super().__init__()
 
 
 class GameFailed(Message):
-    def __init__(self, game: str, reason: str) -> None:
+    def __init__(self, game: str, reason: str, item_id: str | None = None) -> None:
         self.game = game
         self.reason = reason
+        self.item_id = item_id
         super().__init__()
 
 
 class GameSkipped(Message):
-    def __init__(self, game: str, reason: str, filename: str | None = None) -> None:
+    def __init__(
+        self,
+        game: str,
+        reason: str,
+        filename: str | None = None,
+        item_id: str | None = None,
+    ) -> None:
         self.game = game
         self.reason = reason
         self.filename = filename
+        self.item_id = item_id
+        super().__init__()
+
+
+class GameCancelled(Message):
+    def __init__(
+        self, game: str, reason: str | None = None, item_id: str | None = None
+    ) -> None:
+        self.game = game
+        self.reason = reason
+        self.item_id = item_id
         super().__init__()
 
 
@@ -140,10 +208,12 @@ class EventBusBridge:
     _TRANSLATIONS: list[tuple[type[ProgressEvent], type[Message]]] = [
         (GameStartEvent, GameStart),
         (GameBytesEvent, GameBytes),
+        (GameStageEvent, GameStage),
         (GameDoneEvent, GameDone),
         (GameUnverifiedEvent, GameUnverified),
         (GameFailedEvent, GameFailed),
         (GameSkippedEvent, GameSkipped),
+        (GameCancelledEvent, GameCancelled),
         (SourceDeadEvent, SourceDead),
         (RateLimitEvent, RateLimit),
         (CloudflareBlockEvent, CloudflareBlock),
@@ -171,7 +241,10 @@ class EventBusBridge:
     def _on_event(self, event: ProgressEvent) -> None:
         for event_cls, msg_cls in self._TRANSLATIONS:
             if isinstance(event, event_cls):
-                kwargs = {name: getattr(event, name) for name in event_cls.__dataclass_fields__}
+                kwargs = {
+                    name: getattr(event, name)
+                    for name in event_cls.__dataclass_fields__
+                }
                 try:
                     self._app.post_message(msg_cls(**kwargs))
                 except Exception:
@@ -196,6 +269,12 @@ class DownloadComplete(Message):
 class DownloadCrashed(Message):
     def __init__(self, exc: str) -> None:
         self.exc = exc
+        super().__init__()
+
+
+class TorrentSetupRequired(Message):
+    def __init__(self, request: object) -> None:
+        self.request = request
         super().__init__()
 
 

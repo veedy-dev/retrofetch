@@ -1,358 +1,231 @@
-# retrofetch
-Automated ROM collection filler for retro console emulation
+<p align="center">
+  <img src="docs/assets/retrofetch-logo.png" alt="Retrofetch cartridge and download arrow logo" width="180">
+</p>
 
-## What you get
-retrofetch builds and maintains a curated ROM library for 178 consoles without
-you doing the hunting. It ranks the most popular titles per system, fetches
-them from reliable archives, and verifies every file against No-Intro / Redump
-hashes.
+<h1 align="center">Retrofetch</h1>
 
-- A clean ROMs/ tree with resume-on-crash state
-- DAT-verified files (no broken dumps)
-- A keyboard-driven TUI with live previews and 24h cache
+<p align="center">
+  <strong>Browse, choose, and organize a retro game library from one friendly TUI.</strong>
+</p>
 
-## Quick start (5 minutes)
-Follow these steps to get running on Windows with PowerShell.
+<p align="center">
+  <a href="https://github.com/veedy-dev/retrofetch/releases">Windows downloads</a>
+  · <a href="#run-from-source">Run from source</a>
+  · <a href="#keyboard-shortcuts">Keyboard shortcuts</a>
+  · <a href="#development">Development</a>
+</p>
 
-### Simplest path: use the launcher
+<p align="center">
+  <img alt="Python 3.10–3.13" src="https://img.shields.io/badge/Python-3.10--3.13-3776AB?logo=python&logoColor=white">
+  <img alt="Windows" src="https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows11&logoColor=white">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/License-MIT-2ea44f"></a>
+</p>
 
-If you just want to run it, use the bundled launcher. It creates the venv and installs dependencies on first run, then drops you straight into the TUI.
+Retrofetch replaces browser hunting and manual torrent setup with a keyboard-first
+workflow. It catalogues **178 systems**, currently exposes browse providers for
+**89**, remembers download progress across restarts, and verifies files against
+No-Intro or Redump DATs when a matching DAT is available.
 
-```powershell
-# Windows PowerShell
-.\launch.ps1
-```
+> **Bring your own legal access.** Retrofetch includes no games or firmware.
+> Download only content you are legally entitled to obtain.
 
-```cmd
-:: Windows double-click
-launch.bat
-```
+![Retrofetch library browser showing Nintendo 64 titles](docs/assets/screenshot-library.png)
 
-```bash
-# Linux / macOS
-./launch.sh
-```
+## Get started on Windows
 
-Skip the rest of this section if the launcher worked. The manual steps below are for people who want to control each step.
+### Installer — recommended
 
-1. Clone and install
-```powershell
-git clone https://github.com/veedy-dev/retrofetch D:\retrofetch
-cd D:\retrofetch
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e .
-```
+1. Open [Releases](https://github.com/veedy-dev/retrofetch/releases).
+2. Download and double-click **`RetrofetchSetup.exe`**.
+3. Launch Retrofetch from the desktop or Start menu.
+4. Choose your game and BIOS folders in the first-run wizard, then press `Ctrl+S`.
 
-2. Verify installation
-```powershell
-retrofetch --version
-```
+No Python installation or terminal commands are required. The installer is
+per-user and does not require administrator access.
 
-3. Launch the TUI
-```powershell
-retrofetch tui
-```
-If this is your first run, a setup wizard will appear. Press Ctrl+S to save your settings.
+> Current builds are unsigned, so Windows SmartScreen may show **Unknown
+> publisher**. Download binaries only from this repository's Releases page.
 
-4. Try a dry run
-```powershell
-retrofetch download --console virtualboy --limit 3 --dry-run
-```
+If the Releases page is empty, use the source instructions below until the first
+release is published.
 
-5. Run a real download
-```powershell
-retrofetch download --console virtualboy --limit 3
-```
+### Portable app
 
-6. Check your coverage
-```powershell
-retrofetch report
-```
+Download **`Retrofetch.exe`** from the same Releases page and double-click it.
+It uses the same setup wizard and stores settings in
+`%LOCALAPPDATA%\Retrofetch\config.yml`.
 
-<details>
-<summary>Linux / macOS instructions</summary>
+## What it does
 
-```bash
-git clone https://github.com/veedy-dev/retrofetch ~/retrofetch
-cd ~/retrofetch
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-retrofetch --version
-```
-</details>
+| Browse | Choose | Download safely |
+|---|---|---|
+| Search provider-backed systems and page through current catalogues. | Pick exact titles, exclude unwanted entries, and edit the queue before starting. | Resume interrupted work, keep partial torrent pieces, and verify against DATs when available. |
 
-## The TUI is the friendly path
-The Textual-based TUI (`retrofetch tui`) is the easiest way to manage your collection.
+- **Fresh sessions:** game selections reset when Retrofetch starts; download state
+  and completed history remain.
+- **Visible progress:** per-title progress, transferred bytes, speed, ETA, seeds,
+  peers, and terminal outcomes are shown in the TUI.
+- **Exact torrent files:** collection torrents select only the requested internal
+  file rather than downloading the whole archive.
+- **Managed qBittorrent:** Windows can install and run an isolated, loopback-only
+  qBittorrent profile when torrent transport is first needed.
+- **Honest verification:** missing DAT coverage is shown as `unverified`, never as
+  a false success.
+- **Settings in the app:** press `,` to change game, BIOS, cache, region, limit,
+  extraction, and torrent settings.
 
-### First-run wizard
-If `config.yml` is missing, the TUI opens a setup wizard. You can configure:
-- ROMs root: Where your files will live.
-- Default limit: How many games to fetch per console (1..1000).
-- Region priority: Comma-separated list (e.g., USA, World, Europe, Japan).
-Press `Ctrl+S` to save your settings or `Esc` to cancel and exit.
+![Retrofetch live torrent progress with speed, ETA, seeds, and peers](docs/assets/screenshot-download.png)
 
-### Home screen and live preview
-The home screen features a 178-console sidebar. As you scroll through consoles, the right panel auto-fetches and previews the top 20 titles.
-- Debounced auto-fetch: Scrolling is smooth because fetches only fire after you stop moving for 400ms.
-- Wantlist cache: Wantlists are cached on disk for 24 hours. Cache hits are instant and show `(cached)` in the header.
-- Retry: If a fetch fails, a yellow toast appears. Press `Ctrl+R` to invalidate the cache and try again.
-- Non-blocking: Opening the Wantlist (`w`) or Download (`d`) screens won't freeze the UI. Data loads in the background while the screen stays responsive.
+## Typical workflow
 
-### Key bindings
+1. Search for a console with `/`.
+2. Press `g` to select games, or use the full current list.
+3. Press `d`, remove anything you changed your mind about, then press `Enter`.
+4. Watch progress or cancel safely with `Esc` / `c`.
+5. Reopen Retrofetch later; active and completed download state is preserved.
+
+DAT-backed files are marked verified after hashing. When no DAT exists for a
+system, the download remains clearly marked unverified.
+
+## Keyboard shortcuts
+
 | Key | Action |
 |---|---|
-| q | Quit (exit 0) |
-| / | Focus filter input (sidebar) |
-| ? | Help modal (key reference) |
-| w | Wantlist curation (DataTable, space=include, a/Ctrl+A=include page, x=exclude, Enter=save) |
-| d | Download confirm screen (Enter=start download, c=cancel) |
-| b | BIOS download screen |
-| s | State browser (read-only .retrofetch-state.json viewer) |
-| C | Coverage viewer (async compute, e=export) |
-| Ctrl+R | Retry fetch (invalidates cache and re-fetches) |
-| Tab | Cycle focus |
-| Enter | Select / Activate |
-| Esc | Back / Close modal |
-| Ctrl+S | Global save (where applicable) |
+| `/` | Search consoles or titles |
+| `g` | Select games |
+| `d` | Review and start downloads |
+| `b` | Download BIOS files |
+| `,` | Settings |
+| `s` | Download state |
+| `C` | Coverage report |
+| `r` / `Ctrl+R` | Refresh current catalogue |
+| `?` | Full in-app help |
+| `q` | Quit |
 
-### Download flow
-Pressing `d` on a Class A/B/C console opens the **Download confirm screen**:
-- Shows the count of selected titles queued for download.
-- Press `Enter` to start the download and open the **Download progress screen**.
-- Press `Esc` to return to home without starting.
+## Support expectations
 
-If you've selected specific titles in the Wantlist screen (`w`), only those titles download. Without a selection, the full ranked wantlist is used.
+Retrofetch knows about 178 systems, but a catalogue entry is not the same as a
+working download provider. The sidebar shows provider-backed systems in green and
+unsupported/skipped systems in grey.
 
-The **Download progress screen** shows:
-- An overall progress block at the top (`X / N games done`).
-- The currently active downloads (top section).
-- Recently completed entries (scrollable middle section).
-- A summary line on completion (`acquired=N, failed=N, unverified=N`).
-- Press `Esc` or `c` while running to open the **Cancel confirm modal**; pressing `y` stops the run gracefully (current file finishes, then dismiss).
-
-### Prerequisites
-A real terminal is required. The TUI will not launch in MSYS2, PowerShell ISE, or non-TTY pipes.
-
-## CLI reference
-
-### init
-Creates `config.yml`, `overrides.yml`, and bootstraps the `dats/` directory.
-
-| Option | Meaning |
+| Class | Current behavior |
 |---|---|
-| --force | Overwrite existing configuration files |
+| A | Cartridge systems; No-Intro verification where bundled DATs exist |
+| B | Disc systems; Redump verification where bundled DATs exist |
+| C | Newer systems; best-effort catalogue/download support |
+| D–F | Arcade, computer, fantasy, mobile, or unsupported distribution models; skipped |
 
-### download
-The primary command for fetching ROMs.
+Provider availability changes. Cloudflare, removed files, dead torrents, and
+zero-seed swarms can make an individual title unavailable even when its catalogue
+entry exists.
 
-| Option | Type | Default | Meaning |
-|---|---|---|---|
-| --console | TEXT | all | Single console shortname (e.g. nes, psx) |
-| --limit | INT | 75 | Max games per console (overrides config) |
-| --verbose / -v | FLAG | off | Emit detailed progress events |
-| --dry-run | FLAG | off | Print wantlist without downloading |
-| --no-torrent | FLAG | off | Skip libtorrent sources |
-| --config | PATH | config.yml | Path to configuration file |
+## Run from source
 
-### bios
-Downloads BIOS files for a console to `bios_root/{console}/`.
+### Windows PowerShell
 
-| Option | Type | Default | Meaning |
-|---|---|---|---|
-| --console | TEXT | required | Console shortname (e.g. psx, ps2, saturn) |
-| --limit | INT | all | Limit number of BIOS files (useful for probing) |
-| --config | PATH | config.yml | Path to configuration file |
-
-You can also trigger BIOS downloads from the TUI by pressing `b` on any console.
-
-### verify
-Rescans existing ROM files and updates local state with verification results.
-
-| Option | Type | Default | Meaning |
-|---|---|---|---|
-| --console | TEXT | all | Single console shortname |
-| --config | PATH | config.yml | Path to configuration file |
-
-### report
-Generates a `coverage.md` report showing collection progress.
-
-| Option | Type | Default | Meaning |
-|---|---|---|---|
-| --config | PATH | config.yml | Path to configuration file |
-| --output | PATH | coverage.md | Target path for the report |
-
-### tui
-Launches the interactive command center.
-
-| Option | Type | Default | Meaning |
-|---|---|---|---|
-| --config | PATH | config.yml | Path to configuration file |
-
-## Configuration
-
-### config.yml
-Defines global paths, region preferences, and source priorities.
-
-```yaml
-roms_root: "D:/Projects/retrofetch/ROMs"
-bios_root: "D:/Projects/retrofetch/BIOS"
-cache_dir: ".cache"
-log_file: "retrofetch.log"
-default_limit: 75
-region_priority:
-  - USA
-  - World
-  - Europe
-  - Japan
-exclude_keywords:
-  - "(Beta)"
-  - "(Proto)"
-  - "(Demo)"
-  - "(Sample)"
-  - "(Kiosk)"
-  - "(Trade Demo)"
-max_game_size_gb: null
-max_concurrent_downloads: 3
-# Most emulators read .zip/.7z archives directly. Set true only if yours doesn't.
-extract_archives: false
-source_fallback_by_class:
-  A: [minerva_http, archive_org, romsfun, romsretro]
-  B: [minerva_http, archive_org, romsretro]
-  C: [minerva_http, archive_org, romsfun, romsretro]
-ranking_sources_by_class:
-  A: [minerva_http, archive_org, romsfun, romsretro]
-  B: [minerva_http, archive_org, romsretro]
-  C: [minerva_http, archive_org, romsfun, romsretro]
+```powershell
+git clone https://github.com/veedy-dev/retrofetch.git
+cd retrofetch
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\retrofetch.exe tui
 ```
 
-### overrides.yml
-Force-include specific titles or set custom limits per console.
+### Linux / macOS
 
-```yaml
-consoles:
-  nes:
-    # include: when non-empty, these titles are the EXACT download set (not prepended to the ranked list)
-    include:
-      - Chrono Trigger
-    exclude:
-      - "E.T. the Extra-Terrestrial"
-    limit: 100
-    region_priority:
-      - USA
-      - Japan
+```bash
+git clone https://github.com/veedy-dev/retrofetch.git
+cd retrofetch
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -e .
+retrofetch tui
 ```
 
-## Source capability matrix
+The packaged Windows app uses a per-user config automatically. Source installs
+can create local config files with:
 
-| Source | Rank | Download | Notes |
-|---|---|---|---|
-| minerva_http | yes | partial | minerva-archive.org; catalog listing works (2,180+ PSP titles); direct HTTP downloads limited by torrent-only policy |
-| archive_org | no | yes | Fallback; availability varies by console |
-| romsfun | no | yes | Cloudflare-protected; may block automated requests |
-| romsretro | no | yes | Cloudflare-protected; may block automated requests |
-
-## Console classes
-retrofetch categorizes systems based on metadata and distribution models.
-
-| Class | Count | Support | Description |
-|---|---|---|---|
-| A | 64 | Full | Cartridge consoles with No-Intro DATs (NES, SNES, GB, etc.) |
-| B | 20 | Full | Disc-based consoles with Redump DATs (PSX, Saturn, CD, etc.) |
-| C | 5 | Best-effort | Modern consoles (PS3, Vita, Wii U, Switch, 3DS) |
-| D | 20 | Skipped | Arcade romsets (MAME, FBNeo, CPS) |
-| E | 54 | Skipped | Home computers / engines / ports (Amiga, DOS, Steam) |
-| F | 15 | Skipped | Fantasy / homebrew / mobile (PICO-8, J2ME) |
-
-## Output layout
+```bash
+retrofetch init
 ```
-<roms_root>/
-|-- <shortname>/
-|   |-- Game Title (USA).ext          # Verified ROM file
-|   |-- .retrofetch-state.json        # Per-console resume state
-|   `-- ...
-<bios_root>/
-|-- <shortname>/
-|   `-- bios.bin                      # BIOS file(s) for the console
-retrofetch.log                         # Rotating application log
-coverage.md                            # Collection status report
-.cache/                                # Temporary metadata caches
+
+See [`config.yml.example`](config.yml.example) and
+[`overrides.yml.example`](overrides.yml.example) for advanced options.
+
+## CLI
+
+The TUI is the recommended interface. Automation is still available:
+
+```bash
+retrofetch download --console virtualboy --limit 3 --dry-run
+retrofetch verify --console psx
+retrofetch bios --console ps2
+retrofetch report
+retrofetch --help
 ```
+
+Use `--no-torrent` for a single HTTP-only run, or set
+`torrent_mode: disabled` in the config.
+
+## Torrent privacy
+
+Managed mode keeps the qBittorrent Web API on `127.0.0.1`, uses a
+Retrofetch-owned profile and secret, disables UPnP/NAT-PMP, and never controls
+untagged jobs. BitTorrent traffic itself is public peer-to-peer traffic: peers can
+see your public IP and may receive uploaded pieces while a transfer is active.
+
+qBittorrent is separate GPL software. Retrofetch displays its publisher, license,
+source, installer URL, and checksum before starting installation.
 
 ## Troubleshooting
 
-### Empty wantlist
-The ranker could not reach sources or the collection is missing on the provider side. Check `retrofetch.log` for network errors or Cloudflare blocks.
+### No titles appear
 
-### Rate-limit halt
-If you see `Rate-limited on <source>, retry in Xs` in verbose output, the source is throttling requests. The downloader backs off automatically. If it halts entirely, wait a few minutes and rerun.
+Refresh with `r`. The provider may be unavailable, blocked, or missing that
+system. Check `retrofetch.log` for the provider error.
 
-### Windows long-path errors
-Enable long paths in the registry: `HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled = 1`. Or move `roms_root` closer to the drive root (e.g., `C:\ROMs`).
+### Torrent speed changes or stays at zero
 
-### .rar files not extracting
-Install the `unrar` binary from rarlab.com and ensure `unrar.exe` is on your system PATH.
+Torrent speed depends on active peers, not your internet plan. A swarm with few
+seeds can alternate between idle periods and short bursts. The TUI shows seeds,
+peers, speed, and ETA so the cause remains visible.
 
-### libtorrent not installed
-Install `libtorrent` manually for torrent support. Use `--no-torrent` to stick to HTTP sources if installation fails.
+### Windows path is too long
 
-### Cloudflare blocked
-Sources like romsfun use Cloudflare. If you see 403 errors, the source is temporarily unreachable. Restart the command later.
+Choose a short library path such as `C:\ROMs`, or enable Windows long-path
+support.
 
-### TUI refuses to launch
-Exits with code 2 if the terminal is incompatible. Avoid MSYS2, PowerShell ISE, or non-TTY environments. Use Windows Terminal or a standard shell.
+### qBittorrent setup is requested
 
-### Ctrl+C mid-download
-Safe to interrupt. State is saved in `.retrofetch-state.json`. Rerunning the command will resume from where it stopped.
+Choose the recommended WinGet option. Retrofetch validates the package, launches
+its managed profile, and resumes the original queue automatically. Set
+`torrent_mode: disabled` if you do not want torrent support.
 
-## Limitations / non-goals
-- BIOS: Available via `retrofetch bios --console <name>` or TUI `b` key. Coverage depends on source availability.
-- No Conversion: Does not handle CHD or zstd compression.
-- No Patching: Does not apply IPS, BPS, or XDelta patches.
-- No Arcade: Skips MAME/FBNeo due to complex versioning.
-- No Media: Does not fetch box art or metadata for frontends.
-- No Mouse: TUI is keyboard-only.
-- No Vimm's Lair: Bulk scraping is not supported.
+## Development
 
-## Repository layout
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[build]" pytest ruff pyright
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m ruff check .
+.\.venv\Scripts\pyright.exe
 ```
-retrofetch/
-|-- retrofetch/
-|   |-- cli.py                 # Typer subcommands and entry points
-|   |-- config.py              # YAML loading and validation
-|   |-- events.py              # EventBus + typed ProgressEvents
-|   |-- ranker.py              # Popularity-based wantlist generation
-|   |-- wantlist_cache.py      # 24h disk cache for TUI previews
-|   |-- state.py               # JSON state management
-|   |-- dat.py / dat_fetch.py  # DAT parsing and bootstrapping
-|   |-- downloader.py          # HTTP/Torrent download logic
-|   |-- extractor.py           # Archive extraction (zip, 7z, rar)
-|   |-- organizer.py           # File naming and path sanitization
-|   |-- orchestrator.py        # Main execution loop
-|   |-- dispatcher.py          # Source fallback management
-|   |-- report.py              # markdown emitter
-|   |-- coverage.py            # pure compute_coverage()
-|   |-- sources/               # Site-specific adapters
-|   `-- tui/                   # Textual command center
-|       |-- app.py
-|       |-- messages.py
-|       |-- styles.tcss
-|       |-- screens/
-|       |   |-- setup.py             # First-run configuration wizard
-|       |   |-- bios.py              # BIOS download screen
-|       |   |-- download_confirm.py  # Download confirm screen
-|       |   |-- download_progress.py # Download progress screen
-|       |   `-- cancel_confirm.py    # Cancel confirm modal
-|       |-- widgets/
-|       |   `-- wantlist_preview.py # Live preview panel
-|       `-- workers/
-|-- consoles.yml               # 178-console metadata (authoritative)
-|-- config.yml.example         # Global config template
-|-- overrides.yml.example      # Per-console override template
-|-- dats/                      # Bundled DAT file snapshots
-`-- ROMs/                      # Default target directory
+
+Build the portable executable and installer:
+
+```powershell
+.\packaging\build_windows.ps1 -InstallTools
 ```
+
+Outputs:
+
+- `dist\Retrofetch.exe`
+- `dist\RetrofetchSetup.exe`
+
+Tagged `v*` pushes run the same tests and publish both files through
+[`windows-release.yml`](.github/workflows/windows-release.yml). Release tags must
+match the version reported by the executable.
 
 ## License
-MIT License. See `pyproject.toml` for details.
+
+[MIT](LICENSE) © 2026 veedy-dev

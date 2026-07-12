@@ -55,7 +55,7 @@ def test_parse_nointro_name_cases(
 
 
 def test_catalog_schema_version_is_wave_one_value() -> None:
-    assert CATALOG_SCHEMA_VERSION == 2
+    assert CATALOG_SCHEMA_VERSION == 4
 
 
 def test_build_catalog_empty_input() -> None:

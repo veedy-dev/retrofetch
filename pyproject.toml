@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "retrofetch"
 version = "2.0.0"
-description = "Automated ROM collection filler for retro console emulation"
+description = "Keyboard-first retro game library browser, downloader, and verifier"
 requires-python = ">=3.10,<3.14"
 license = { text = "MIT" }
 readme = "README.md"
@@ -50,10 +50,28 @@ retrofetch = "retrofetch.cli:app"
 Homepage = "https://github.com/veedy-dev/retrofetch"
 Repository = "https://github.com/veedy-dev/retrofetch"
 Issues = "https://github.com/veedy-dev/retrofetch/issues"
-Changelog = "https://github.com/veedy-dev/retrofetch/blob/main/README.md#changelog"
+Changelog = "https://github.com/veedy-dev/retrofetch/releases"
+
+[project.optional-dependencies]
+build = ["pyinstaller==6.21.0"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["retrofetch"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/retrofetch",
+    "/dats",
+    "/.env.example",
+    "/config.yml.example",
+    "/consoles.yml",
+    "/launch.sh",
+    "/LICENSE",
+    "/overrides.yml.example",
+    "/pyproject.toml",
+    "/README.md",
+    "/packaging",
+]
 
 [tool.hatch.build.targets.wheel.force-include]
 "consoles.yml" = "retrofetch/consoles.yml"

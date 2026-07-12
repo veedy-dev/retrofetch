@@ -12,6 +12,16 @@ def test_extract_archives_defaults_false() -> None:
     assert config.bios_root == Path("BIOS")
 
 
+def test_minerva_catalog_and_torrent_are_enabled_by_default() -> None:
+    config = Config(roms_root=Path("ROMs"))
+
+    for klass in ("A", "B", "C"):
+        assert config.ranking_sources_by_class[klass][0] == "minerva_http"
+        assert "minerva_http" not in config.source_fallback_by_class[klass]
+        assert config.source_fallback_by_class[klass][0] == "minerva_torrent"
+    assert config.torrent_mode == "managed"
+
+
 def test_extract_archives_can_be_enabled(scratch_path) -> None:
     config_file = scratch_path / "config.yml"
     config_file.write_text(
@@ -31,4 +41,5 @@ def test_example_config_documents_keep_archive_default() -> None:
     text = Path("config.yml.example").read_text(encoding="utf-8")
 
     assert "extract_archives: false" in text
-    assert "bios_root:" in text
+    assert 'roms_root: "ROMs"' in text
+    assert 'bios_root: "BIOS"' in text

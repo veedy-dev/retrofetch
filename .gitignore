@@ -14,6 +14,11 @@ coverage.md
 .sisyphus/notepads/
 .serena/
 .ruff_cache/
+.omo/
+.omx/
+.playwright-mcp/
+config.yml
+overrides.yml
 
 # Bundled data not tracked
 BIOS/

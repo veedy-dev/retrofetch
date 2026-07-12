@@ -1,17 +1,17 @@
-"""Wantlist curation screen - DataTable multi-select + save to overrides.yml.
+"""Wantlist curation screen - session-only DataTable multi-select.
 
 Pushed from HomeScreen when the user presses 'w' on a selected Class A/B/C console.
 Displays up to 200 ranked titles with include/exclude state, paginated 50 rows/page
 (T1 verdict: raw DataTable filtering is NO-GO at 5000 rows; paginate instead).
 
-Save path: load overrides.yml via _yaml_rt (load-then-mutate per Metis K.4), update
-the specific console's include/exclude lists, save via save_overrides() (atomic LF).
+Selections update the running TUI only. Reopening Retrofetch starts with a clean
+wantlist while download progress/history remains persisted separately.
 """
+
 from __future__ import annotations
 
 # pyright: reportAttributeAccessIssue=false
 
-from pathlib import Path
 from typing import Any
 
 from rich.text import Text
@@ -23,7 +23,7 @@ from textual.coordinate import Coordinate  # pyright: ignore[reportMissingImport
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
 from textual.widgets import DataTable, Footer, Header, Input, Label  # pyright: ignore[reportMissingImports]
 
-from retrofetch.config import ConsoleOverride, _yaml_rt, save_overrides
+from retrofetch.config import ConsoleOverride
 from retrofetch.tui.messages import WantlistFailed, WantlistReady
 from retrofetch.wantlist_cache import get_or_fetch_wantlist
 
@@ -36,8 +36,8 @@ class WantlistScreen(Screen[None]):
     BINDINGS = [
         Binding("space", "toggle_include", "Include", show=True),
         Binding("x", "toggle_exclude", "Exclude", show=True),
-        Binding("enter", "enter", "Save", show=True, priority=True),
-        Binding("slash", "focus_filter", "Filter", show=True, key_display="/"),
+        Binding("enter", "enter", "Apply", show=True, priority=True),
+        Binding("slash", "focus_filter", "Search", show=True, key_display="/"),
         Binding("r", "refresh", "Refresh", show=True),
         Binding("escape", "cancel", "Cancel", show=True),
         Binding("pageup", "page_prev", "Prev page", show=True),
@@ -73,9 +73,9 @@ class WantlistScreen(Screen[None]):
         yield Header(show_clock=False)
         with Vertical(id="main-panel"):
             yield Label(
-                f"Wantlist: {self.shortname}  (space=include, x=exclude, /=filter, enter=save, r=refresh, esc=cancel)"
+                f"Select Games: {self.shortname}  (space=include, x=exclude, /=search, enter=apply, r=refresh, esc=cancel)"
             )
-            yield Input(placeholder="filter titles...", id="wantlist-filter")
+            yield Input(placeholder="search titles...", id="wantlist-filter")
             yield Label("", id="status-line")
             yield DataTable(id="wantlist-table")
         yield Footer()
@@ -123,7 +123,7 @@ class WantlistScreen(Screen[None]):
 
     def _update_loading_status_line(self) -> None:
         frame = _SPINNER_FRAMES[self._spinner_index]
-        self._set_status(f"Loading wantlist for {self.shortname}...  {frame}")
+        self._set_status(f"Loading games for {self.shortname}...  {frame}")
 
     @work(thread=True, exclusive=True, group="wantlist-load")
     def _kick_load(self) -> None:
@@ -209,11 +209,13 @@ class WantlistScreen(Screen[None]):
             # Preserve an error/failure status when the list is empty
             return
         source = self._loaded_source or "loading"
-        filter_note = (
-            f" filtered from {raw_total}" if self._filter_query and raw_total != total else ""
+        search_note = (
+            f" matched from {raw_total}"
+            if self._filter_query and raw_total != total
+            else ""
         )
         status = (
-            f"{total} titles{filter_note} ({source})  |  "
+            f"{total} titles{search_note} ({source})  |  "
             f"page {self._page + 1}/{total_pages}  |  "
             f"included: {len(self._include)}  excluded: {len(self._exclude)}"
         )
@@ -286,7 +288,9 @@ class WantlistScreen(Screen[None]):
             self._render_page()
 
     def action_page_next(self) -> None:
-        total_pages = max(1, (len(self._wantlist) + self._PAGE_SIZE - 1) // self._PAGE_SIZE)
+        total_pages = max(
+            1, (len(self._filtered_wantlist) + self._PAGE_SIZE - 1) // self._PAGE_SIZE
+        )
         if self._page < total_pages - 1:
             self._page += 1
             self._render_page()
@@ -294,6 +298,7 @@ class WantlistScreen(Screen[None]):
     def action_refresh(self) -> None:
         """Force a fresh fetch: invalidate cache + re-kick the worker."""
         from retrofetch.wantlist_cache import invalidate
+
         try:
             cache_dir = self.app.config.cache_dir  # pyright: ignore[reportAttributeAccessIssue]
             invalidate(cache_dir, self.shortname)
@@ -311,38 +316,8 @@ class WantlistScreen(Screen[None]):
         self.dismiss(None)
 
     def action_enter(self) -> None:
-        if self._save_overrides():
-            self.dismiss(None)
-
-    def _save_overrides(self) -> bool:
-        overrides_path = Path("overrides.yml")
-        if not overrides_path.exists():
-            # Fall back to the example file as a template; we still save to overrides.yml
-            example = Path("overrides.yml.example")
-            if example.exists():
-                overrides_path.write_bytes(example.read_bytes())
-            else:
-                overrides_path.write_text("consoles: {}\n", encoding="utf-8")
-        raw = _yaml_rt.load(overrides_path.read_text(encoding="utf-8"))
-        if raw is None:
-            raw = {}
-        consoles = raw.get("consoles")
-        if consoles is None:
-            from ruamel.yaml.comments import CommentedMap  # pyright: ignore[reportMissingImports]
-            consoles = CommentedMap()
-            raw["consoles"] = consoles
-        entry = consoles.get(self.shortname)
-        if entry is None:
-            from ruamel.yaml.comments import CommentedMap  # pyright: ignore[reportMissingImports]
-            entry = CommentedMap()
-            consoles[self.shortname] = entry
-        entry["include"] = sorted(self._include)
-        entry["exclude"] = sorted(self._exclude)
-        # Preserve existing limit/region_priority if present - untouched.
-        try:
-            save_overrides(overrides_path, raw)
-            self._set_status(f"saved overrides.yml (include={len(self._include)}, exclude={len(self._exclude)})")
-            return True
-        except Exception as exc:
-            self._set_status(f"save failed: {exc}")
-            return False
+        self.override = self.override.model_copy(
+            update={"include": sorted(self._include), "exclude": sorted(self._exclude)}
+        )
+        self.app.overrides[self.shortname] = self.override
+        self.dismiss(None)

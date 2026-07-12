@@ -14,6 +14,7 @@ from retrofetch.config import (
     Config,
     ConfigError,
     _yaml_rt,
+    default_library_root,
     load_config,
     load_overrides,
 )
@@ -95,16 +96,6 @@ def _resolve_config(config_path: Path) -> Config:
         raise typer.Exit(2) from exc
 
 
-def _try_load_config(config_path: Path) -> Config | None:
-    """Return Config if loadable, else None (caller decides wizard)."""
-    if not config_path.exists():
-        return None
-    try:
-        return load_config(config_path)
-    except ConfigError:
-        return None
-
-
 def _resolve_console_entry(
     consoles: dict[str, Any], shortname: str
 ) -> dict[str, Any] | None:
@@ -118,9 +109,7 @@ def _resolve_console_entry(
 def _verbose_formatter(cons: Console) -> Callable[[ProgressEvent], None]:
     def _on(event: ProgressEvent) -> None:
         if isinstance(event, GameStartEvent):
-            cons.print(
-                f"[cyan]-> Starting {event.game} from {event.source}[/cyan]"
-            )
+            cons.print(f"[cyan]-> Starting {event.game} from {event.source}[/cyan]")
         elif isinstance(event, GameDoneEvent):
             sha1_str = f"{event.sha1[:8]}..." if event.sha1 else "sha1=?"
             cons.print(
@@ -130,9 +119,7 @@ def _verbose_formatter(cons: Console) -> Callable[[ProgressEvent], None]:
         elif isinstance(event, GameFailedEvent):
             cons.print(f"[red][X] Failed {event.game}: {event.reason}[/red]")
         elif isinstance(event, SourceDeadEvent):
-            cons.print(
-                f"[yellow]! Source {event.source} dead: {event.reason}[/yellow]"
-            )
+            cons.print(f"[yellow]! Source {event.source} dead: {event.reason}[/yellow]")
         elif isinstance(event, RateLimitEvent):
             cons.print(
                 f"[yellow]! Rate-limited on {event.source}, "
@@ -156,9 +143,7 @@ def _verbose_formatter(cons: Console) -> Callable[[ProgressEvent], None]:
                     f"{event.games_loaded} games[/dim]"
                 )
         elif isinstance(event, ExtractionStartEvent):
-            cons.print(
-                f"[dim]... Extracting {event.filename} ({event.format})[/dim]"
-            )
+            cons.print(f"[dim]... Extracting {event.filename} ({event.format})[/dim]")
         elif isinstance(event, ExtractionDoneEvent):
             cons.print(f"[dim]... Extracted to {event.extracted_to}[/dim]")
 
@@ -211,10 +196,10 @@ def download(
         None, "--limit", help="Max games per console (overrides config.default_limit)"
     ),
     dry_run: bool = typer.Option(
-        False, "--dry-run", help="Print wantlist without downloading"
+        False, "--dry-run", help="Print game list without downloading"
     ),
     no_torrent: bool = typer.Option(
-        False, "--no-torrent", help="Skip torrent-based sources"
+        False, "--no-torrent", help="Skip qBittorrent/torrent sources for this run"
     ),
     verbose: bool = typer.Option(
         False,
@@ -261,6 +246,7 @@ def download(
         bus = EventBus()
         bus.subscribe(_verbose_formatter(console))
 
+    exit_code = 0
     for entry in entries:
         short: str = str(entry.get("shortname", "?"))
         klass: str = str(entry.get("class", "?"))
@@ -287,7 +273,7 @@ def download(
         wantlist = resolve_download_set(ranked_titles, override, per_limit)
 
         console.print(
-            f"[cyan]Console:[/cyan] {short} (Class {klass}) - wantlist: {len(wantlist)} games"
+            f"[cyan]Console:[/cyan] {short} (Class {klass}) - selected: {len(wantlist)} games"
         )
         for title in wantlist[:5]:
             console.print(f"  - {title}")
@@ -308,14 +294,18 @@ def download(
         if not dry_run:
             if report.error:
                 console.print(f"[red]{short} error:[/red] {report.error}")
+                exit_code = 1
             else:
                 console.print(
                     f"[green]{short}:[/green] attempted={report.attempted} "
                     f"acquired={report.acquired} failed={report.failed} "
-                    f"unverified={report.unverified}"
+                    f"unverified={report.unverified} cancelled={report.cancelled}"
                 )
+                if report.failed:
+                    exit_code = 1
         if coordinator.stop_event.is_set():
             console.print("[yellow]stopped by signal; rerun to resume[/yellow]")
+            exit_code = 130
             break
 
     if not dry_run:
@@ -323,6 +313,8 @@ def download(
             consoles_yml_path, config.roms_root, Path.cwd() / "coverage.md"
         )
         console.print(f"[green]Report:[/green] {coverage}")
+        if exit_code:
+            raise typer.Exit(exit_code)
 
 
 @app.command()
@@ -477,6 +469,7 @@ def tui(
         )
         raise typer.Exit(2)
 
+    config_path = config_path.expanduser().resolve()
     consoles_yml_path = Path.cwd() / "consoles.yml"
     if not consoles_yml_path.exists():
         consoles_yml_path = _resources.find_data_file("consoles.yml")
@@ -490,24 +483,35 @@ def tui(
     except ConfigError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(2) from exc
+    overrides_path = config_path.with_name("overrides.yml")
     try:
-        overrides = load_overrides(Path("overrides.yml"))
+        overrides = load_overrides(overrides_path)
     except ConfigError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(2) from exc
 
-    existing = _try_load_config(config_path)
-    first_run = existing is None
+    first_run = not config_path.exists()
     if first_run:
-        minimal_config = Config(roms_root=Path.cwd() / "ROMs")
+        library_root = default_library_root()
+        minimal_config = Config(
+            roms_root=library_root,
+            bios_root=library_root.parent / "BIOS",
+            cache_dir=config_path.parent / "cache",
+            log_file=config_path.parent / "retrofetch.log",
+        )
     else:
-        minimal_config = existing
+        try:
+            minimal_config = load_config(config_path)
+        except ConfigError as exc:
+            console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(2) from exc
 
     from retrofetch.tui.app import RetrofetchApp
 
     tui_app = RetrofetchApp(
         config=minimal_config,
         config_path=config_path,
+        overrides_path=overrides_path,
         consoles_yml=consoles_yml,
         overrides=overrides,
         first_run=first_run,

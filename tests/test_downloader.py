@@ -5,6 +5,7 @@ import http.server
 import socketserver
 import threading
 import zipfile
+import zlib
 from pathlib import Path
 from typing import Any, cast
 
@@ -12,13 +13,89 @@ import pytest
 
 from retrofetch.dat import GameEntry as DatGameEntry, Rom
 from retrofetch.dispatcher import SourceDispatcher
-from retrofetch.downloader import download_game, stream_http_download
-from retrofetch.events import EventBus, GameSkippedEvent
+from retrofetch.downloader import (
+    download_game,
+    finalize_staged_candidate,
+    skip_if_acquired,
+    stream_http_download,
+)
+from retrofetch.events import EventBus, GameFailedEvent, GameSkippedEvent, GameStartEvent
 from retrofetch.sources import DownloadCandidate, SourceUnavailable
 from retrofetch.state import GameEntry, State
 
 
 PAYLOAD = (b"0123456789abcdef" * 65536)[: 1024 * 1024]
+
+
+def test_finalize_staged_candidate_validates_and_promotes(scratch_path) -> None:
+    staging = scratch_path / ".staging"
+    target = scratch_path / "roms"
+    staging.mkdir()
+    payload = b"real payload"
+    staged = staging / "remote.bin"
+    staged.write_bytes(payload)
+    candidate = DownloadCandidate(
+        "torrent://fixture",
+        "Game.bin",
+        "torrent",
+        expected_size=len(payload),
+        expected_sha1=hashlib.sha1(payload).hexdigest(),
+        expected_crc32=f"{zlib.crc32(payload) & 0xFFFFFFFF:08x}",
+        extra={"artifact_md5": hashlib.md5(payload, usedforsecurity=False).hexdigest()},
+    )
+
+    result = finalize_staged_candidate(
+        staged,
+        staging_root=staging,
+        target_dir=target,
+        candidate=candidate,
+    )
+
+    assert result.path == target / "Game.bin"
+    assert result.path.read_bytes() == payload
+    assert not staged.exists()
+
+
+def test_finalize_staged_candidate_rejects_escape_mismatch_and_clobber(
+    scratch_path,
+) -> None:
+    staging = scratch_path / ".staging"
+    target = scratch_path / "roms"
+    staging.mkdir()
+    target.mkdir()
+    outside = scratch_path / "outside.bin"
+    outside.write_bytes(b"payload")
+    candidate = DownloadCandidate(
+        "torrent://fixture", "Game.bin", "torrent", expected_size=7
+    )
+
+    with pytest.raises(SourceUnavailable, match="escapes"):
+        finalize_staged_candidate(
+            outside,
+            staging_root=staging,
+            target_dir=target,
+            candidate=candidate,
+        )
+
+    staged = staging / "payload.bin"
+    staged.write_bytes(b"wrong")
+    with pytest.raises(SourceUnavailable, match="size mismatch"):
+        finalize_staged_candidate(
+            staged,
+            staging_root=staging,
+            target_dir=target,
+            candidate=candidate,
+        )
+
+    staged.write_bytes(b"payload")
+    (target / "Game.bin").write_bytes(b"existing")
+    with pytest.raises(SourceUnavailable, match="refusing to overwrite"):
+        finalize_staged_candidate(
+            staged,
+            staging_root=staging,
+            target_dir=target,
+            candidate=candidate,
+        )
 
 
 class _ThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
@@ -213,6 +290,112 @@ def test_dispatcher_skips_already_acquired_without_source_lookup(scratch_path) -
 
     assert result.status == "skipped"
     assert any(isinstance(event, GameSkippedEvent) for event in events)
+
+
+def test_unverified_acquired_outcome_skips_when_recorded_artifact_matches(
+    scratch_path: Path,
+) -> None:
+    payload = b"unverified but acquired"
+    (scratch_path / "Game.zip").write_bytes(payload)
+    state = State(
+        console="nes",
+        games=[
+            GameEntry(
+                title="Game",
+                status="unverified",
+                outcome="acquired",
+                verification="unverified",
+                filename="Game.zip",
+                size_bytes=len(payload),
+                sha1=hashlib.sha1(payload).hexdigest(),
+            )
+        ],
+    )
+
+    result = skip_if_acquired(state, "Game", scratch_path)
+
+    assert result is not None and result.status == "skipped"
+
+
+def test_acquired_record_does_not_skip_corrupt_existing_artifact(
+    scratch_path: Path,
+) -> None:
+    (scratch_path / "Game.zip").write_bytes(b"corrupt")
+    state = State(
+        console="nes",
+        games=[
+            GameEntry(
+                title="Game",
+                status="unverified",
+                outcome="acquired",
+                filename="Game.zip",
+                size_bytes=100,
+            )
+        ],
+    )
+
+    assert skip_if_acquired(state, "Game", scratch_path) is None
+
+
+class _NonRetryingFailureSource:
+    name = "broken"
+    calls = 0
+
+    def __init__(self, entry: dict[str, object]) -> None:
+        pass
+
+    def find_url_for_game(self, title: str, region_priority=None) -> DownloadCandidate:
+        return DownloadCandidate("https://example.invalid/game.zip", "game.zip", self.name)
+
+    def download(self, candidate, dest_dir, *, event_bus=None) -> Path:
+        type(self).calls += 1
+        raise SourceUnavailable("HTML landing page", retryable=False)
+
+
+class _NoMatchSource:
+    name = "missing"
+
+    def __init__(self, entry: dict[str, object]) -> None:
+        pass
+
+    def find_url_for_game(self, title: str, region_priority=None) -> None:
+        return None
+
+
+def test_dispatcher_emits_one_terminal_failure_after_fallback(
+    monkeypatch, scratch_path
+) -> None:
+    import retrofetch.dispatcher as dispatcher_mod
+
+    _NonRetryingFailureSource.calls = 0
+    monkeypatch.setitem(
+        dispatcher_mod._SOURCE_FACTORIES, "broken", _NonRetryingFailureSource
+    )
+    monkeypatch.setitem(dispatcher_mod._SOURCE_FACTORIES, "missing", _NoMatchSource)
+    events = []
+    bus = EventBus()
+    bus.subscribe(events.append)
+
+    result = SourceDispatcher({}, ["broken", "missing"]).dispatch_download(
+        game_title="Game",
+        game=None,
+        target_dir=scratch_path,
+        region_priority=["USA"],
+        state=State(console="test"),
+        console="test",
+        event_bus=bus,
+        verification_available=False,
+    )
+
+    starts = [event.source for event in events if isinstance(event, GameStartEvent)]
+    failures = [event for event in events if isinstance(event, GameFailedEvent)]
+    assert _NonRetryingFailureSource.calls == 1
+    assert starts == ["broken", "missing"]
+    assert len(failures) == 1
+    assert failures[0].reason == result.reason
+    assert result.reason is not None
+    assert "broken:HTML landing page" in result.reason
+    assert "missing:no_match" in result.reason
 
 
 class _ZipSource:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import stat
 import zipfile
 import hashlib
 import threading
@@ -19,18 +20,17 @@ from retrofetch.dat import GameEntry, Rom, VerifyResult, verify_file
 from retrofetch.events import (
     EventBus,
     GameBytesEvent,
+    GameCancelledEvent,
     GameDoneEvent,
-    GameFailedEvent,
     GameSkippedEvent,
-    GameStartEvent,
     GameUnverifiedEvent,
     RateLimitEvent,
 )
 
-from retrofetch.sources import DownloadCandidate, SourceUnavailable
+from retrofetch.sources import DownloadCancelled, DownloadCandidate, SourceUnavailable
 from retrofetch.extractor import ExtractionError, extract_archive, is_archive
 from retrofetch.sanitize import sanitize_filename
-from retrofetch.state import GameAttempt, State, update_game
+from retrofetch.state import GameAttempt, GameEntry as StateGameEntry, State, update_game
 
 _log = logging.getLogger(__name__)
 
@@ -86,6 +86,116 @@ class StreamDownloadResult:
     bytes_written: int
 
 
+@dataclass(frozen=True)
+class FinalizeResult:
+    path: Path
+    size: int
+    sha1: str | None = None
+    crc32: str | None = None
+    md5: str | None = None
+
+
+def validate_candidate_file(
+    path: Path, candidate: DownloadCandidate
+) -> FinalizeResult:
+    """Validate one provider artifact without moving it."""
+    source = Path(path)
+    resolved = source.resolve(strict=True)
+    info = source.lstat()
+    if stat.S_ISLNK(info.st_mode) or (
+        getattr(info, "st_file_attributes", 0)
+        & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    ):
+        raise SourceUnavailable("candidate file is a link or reparse point", retryable=False)
+    if not resolved.is_file():
+        raise SourceUnavailable("candidate payload is not a regular file", retryable=False)
+
+    size = resolved.stat().st_size
+    if candidate.expected_size is not None and size != candidate.expected_size:
+        raise SourceUnavailable(
+            f"staged torrent size mismatch: expected {candidate.expected_size}, got {size}",
+            retryable=False,
+        )
+
+    expected_md5 = None
+    if candidate.extra is not None:
+        raw_md5 = candidate.extra.get("artifact_md5")
+        expected_md5 = str(raw_md5).lower() if raw_md5 else None
+    need_sha1 = bool(candidate.expected_sha1)
+    need_crc32 = bool(candidate.expected_crc32)
+    need_md5 = bool(expected_md5)
+    sha1 = hashlib.sha1() if need_sha1 else None
+    md5 = hashlib.md5(usedforsecurity=False) if need_md5 else None
+    crc32 = 0
+    if need_sha1 or need_crc32 or need_md5:
+        with resolved.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                if sha1 is not None:
+                    sha1.update(chunk)
+                if md5 is not None:
+                    md5.update(chunk)
+                if need_crc32:
+                    crc32 = zlib.crc32(chunk, crc32)
+    actual_sha1 = sha1.hexdigest() if sha1 is not None else None
+    actual_md5 = md5.hexdigest() if md5 is not None else None
+    actual_crc32 = f"{crc32 & 0xFFFFFFFF:08x}" if need_crc32 else None
+    checks = (
+        ("SHA1", candidate.expected_sha1, actual_sha1),
+        ("CRC32", candidate.expected_crc32, actual_crc32),
+        ("MD5", expected_md5, actual_md5),
+    )
+    for label, expected, actual in checks:
+        if expected and actual != expected.lower():
+            raise SourceUnavailable(
+                f"staged torrent {label} mismatch", retryable=False
+            )
+    return FinalizeResult(
+        path=resolved,
+        size=size,
+        sha1=actual_sha1,
+        crc32=actual_crc32,
+        md5=actual_md5,
+    )
+
+
+def finalize_staged_candidate(
+    staged_path: Path,
+    *,
+    staging_root: Path,
+    target_dir: Path,
+    candidate: DownloadCandidate,
+) -> FinalizeResult:
+    """Validate one staged payload and atomically promote it without clobbering."""
+    root = Path(staging_root).resolve(strict=True)
+    staged = Path(staged_path)
+    resolved = staged.resolve(strict=True)
+    if not resolved.is_relative_to(root):
+        raise SourceUnavailable("staged torrent file escapes its private directory", retryable=False)
+    validated = validate_candidate_file(staged, candidate)
+
+    filename = Path(candidate.filename)
+    if filename.name != candidate.filename:
+        raise SourceUnavailable("torrent filename contains a path", retryable=False)
+    destination_root = Path(target_dir)
+    destination_root.mkdir(parents=True, exist_ok=True)
+    destination = destination_root / sanitize_filename(
+        candidate.filename, str(destination_root)
+    )
+    if destination.exists() and destination.resolve() != resolved:
+        raise SourceUnavailable(
+            f"refusing to overwrite existing file: {destination.name}", retryable=False
+        )
+    if destination.resolve(strict=False) != resolved:
+        os.replace(resolved, destination)
+    return FinalizeResult(
+        path=destination,
+        size=validated.size,
+        sha1=validated.sha1,
+        crc32=validated.crc32,
+        md5=validated.md5,
+    )
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -100,11 +210,17 @@ def _rom_for_verification(game: GameEntry, filename: str) -> Rom | None:
 
 
 def _record_attempt(
-    state: State, game_title: str, source_name: str, result: str
+    state: State,
+    game_title: str,
+    source_name: str,
+    result: str,
+    item_id: str | None = None,
 ) -> None:
     attempt = GameAttempt(source=source_name, result=result, ts=_now())
     for g in state.games:
-        if g.title == game_title:
+        if (item_id is not None and g.item_id == item_id) or (
+            item_id is None and g.title == game_title
+        ):
             g.attempts.append(attempt)
             return
     update_game(
@@ -112,6 +228,7 @@ def _record_attempt(
         game_title,
         status="pending",
         attempts=[attempt],
+        item_id=item_id,
     )
 
 
@@ -244,7 +361,10 @@ def stream_http_download(
                 elif resp.status_code == 206 and range_requested:
                     resumed = True
                 elif resp.status_code != 200:
-                    raise SourceUnavailable(f"{source_name} HTTP {resp.status_code}")
+                    raise SourceUnavailable(
+                        f"{source_name} HTTP {resp.status_code}",
+                        retryable=resp.status_code in (408, 429) or resp.status_code >= 500,
+                    )
 
                 content_type = resp.headers.get("Content-Type", "")
                 if (
@@ -252,7 +372,8 @@ def stream_http_download(
                     and final.suffix.lower() not in (".html", ".htm")
                 ):
                     raise SourceUnavailable(
-                        f"{source_name} returned HTML page instead of file content"
+                        f"{source_name} returned HTML page instead of file content",
+                        retryable=False,
                     )
 
                 content_length = _content_length(resp.headers)
@@ -284,20 +405,69 @@ def stream_http_download(
     except httpx.HTTPError as exc:
         raise SourceUnavailable(f"{source_name} download error: {exc}") from exc
     except OSError as exc:
-        raise SourceUnavailable(f"{source_name} file write error: {exc}") from exc
+        raise SourceUnavailable(
+            f"{source_name} file write error: {exc}", retryable=False
+        ) from exc
 
     try:
         os.replace(part, final)
     except OSError as exc:
-        raise SourceUnavailable(f"{source_name} atomic replace failed: {exc}") from exc
+        raise SourceUnavailable(
+            f"{source_name} atomic replace failed: {exc}", retryable=False
+        ) from exc
     return StreamDownloadResult(path=final, resumed=resumed, bytes_written=downloaded)
+
+
+def _recorded_file_matches(entry: StateGameEntry, target_dir: Path) -> bool:
+    if not entry.filename:
+        return False
+    root = Path(target_dir).resolve(strict=False)
+    candidate = Path(target_dir) / entry.filename
+    try:
+        info = candidate.lstat()
+        resolved = candidate.resolve(strict=True)
+    except OSError:
+        return False
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or (
+            getattr(info, "st_file_attributes", 0)
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+        )
+        or not resolved.is_relative_to(root)
+        or not resolved.is_file()
+    ):
+        return False
+    if entry.size_bytes is not None and resolved.stat().st_size != entry.size_bytes:
+        return False
+    if not entry.sha1 and not entry.crc32:
+        return True
+    sha1 = hashlib.sha1() if entry.sha1 else None
+    crc32 = 0
+    with resolved.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            if sha1 is not None:
+                sha1.update(chunk)
+            if entry.crc32:
+                crc32 = zlib.crc32(chunk, crc32)
+    return (not entry.sha1 or sha1 is not None and sha1.hexdigest() == entry.sha1.lower()) and (
+        not entry.crc32 or f"{crc32 & 0xFFFFFFFF:08x}" == entry.crc32.lower()
+    )
 
 
 def _acquired_filename(state: State, game_title: str, target_dir: Path) -> str | None:
     for entry in state.games:
-        if entry.title == game_title and entry.status == "acquired" and entry.filename:
-            if (Path(target_dir) / entry.filename).exists():
-                return entry.filename
+        acquired = entry.outcome == "acquired" or entry.status in {
+            "acquired",
+            "unverified",
+        }
+        if (
+            entry.title == game_title
+            and acquired
+            and entry.filename
+            and _recorded_file_matches(entry, target_dir)
+        ):
+            return entry.filename
     return None
 
 
@@ -307,6 +477,7 @@ def skip_if_acquired(
     target_dir: Path,
     *,
     event_bus: EventBus | None = None,
+    item_id: str | None = None,
 ) -> DownloadResult | None:
     filename = _acquired_filename(state, game_title, target_dir)
     if filename is None:
@@ -317,6 +488,7 @@ def skip_if_acquired(
                 game=game_title,
                 reason="already acquired",
                 filename=filename,
+                item_id=item_id,
             )
         )
     return DownloadResult(
@@ -429,18 +601,20 @@ def download_game(
     extract_archives: bool = False,
     verification_available: bool = True,
     state_lock: threading.Lock | None = None,
+    item_id: str | None = None,
 ) -> DownloadResult:
     target_dir = Path(target_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
 
     def record_attempt(result: str) -> None:
         if state_lock is None:
-            _record_attempt(state, game_title, source.name, result)
+            _record_attempt(state, game_title, source.name, result, item_id)
             return
         with state_lock:
-            _record_attempt(state, game_title, source.name, result)
+            _record_attempt(state, game_title, source.name, result, item_id)
 
     def update_status(status: str, **kwargs: object) -> None:
+        kwargs["item_id"] = item_id
         if state_lock is None:
             update_game(state, game_title, status=status, **kwargs)
             return
@@ -453,6 +627,7 @@ def download_game(
             game_title,
             target_dir,
             event_bus=event_bus,
+            item_id=item_id,
         )
     else:
         with state_lock:
@@ -461,19 +636,31 @@ def download_game(
                 game_title,
                 target_dir,
                 event_bus=event_bus,
+                item_id=item_id,
             )
     if skipped is not None:
         return skipped
-
-    if event_bus is not None:
-        event_bus.publish(
-            GameStartEvent(game=game_title, source=source.name, console=console)
-        )
 
     last_reason: str | None = None
     for attempt_num in range(1, MAX_ATTEMPTS_PER_SOURCE + 1):
         try:
             downloaded = source.download(candidate, target_dir, event_bus=event_bus)
+        except DownloadCancelled as exc:
+            reason = str(exc)
+            record_attempt(f"cancelled: {reason}")
+            update_status(
+                "cancelled",
+                source=source.name,
+                provider=source.name,
+                phase="terminal",
+                outcome="cancelled",
+                verification="not_applicable",
+            )
+            if event_bus is not None:
+                event_bus.publish(GameCancelledEvent(game_title, reason, item_id))
+            return DownloadResult(
+                status="cancelled", source=source.name, reason=reason
+            )
         except SourceUnavailable as exc:
             last_reason = str(exc)
             _log.warning(
@@ -485,6 +672,8 @@ def download_game(
                 exc,
             )
             record_attempt(f"download_failed: {exc}")
+            if not exc.retryable:
+                break
             if attempt_num < MAX_ATTEMPTS_PER_SOURCE:
                 time.sleep(min(2 ** (attempt_num - 1), 5))
             continue
@@ -553,10 +742,16 @@ def download_game(
             update_status(
                 "unverified",
                 source=source.name,
+                provider=source.name,
                 filename=final_filename,
                 sha1=candidate.expected_sha1,
                 crc32=candidate.expected_crc32,
                 size_bytes=candidate.expected_size,
+                completed_bytes=candidate.expected_size or 0,
+                final_path=str(target_dir / final_filename),
+                phase="terminal",
+                outcome="acquired",
+                verification="unverified",
             )
             if event_bus is not None:
                 event_bus.publish(
@@ -564,6 +759,7 @@ def download_game(
                         game=game_title,
                         source=source.name,
                         reason=verify_reason,
+                        item_id=item_id,
                     )
                 )
             return DownloadResult(
@@ -595,10 +791,16 @@ def download_game(
         update_status(
             "acquired",
             source=source.name,
+            provider=source.name,
             filename=sanitized,
             sha1=candidate.expected_sha1,
             crc32=candidate.expected_crc32,
             size_bytes=candidate.expected_size,
+            completed_bytes=candidate.expected_size or 0,
+            final_path=str(target_dir / sanitized),
+            phase="terminal",
+            outcome="acquired",
+            verification="verified",
         )
         if event_bus is not None:
             event_bus.publish(
@@ -607,14 +809,20 @@ def download_game(
                     source=source.name,
                     size=candidate.expected_size or 0,
                     sha1=candidate.expected_sha1,
+                    item_id=item_id,
                 )
             )
         return DownloadResult(status="acquired", filename=sanitized, source=source.name)
 
-    update_status("failed", source=source.name)
+    update_status(
+        "failed",
+        source=source.name,
+        provider=source.name,
+        phase="terminal",
+        outcome="failed",
+        verification="not_applicable",
+    )
     final_reason = last_reason or "exhausted attempts"
-    if event_bus is not None:
-        event_bus.publish(GameFailedEvent(game=game_title, reason=final_reason))
     return DownloadResult(
         status="failed",
         source=source.name,

@@ -1,5 +1,0 @@
-status=PASS
-shortname=arcadia
-state_after_fail=FAILED
-state_after_retry=READY
-fetch_call_count=2

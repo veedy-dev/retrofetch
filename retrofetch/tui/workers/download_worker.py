@@ -25,7 +25,32 @@ from textual.worker import get_current_worker  # pyright: ignore[reportMissingIm
 from retrofetch.config import Config
 from retrofetch.events import EventBus
 from retrofetch.orchestrator import RunReport, run_console
-from retrofetch.tui.messages import DownloadComplete, DownloadCrashed, EventBusBridge
+from retrofetch.tui.messages import (
+    DownloadComplete,
+    DownloadCrashed,
+    EventBusBridge,
+    TorrentSetupRequired,
+)
+
+
+class TorrentSetupGate:
+    def __init__(self) -> None:
+        self._event = threading.Event()
+        self.accepted = False
+
+    def resolve(self, accepted: bool) -> None:
+        self.accepted = bool(accepted)
+        self._event.set()
+
+    def wait(self, stop_event: threading.Event | None) -> bool:
+        if stop_event is not None and stop_event.is_set():
+            return False
+        while not self._event.wait(0.1):
+            if stop_event is not None and stop_event.is_set():
+                return False
+        return self.accepted and not (
+            stop_event is not None and stop_event.is_set()
+        )
 
 
 class DownloadWorker:
@@ -101,6 +126,7 @@ class DownloadWorker:
                 stop_event=self._stop_event,
                 event_bus=self._bus,
                 dry_run=self._dry_run,
+                torrent_setup_callback=self._request_torrent_setup,
             )
         except Exception as exc:
             try:
@@ -114,6 +140,11 @@ class DownloadWorker:
                 self._app.post_message(DownloadComplete(report))
         finally:
             self._cleanup()
+
+    def _request_torrent_setup(self) -> bool:
+        gate = TorrentSetupGate()
+        self._app.post_message(TorrentSetupRequired(gate))
+        return gate.wait(self._stop_event)
 
     def _cleanup(self) -> None:
         if self._bridge is not None:

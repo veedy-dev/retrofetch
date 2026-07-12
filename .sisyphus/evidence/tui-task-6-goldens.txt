@@ -1,2 +1,0 @@
-goldens ok
-command: .\.venv\Scripts\python.exe .sisyphus\qa\wave1-task6-goldens.py

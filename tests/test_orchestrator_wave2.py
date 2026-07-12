@@ -5,13 +5,16 @@ import time
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from retrofetch.config import Config
 from retrofetch.downloader import DownloadResult
 from retrofetch.events import DatLoadDoneEvent, EventBus
 from retrofetch.orchestrator import run_console
 from retrofetch.sources import DownloadCandidate
-from retrofetch.dispatcher import SourceDispatcher
+from retrofetch.dispatcher import DeferredTorrentAttempt, SourceDispatcher
 from retrofetch.state import State
+from retrofetch.torrent import PreparedTorrent
 
 
 class _ConcurrentFakeDispatcher:
@@ -65,7 +68,7 @@ def test_run_console_uses_bounded_concurrency(monkeypatch, scratch_path) -> None
     config = Config(
         roms_root=scratch_path,
         source_fallback_by_class={"A": ["fake"]},
-        max_concurrent_downloads=99,
+        max_concurrent_downloads=16,
     )
 
     report = run_console(
@@ -78,6 +81,29 @@ def test_run_console_uses_bounded_concurrency(monkeypatch, scratch_path) -> None
 
     assert report.acquired == 6
     assert 2 <= _ConcurrentFakeDispatcher.max_active <= 3
+
+
+def test_pre_cancelled_run_reports_every_item_cancelled(scratch_path) -> None:
+    stop = threading.Event()
+    stop.set()
+    config = Config(
+        roms_root=scratch_path,
+        source_fallback_by_class={"A": []},
+        max_concurrent_downloads=1,
+    )
+
+    report = run_console(
+        {"shortname": "fake", "class": "A"},
+        ["Game A", "Game B"],
+        config,
+        allow_torrent=False,
+        consoles_yml={"consoles": [{"shortname": "fake", "class": "A"}]},
+        stop_event=stop,
+    )
+
+    assert report.attempted == 2
+    assert report.cancelled == 2
+    assert report.acquired + report.failed + report.skipped + report.cancelled == 2
 
 
 class _UnverifiedFakeDispatcher:
@@ -233,3 +259,95 @@ def test_dispatcher_treats_unverified_download_as_terminal_success(
 
     assert result.status == "unverified"
     assert result.reason == "found:unverified"
+
+
+class _GroupedFakeCoordinator:
+    batches: list[list[str]] = []
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        pass
+
+    def transfer_many(self, items, **kwargs):
+        type(self).batches.append([item.item_id for item in items])
+        return {
+            item.item_id: PreparedTorrent(
+                item.target_dir / f"{item.item_id}.part",
+                item.target_dir,
+            )
+            for item in items
+        }
+
+    def close(self) -> None:
+        pass
+
+
+class _GroupedFakeDispatcher:
+    def __init__(
+        self,
+        console_entry: dict[str, Any],
+        source_names: list[str],
+        allow_torrent: bool,
+    ) -> None:
+        self.torrent_coordinator = None
+
+    def dispatch_until_torrent(self, *, game_title: str, **kwargs):
+        candidate = DownloadCandidate(
+            "https://example.test/collection.torrent",
+            f"{game_title}.zip",
+            "minerva_torrent",
+            expected_size=1,
+            extra={
+                "transport": "torrent",
+                "torrent_url": "https://example.test/collection.torrent",
+                "torrent_infohash": "a" * 40,
+                "torrent_internal_path": f"Collection/{game_title}.zip",
+                "torrent_file_index": 0 if game_title == "Game A" else 1,
+                "torrent_name": "Collection",
+            },
+        )
+        return DeferredTorrentAttempt(
+            source_index=0,
+            source_name="minerva_torrent",
+            candidate=candidate,
+            attempts_summary=(),
+            item_id=game_title,
+        )
+
+    def resume_download(self, deferred, *, prepared, transfer_error, **kwargs):
+        assert prepared is not None
+        assert transfer_error is None
+        return DownloadResult(status="unverified", filename=deferred.candidate.filename)
+
+
+@pytest.mark.parametrize("workers", [1, 3])
+def test_run_console_batches_same_infohash_after_workers_drain(
+    monkeypatch: pytest.MonkeyPatch,
+    scratch_path: Path,
+    workers: int,
+) -> None:
+    _GroupedFakeCoordinator.batches = []
+    monkeypatch.setattr(
+        "retrofetch.orchestrator.SourceDispatcher", _GroupedFakeDispatcher
+    )
+    monkeypatch.setattr(
+        "retrofetch.orchestrator.TorrentCoordinator", _GroupedFakeCoordinator
+    )
+    config = Config(
+        roms_root=scratch_path,
+        source_fallback_by_class={"A": ["minerva_torrent"]},
+        max_concurrent_downloads=workers,
+    )
+
+    report = run_console(
+        {"shortname": "fake", "class": "A"},
+        ["Game A", "Game B"],
+        config,
+        allow_torrent=True,
+        consoles_yml={"consoles": [{"shortname": "fake", "class": "A"}]},
+    )
+
+    assert len(_GroupedFakeCoordinator.batches) == 1
+    assert sorted(_GroupedFakeCoordinator.batches[0]) == ["Game A", "Game B"]
+    assert report.attempted == 2
+    assert report.unverified == 2
+    assert report.failed == 0

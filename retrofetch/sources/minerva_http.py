@@ -278,6 +278,10 @@ class MinervaHttpSource:
         if entry is None or not entry.files:
             return None
         catalog_file = entry.files[0]
+        # MiNERVA's /rom endpoint is an information page; its documented
+        # payload delivery is torrent-only, so it is browse metadata, not HTTP.
+        if urlsplit(catalog_file.url).path.rstrip("/") == "/rom":
+            return None
         return DownloadCandidate(
             url=catalog_file.url,
             filename=catalog_file.filename,

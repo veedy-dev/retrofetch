@@ -1,3 +1,0 @@
-status=PASS
-decoded_return=OK
-decoded_cache=OK

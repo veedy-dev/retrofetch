@@ -1,2 +1,0 @@
-return_value=2
-status=PASS

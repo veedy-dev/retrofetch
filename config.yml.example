@@ -1,5 +1,5 @@
-roms_root: "D:/Projects/retrofetch/ROMs"
-bios_root: "D:/Projects/retrofetch/BIOS"
+roms_root: "ROMs"
+bios_root: "BIOS"
 cache_dir: ".cache"
 log_file: "retrofetch.log"
 default_limit: 75
@@ -19,11 +19,16 @@ max_game_size_gb: null
 max_concurrent_downloads: 3
 # Most emulators read .zip/.7z archives directly. Keep archives by default.
 extract_archives: false
+# Windows default: Retrofetch runs qBittorrent in an isolated local profile.
+# Use "existing" only for a loopback Web API you already manage, or "disabled".
+torrent_mode: managed
+qbittorrent_path: null
+qbittorrent_url: "http://127.0.0.1:8080"
 source_fallback_by_class:
+  A: [minerva_torrent, archive_org, romsfun, romsretro]
+  B: [minerva_torrent, archive_org, romsretro]
+  C: [minerva_torrent, archive_org, romsfun, romsretro]
+ranking_sources_by_class:
   A: [minerva_http, archive_org, romsfun, romsretro]
   B: [minerva_http, archive_org, romsretro]
   C: [minerva_http, archive_org, romsfun, romsretro]
-ranking_sources_by_class:
-  A: [minerva_http, archive_org, romsfun, romsretro, vimm, coolrom]
-  B: [minerva_http, archive_org, romsretro, vimm, coolrom]
-  C: [minerva_http, archive_org, romsfun, romsretro, vimm]

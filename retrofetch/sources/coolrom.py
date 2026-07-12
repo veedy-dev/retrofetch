@@ -23,7 +23,7 @@ _BASE_URL = "https://coolrom.com.au"
 
 
 class CoolROMSource:
-    """Wantlist-only adapter.
+    """Catalog-only adapter.
 
     CoolROM can intermittently return Cloudflare challenge pages. When that
     happens, list_popular records a failure and returns an empty result so the
@@ -119,5 +119,5 @@ class CoolROMSource:
         event_bus: EventBus | None = None,
     ) -> Path:
         raise SourceUnavailable(
-            "coolrom download not implemented in wantlist-only adapter"
+            "coolrom download not implemented in catalog-only adapter"
         )

@@ -1,8 +1,0 @@
-status=PASS
-app_title=Retrofetch
-availability_classifier=OK
-pagination_1/3=OK
-pagination_2/3=OK
-pagination_3/3=OK
-next_past_end=bounds_OK
-prev_from_last=OK

@@ -48,15 +48,14 @@ def test_minerva_catalog_parses_rom_links_sizes_and_one_subdir() -> None:
     entry = source.get_entry("Burnout Dominator", ["USA", "Europe"])
 
     assert titles == ["Burnout Dominator", "Ridge Racer"]
-    assert candidate is not None
-    assert candidate.filename == "Burnout Dominator (USA).zip"
-    assert candidate.expected_size == 1_610_612_736
-    assert candidate.url == (
+    assert candidate is None
+    assert entry is not None
+    assert entry.files[0].filename == "Burnout Dominator (USA).zip"
+    assert entry.files[0].size == 1_610_612_736
+    assert entry.files[0].url == (
         "https://minerva.test/rom?name=Redump/PSP/"
         "Burnout%20Dominator%20%28USA%29.zip"
     )
-    assert entry is not None
-    assert entry.files[0].url == candidate.url
 
 
 def test_minerva_limit_caps_titles_after_catalog_build() -> None:

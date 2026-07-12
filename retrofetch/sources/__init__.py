@@ -10,6 +10,17 @@ from retrofetch.events import EventBus
 class SourceUnavailable(Exception):
     """Raised when a source cannot fulfill a request (down, rate-limited, CF-blocked)."""
 
+    def __init__(self, message: str, *, retryable: bool = True) -> None:
+        super().__init__(message)
+        self.retryable = retryable
+
+
+class DownloadCancelled(SourceUnavailable):
+    """Raised when the shared stop token halts an active transfer."""
+
+    def __init__(self, message: str = "download cancelled") -> None:
+        super().__init__(message, retryable=False)
+
 
 @dataclass
 class DownloadCandidate:

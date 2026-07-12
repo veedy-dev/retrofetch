@@ -11,6 +11,7 @@ Markup note: action hints contain ``[w]``/``[d]``/etc. which Textual/Rich would
 otherwise treat as style tags. We render via ``rich.text.Text`` so brackets
 stay literal.
 """
+
 from __future__ import annotations
 
 from typing import Literal
@@ -23,7 +24,7 @@ from textual.widgets import Static  # pyright: ignore[reportMissingImports]
 PreviewState = Literal["IDLE", "LOADING", "READY", "FAILED"]
 
 
-_HINTS = "[w] wantlist  [d] download  [s] state  [C] coverage  [?] help  [q] quit"
+_HINTS = "[g] select games  [d] download  [,] settings  [s] state  [?] help  [q] quit"
 
 _SPINNER_FRAMES = ("|", "/", "-", "\\")
 _SPINNER_INTERVAL_S = 0.12
@@ -89,7 +90,7 @@ class WantlistPreview(Static):
     def _render_loading_body(self) -> None:
         frame = _SPINNER_FRAMES[self._spinner_index]
         self._set_body(
-            f"Fetching wantlist for {self._current_console}...  {frame}\n\n{_HINTS}"
+            f"Fetching games for {self._current_console}...  {frame}\n\n{_HINTS}"
         )
 
     # -- internal helpers --------------------------------------------------
@@ -122,24 +123,19 @@ class WantlistPreview(Static):
 
         if page_titles:
             listing = "\n".join(
-                f"  {start + i + 1:>3}. {title}"
-                for i, title in enumerate(page_titles)
+                f"  {start + i + 1:>3}. {title}" for i, title in enumerate(page_titles)
             )
         else:
-            listing = "  (empty wantlist)"
+            listing = "  (no games found)"
 
         acquired = self._counts.get("acquired", 0)
         failed = self._counts.get("failed", 0)
         pending = self._counts.get("pending", 0)
-        counts_line = (
-            f"state: acquired={acquired}  failed={failed}  pending={pending}"
-        )
+        counts_line = f"state: acquired={acquired}  failed={failed}  pending={pending}"
 
         lines = [header, "", listing, "", counts_line, ""]
         if total_pages > 1:
-            lines.append(
-                f"Page {self._page + 1}/{total_pages}    <- prev    -> next"
-            )
+            lines.append(f"Page {self._page + 1}/{total_pages}    <- prev    -> next")
             lines.append("")
         lines.append(_HINTS)
         self._set_body("\n".join(lines))

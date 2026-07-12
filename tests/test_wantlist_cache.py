@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from retrofetch.catalog import CATALOG_SCHEMA_VERSION
+from retrofetch.config import Config, ConsoleOverride
+from retrofetch.tui.app import RetrofetchApp
 from retrofetch.wantlist_cache import (
     CachedWantlist,
     cache_path,
@@ -97,3 +101,45 @@ def test_legacy_empty_marker_is_ignored_and_deleted(scratch_path) -> None:
 
     assert is_recently_empty(scratch_path, "psp") is False
     assert not marker.exists()
+
+
+def test_tui_launch_resets_browsing_but_keeps_download_state(
+    monkeypatch, scratch_path
+) -> None:
+    monkeypatch.chdir(scratch_path)
+    cached = CachedWantlist(
+        console="psp",
+        titles=["Old Game"],
+        cached_at=datetime.now(timezone.utc),
+        ttl_hours=24,
+    )
+    save_cached(scratch_path / ".cache", cached)
+    state_path = scratch_path / "ROMs" / "psp" / ".retrofetch-state.json"
+    state_path.parent.mkdir(parents=True)
+    state_path.write_text('{"status":"downloading"}', encoding="utf-8")
+    app = RetrofetchApp(
+        config=Config(
+            roms_root=scratch_path / "ROMs", cache_dir=scratch_path / ".cache"
+        ),
+        config_path=Path("config.yml"),
+        consoles_yml={"consoles": []},
+        overrides={
+            "psp": ConsoleOverride(
+                include=["Old Choice"],
+                exclude=["Other Choice"],
+                limit=12,
+                region_priority=["Japan"],
+            )
+        },
+    )
+
+    async def run() -> None:
+        async with app.run_test():
+            assert load_cached(scratch_path / ".cache", "psp") is None
+            assert app.overrides["psp"].include == []
+            assert app.overrides["psp"].exclude == []
+            assert app.overrides["psp"].limit == 12
+            assert app.overrides["psp"].region_priority == ["Japan"]
+
+    asyncio.run(run())
+    assert state_path.read_text(encoding="utf-8") == '{"status":"downloading"}'

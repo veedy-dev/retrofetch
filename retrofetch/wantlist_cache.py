@@ -4,6 +4,7 @@ import html
 import json
 import logging
 import os
+import shutil
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -11,6 +12,7 @@ from typing import Any
 
 from retrofetch.config import Config, ConsoleOverride
 from retrofetch.catalog import CATALOG_SCHEMA_VERSION
+
 # NOTE: ``get_wantlist`` is looked up indirectly via the ranker module each call
 # (see ``get_or_fetch_wantlist``) so monkey-patches at ``retrofetch.ranker.get_wantlist``
 # keep flowing through, which matters for the existing wave1-4 pilot harness.
@@ -51,7 +53,9 @@ def _parse_cached(raw: Any) -> CachedWantlist | None:
 
     if not isinstance(console, str):
         return None
-    if not isinstance(titles, list) or not all(isinstance(title, str) for title in titles):
+    if not isinstance(titles, list) or not all(
+        isinstance(title, str) for title in titles
+    ):
         return None
     if not isinstance(cached_at_raw, str):
         return None
@@ -126,6 +130,12 @@ def invalidate(cache_dir: Path, shortname: str) -> None:
     # Clearing the cache also clears any prior empty-marker so the user's
     # manual retry starts from a clean slate.
     clear_empty_marker(cache_dir, shortname)
+
+
+def invalidate_all(cache_dir: Path) -> None:
+    """Clear fetched wantlists so a new TUI session starts fresh."""
+    for directory in ("wantlists", "empty_marks"):
+        shutil.rmtree(cache_dir / directory, ignore_errors=True)
 
 
 def _empty_marker_path(cache_dir: Path, shortname: str) -> Path:
@@ -239,7 +249,9 @@ def get_or_fetch_wantlist(
 
     ranking_override = None
     if overrides is not None and overrides.region_priority:
-        ranking_override = ConsoleOverride(region_priority=list(overrides.region_priority))
+        ranking_override = ConsoleOverride(
+            region_priority=list(overrides.region_priority)
+        )
 
     # Re-resolve through the module to honor monkey-patches at call time.
     # Always fetch/cache the full raw browse catalog; callers apply their own

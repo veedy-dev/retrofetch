@@ -13,11 +13,11 @@ Keybindings:
 Workers all carry explicit ``group=`` names per Metis K.6:
 - ``preview`` for the Highlighted-debounced fetcher.
 """
+
 from __future__ import annotations
 
 # pyright: reportAttributeAccessIssue=false
 
-from pathlib import Path
 from typing import Any
 
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
@@ -34,7 +34,6 @@ from retrofetch.tui.widgets.wantlist_preview import WantlistPreview
 from retrofetch.wantlist_cache import (
     get_or_fetch_wantlist,
     invalidate,
-    is_recently_empty,
     load_cached,
 )
 
@@ -54,13 +53,16 @@ class HomeScreen(Screen[None]):
 
     BINDINGS = [
         Binding("q", "quit", "Quit", show=True),
-        Binding("slash", "focus_filter", "Filter", show=True, key_display="/"),
+        Binding(
+            "slash", "focus_filter", "Search", show=True, key_display="/", priority=True
+        ),
         Binding("question_mark", "help", "Help", show=True, key_display="?"),
         Binding("tab", "focus_next", "Next", show=False),
-        Binding("w", "open_wantlist", "Wantlist", show=True),
+        Binding("g", "open_wantlist", "Select Games", show=True),
         Binding("d", "open_download", "Download", show=True),
         Binding("b", "open_bios", "BIOS", show=True),
         Binding("s", "open_state", "State", show=True),
+        Binding("comma", "open_settings", "Settings", show=True, key_display=","),
         Binding("C", "open_coverage", "Coverage", show=True),
         Binding("r", "retry_fetch", "Refresh", show=True),
         Binding("ctrl+r", "retry_fetch", "Refresh", show=False),
@@ -93,7 +95,7 @@ class HomeScreen(Screen[None]):
         yield Header(show_clock=False)
         with Horizontal():
             with Vertical(id="sidebar"):
-                yield Input(placeholder="filter consoles...", id="filter")
+                yield Input(placeholder="search consoles...", id="filter")
                 yield ListView(id="console-list")
             yield WantlistPreview(id="main-panel")
         yield Footer()
@@ -115,38 +117,21 @@ class HomeScreen(Screen[None]):
         return any(entry.get(field) for field in cls._RANKING_SLUG_FIELDS)
 
     @classmethod
-    def _is_available(cls, entry: dict[str, Any], cache_dir: Path | None = None) -> bool:
-        """A console is 'available' iff:
-        - its class is A/B/C, AND
-        - at least one ranking source slug is populated, AND
-        - no recent empty-marker exists (i.e. last fetch did not come back
-          empty within EMPTY_MARKER_TTL_HOURS).
-
-        ``cache_dir`` is optional so unit tests (and pre-mount callers) can
-        invoke the classifier without requiring a config. When omitted, only
-        the slug check is applied.
-        """
-        if not cls._has_slug(entry):
-            return False
-        if cache_dir is None:
-            return True
-        shortname = str(entry.get("shortname", ""))
-        if not shortname:
-            return False
-        return not is_recently_empty(cache_dir, shortname)
+    def _is_available(cls, entry: dict[str, Any]) -> bool:
+        """Return whether this console has a configured browse provider."""
+        return cls._has_slug(entry)
 
     def on_mount(self) -> None:
         """Populate the ListView from self.app.consoles_yml (loaded by cli.py)."""
         consoles = self.app.consoles_yml.get("consoles", []) or []
         list_view: ListView = self.query_one("#console-list", ListView)
-        cache_dir = self.app.config.cache_dir  # pyright: ignore[reportAttributeAccessIssue]
         total_count = 0
         available_count = 0
         for entry in consoles:
             shortname = str(entry.get("shortname", "?"))
             display_name = str(entry.get("display_name", shortname))
             klass = str(entry.get("class", "?"))
-            available = self._is_available(entry, cache_dir)
+            available = self._is_available(entry)
             badge = f"[{klass}]" if klass else "[?]"
             label = Label(f"{badge} {display_name}")
             css_class = "class-available" if available else "class-unavailable"
@@ -169,43 +154,6 @@ class HomeScreen(Screen[None]):
         except Exception:
             pass
 
-    def _update_row_availability(self, shortname: str, available: bool) -> None:
-        """Recolor a single sidebar row after a live fetch outcome.
-
-        Used by the message handlers so a console that just returned 0 titles
-        turns grey immediately, and a console whose retry succeeded turns
-        green again without waiting for the next app launch.
-        """
-        changed = False
-        for entry, item in self._all_items:
-            if str(entry.get("shortname", "")) != shortname:
-                continue
-            prior = getattr(item, "_rf_available", False)
-            if prior == available:
-                return
-            item._rf_available = available  # type: ignore[attr-defined]
-            try:
-                if available:
-                    item.remove_class("class-unavailable")
-                    item.add_class("class-available")
-                else:
-                    item.remove_class("class-available")
-                    item.add_class("class-unavailable")
-            except Exception:
-                # Textual may not have mounted the item yet; ignore.
-                pass
-            changed = True
-            break
-        if changed:
-            # Re-emit the coverage stat so the header reflects the new count.
-            available_count = sum(
-                1 for _, item in self._all_items if getattr(item, "_rf_available", False)
-            )
-            try:
-                self.app.sub_title = f"{available_count}/{len(self._all_items)} consoles available"
-            except Exception:
-                pass
-
     # ------------------------------------------------------------------
     # Filter debounce (unchanged)
     # ------------------------------------------------------------------
@@ -215,7 +163,7 @@ class HomeScreen(Screen[None]):
             return
         if self._filter_timer is not None:
             self._filter_timer.stop()
-        query = event.value.lower()
+        query = event.value.strip().casefold()
         self._filter_timer = self.set_timer(
             self._FILTER_DEBOUNCE_MS / 1000.0,
             lambda: self._apply_filter(query),
@@ -223,8 +171,8 @@ class HomeScreen(Screen[None]):
 
     def _apply_filter(self, query: str) -> None:
         for _entry, item in self._all_items:
-            display_name = getattr(item, "_rf_display_name", "").lower()
-            shortname = getattr(item, "_rf_shortname", "").lower()
+            display_name = getattr(item, "_rf_display_name", "").casefold()
+            shortname = getattr(item, "_rf_shortname", "").casefold()
             matches = (not query) or (query in display_name) or (query in shortname)
             item.display = matches
 
@@ -243,7 +191,12 @@ class HomeScreen(Screen[None]):
             state = load_state(shortname, self.app.config.roms_root)
         except Exception:
             return {"acquired": 0, "unverified": 0, "failed": 0, "pending": 0}
-        counts: dict[str, int] = {"acquired": 0, "unverified": 0, "failed": 0, "pending": 0}
+        counts: dict[str, int] = {
+            "acquired": 0,
+            "unverified": 0,
+            "failed": 0,
+            "pending": 0,
+        }
         for game in state.games:
             status = getattr(game, "status", "pending")
             counts[status] = counts.get(status, 0) + 1
@@ -310,11 +263,6 @@ class HomeScreen(Screen[None]):
     # Message handlers - run on UI thread
     # ------------------------------------------------------------------
     def on_wantlist_ready(self, message: WantlistReady) -> None:
-        # Empty results downgrade the sidebar row to grey (in-session), so the
-        # user knows this console is effectively unavailable. We still render
-        # the (empty) preview so the user sees the outcome. Non-empty results
-        # guarantee the row is green.
-        self._update_row_availability(message.console, bool(message.titles))
         # Only accept if the highlighted console still matches, to avoid
         # stale worker results clobbering a newer highlight.
         if self._last_highlighted and message.console != self._last_highlighted:
@@ -331,9 +279,6 @@ class HomeScreen(Screen[None]):
         )
 
     def on_wantlist_failed(self, message: WantlistFailed) -> None:
-        # Fetch failure also downgrades the row so the user sees the state
-        # without needing to re-scroll.
-        self._update_row_availability(message.console, False)
         if self._last_highlighted and message.console != self._last_highlighted:
             return
         try:
@@ -403,7 +348,19 @@ class HomeScreen(Screen[None]):
 
     def action_help(self) -> None:
         from retrofetch.tui.screens.help import HelpScreen
+
         self.app.push_screen(HelpScreen())
+
+    def action_open_settings(self) -> None:
+        from retrofetch.tui.screens.config_editor import ConfigEditorScreen
+
+        def _saved(saved: bool | None) -> None:
+            if saved:
+                self.app.show_toast("Settings saved and applied.", "info")
+
+        self.app.push_screen(
+            ConfigEditorScreen(config_path=self.app.config_path), _saved
+        )
 
     def action_open_wantlist(self) -> None:
         list_view = self.query_one("#console-list", ListView)
@@ -418,6 +375,7 @@ class HomeScreen(Screen[None]):
             return
         override = self.app.overrides.get(shortname)
         from retrofetch.tui.screens.wantlist import WantlistScreen
+
         self.app.push_screen(WantlistScreen(console_entry=entry, override=override))
 
     def action_open_download(self) -> None:
@@ -433,7 +391,10 @@ class HomeScreen(Screen[None]):
             return
         override = self.app.overrides.get(shortname)
         from retrofetch.tui.screens.download_confirm import DownloadConfirmScreen
-        self.app.push_screen(DownloadConfirmScreen(console_entry=entry, override=override))
+
+        self.app.push_screen(
+            DownloadConfirmScreen(console_entry=entry, override=override)
+        )
 
     def action_open_bios(self) -> None:
         list_view = self.query_one("#console-list", ListView)
@@ -448,6 +409,7 @@ class HomeScreen(Screen[None]):
         if entry is None:
             return
         from retrofetch.tui.screens.bios import BiosScreen
+
         self.app.push_screen(BiosScreen(console_entry=entry))
 
     def action_open_state(self) -> None:
@@ -462,10 +424,10 @@ class HomeScreen(Screen[None]):
         if entry is None:
             return
         from retrofetch.tui.screens.state import StateScreen
+
         self.app.push_screen(StateScreen(console_entry=entry))
 
     def action_open_coverage(self) -> None:
         from retrofetch.tui.screens.coverage import CoverageScreen
+
         self.app.push_screen(CoverageScreen())
-
-
