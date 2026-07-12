@@ -13,6 +13,7 @@ from retrofetch.sanitize import make_long_path, sanitize_filename
 _log = logging.getLogger(__name__)
 
 _DISC_PATTERN = re.compile(r"\s*\((?:Disc|Disk)\s*\d+[^)]*\)", re.IGNORECASE)
+_REGION_SUFFIX = re.compile(r"(\s+\([^)]+\))$")
 
 
 class PlaceResult:
@@ -37,6 +38,12 @@ def _file_sha1(path: Path) -> str:
     return h.hexdigest()
 
 
+def safe_target_path(target_dir: Path, canonical_name: str) -> Path:
+    target_dir = Path(target_dir)
+    safe_name = sanitize_filename(canonical_name, str(target_dir))
+    return target_dir / safe_name
+
+
 def place_file(
     extracted: Path,
     target_dir: Path,
@@ -44,8 +51,8 @@ def place_file(
 ) -> PlaceResult:
     target_dir = Path(target_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
-    safe_name = sanitize_filename(canonical_name)
-    final = target_dir / safe_name
+    final = safe_target_path(target_dir, canonical_name)
+    safe_name = final.name
     final_long = make_long_path(final)
     if final.exists():
         existing_sha = _file_sha1(final)
@@ -58,9 +65,14 @@ def place_file(
             return PlaceResult(status="already_present", final_path=final)
         stem = final.stem
         ext = final.suffix
+        region = ""
+        match = _REGION_SUFFIX.search(stem)
+        if match:
+            region = match.group(1)
+            stem = stem[: match.start()]
         suffix_num = 2
         while True:
-            candidate = target_dir / f"{stem} ({suffix_num}){ext}"
+            candidate = safe_target_path(target_dir, f"{stem} ({suffix_num}){region}{ext}")
             if not candidate.exists():
                 final = candidate
                 final_long = make_long_path(final)

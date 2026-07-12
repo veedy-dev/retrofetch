@@ -1,1 +1,0 @@
-T12 msys2-refusal: OK (exit 2, msg='retrofetch tui requires an interactive terminal\n')

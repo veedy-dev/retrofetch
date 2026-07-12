@@ -9,10 +9,12 @@ import typer
 from rich.console import Console
 
 from retrofetch import __version__
+from retrofetch import _resources
 from retrofetch.config import (
     Config,
     ConfigError,
     _yaml_rt,
+    default_library_root,
     load_config,
     load_overrides,
 )
@@ -34,9 +36,11 @@ from retrofetch.events import (
 )
 from retrofetch.logging_setup import setup_logging
 from retrofetch.orchestrator import run_console
-from retrofetch.ranker import get_wantlist
+from retrofetch.ranker import get_wantlist, resolve_download_set
 from retrofetch.report import generate_coverage_report
 from retrofetch.signals import install_signal_handlers
+from retrofetch.sources import SourceUnavailable
+from retrofetch.sources.bios import BiosSource
 from retrofetch.state import load_state, save_state, update_game
 from retrofetch.ui import console
 
@@ -92,16 +96,6 @@ def _resolve_config(config_path: Path) -> Config:
         raise typer.Exit(2) from exc
 
 
-def _try_load_config(config_path: Path) -> Config | None:
-    """Return Config if loadable, else None (caller decides wizard)."""
-    if not config_path.exists():
-        return None
-    try:
-        return load_config(config_path)
-    except ConfigError:
-        return None
-
-
 def _resolve_console_entry(
     consoles: dict[str, Any], shortname: str
 ) -> dict[str, Any] | None:
@@ -115,9 +109,7 @@ def _resolve_console_entry(
 def _verbose_formatter(cons: Console) -> Callable[[ProgressEvent], None]:
     def _on(event: ProgressEvent) -> None:
         if isinstance(event, GameStartEvent):
-            cons.print(
-                f"[cyan]-> Starting {event.game} from {event.source}[/cyan]"
-            )
+            cons.print(f"[cyan]-> Starting {event.game} from {event.source}[/cyan]")
         elif isinstance(event, GameDoneEvent):
             sha1_str = f"{event.sha1[:8]}..." if event.sha1 else "sha1=?"
             cons.print(
@@ -127,9 +119,7 @@ def _verbose_formatter(cons: Console) -> Callable[[ProgressEvent], None]:
         elif isinstance(event, GameFailedEvent):
             cons.print(f"[red][X] Failed {event.game}: {event.reason}[/red]")
         elif isinstance(event, SourceDeadEvent):
-            cons.print(
-                f"[yellow]! Source {event.source} dead: {event.reason}[/yellow]"
-            )
+            cons.print(f"[yellow]! Source {event.source} dead: {event.reason}[/yellow]")
         elif isinstance(event, RateLimitEvent):
             cons.print(
                 f"[yellow]! Rate-limited on {event.source}, "
@@ -145,14 +135,15 @@ def _verbose_formatter(cons: Console) -> Callable[[ProgressEvent], None]:
                 f"[dim]... Loading DAT for {event.console}: {event.dat_name}[/dim]"
             )
         elif isinstance(event, DatLoadDoneEvent):
-            cons.print(
-                f"[dim]... DAT loaded for {event.console}: "
-                f"{event.games_loaded} games[/dim]"
-            )
+            if event.detail:
+                cons.print(f"[yellow]... {event.detail}[/yellow]")
+            else:
+                cons.print(
+                    f"[dim]... DAT loaded for {event.console}: "
+                    f"{event.games_loaded} games[/dim]"
+                )
         elif isinstance(event, ExtractionStartEvent):
-            cons.print(
-                f"[dim]... Extracting {event.filename} ({event.format})[/dim]"
-            )
+            cons.print(f"[dim]... Extracting {event.filename} ({event.format})[/dim]")
         elif isinstance(event, ExtractionDoneEvent):
             cons.print(f"[dim]... Extracted to {event.extracted_to}[/dim]")
 
@@ -166,9 +157,9 @@ def init(
     """Create config.yml, overrides.yml, .env.example, and bootstrap dats/ layout."""
 
     targets = {
-        "config.yml": _REPO_DIR / "config.yml.example",
-        "overrides.yml": _REPO_DIR / "overrides.yml.example",
-        ".env.example": _REPO_DIR / ".env.example",
+        "config.yml": _resources.find_data_file("config.yml.example"),
+        "overrides.yml": _resources.find_data_file("overrides.yml.example"),
+        ".env.example": _resources.find_data_file(".env.example"),
     }
     for dest_name, example_path in targets.items():
         dest = Path.cwd() / dest_name
@@ -187,7 +178,7 @@ def init(
     bootstrap_dats(dats_dir)
     console.print(f"[green]ensured[/green] {dats_dir}/ structure")
 
-    consoles_src = _REPO_DIR / "consoles.yml"
+    consoles_src = _resources.find_data_file("consoles.yml")
     consoles_dst = Path.cwd() / "consoles.yml"
     if consoles_src.exists() and not consoles_dst.exists():
         shutil.copyfile(consoles_src, consoles_dst)
@@ -205,10 +196,10 @@ def download(
         None, "--limit", help="Max games per console (overrides config.default_limit)"
     ),
     dry_run: bool = typer.Option(
-        False, "--dry-run", help="Print wantlist without downloading"
+        False, "--dry-run", help="Print game list without downloading"
     ),
     no_torrent: bool = typer.Option(
-        False, "--no-torrent", help="Skip torrent-based sources"
+        False, "--no-torrent", help="Skip qBittorrent/torrent sources for this run"
     ),
     verbose: bool = typer.Option(
         False,
@@ -227,7 +218,7 @@ def download(
     setup_logging(config.log_file)
     consoles_yml_path = Path.cwd() / "consoles.yml"
     if not consoles_yml_path.exists():
-        consoles_yml_path = _REPO_DIR / "consoles.yml"
+        consoles_yml_path = _resources.find_data_file("consoles.yml")
     try:
         consoles_yml = _load_consoles(consoles_yml_path)
     except ConfigError as exc:
@@ -255,6 +246,7 @@ def download(
         bus = EventBus()
         bus.subscribe(_verbose_formatter(console))
 
+    exit_code = 0
     for entry in entries:
         short: str = str(entry.get("shortname", "?"))
         klass: str = str(entry.get("class", "?"))
@@ -272,15 +264,16 @@ def download(
         if per_limit is None:
             per_limit = config.default_limit
 
-        wantlist = get_wantlist(
+        ranked_titles = get_wantlist(
             console_entry=entry,
             overrides=override,
             config=config,
             limit=per_limit,
         )
+        wantlist = resolve_download_set(ranked_titles, override, per_limit)
 
         console.print(
-            f"[cyan]Console:[/cyan] {short} (Class {klass}) - wantlist: {len(wantlist)} games"
+            f"[cyan]Console:[/cyan] {short} (Class {klass}) - selected: {len(wantlist)} games"
         )
         for title in wantlist[:5]:
             console.print(f"  - {title}")
@@ -301,14 +294,18 @@ def download(
         if not dry_run:
             if report.error:
                 console.print(f"[red]{short} error:[/red] {report.error}")
+                exit_code = 1
             else:
                 console.print(
                     f"[green]{short}:[/green] attempted={report.attempted} "
                     f"acquired={report.acquired} failed={report.failed} "
-                    f"unverified={report.unverified}"
+                    f"unverified={report.unverified} cancelled={report.cancelled}"
                 )
+                if report.failed:
+                    exit_code = 1
         if coordinator.stop_event.is_set():
             console.print("[yellow]stopped by signal; rerun to resume[/yellow]")
+            exit_code = 130
             break
 
     if not dry_run:
@@ -316,6 +313,50 @@ def download(
             consoles_yml_path, config.roms_root, Path.cwd() / "coverage.md"
         )
         console.print(f"[green]Report:[/green] {coverage}")
+        if exit_code:
+            raise typer.Exit(exit_code)
+
+
+@app.command()
+def bios(
+    console_name: str = typer.Option(
+        ..., "--console", help="Console shortname (e.g. psx, ps2, saturn)"
+    ),
+    limit: Optional[int] = typer.Option(
+        None,
+        "--limit",
+        help="Limit BIOS files for a small probe run; default downloads all listed files.",
+    ),
+    config_path: Path = typer.Option(Path("config.yml"), "--config"),
+) -> None:
+    """Opt-in BIOS download to BIOS/{console}."""
+
+    config = _resolve_config(config_path)
+    setup_logging(config.log_file)
+    source = BiosSource()
+    try:
+        catalog = source.list_files(console_name)
+    except SourceUnavailable as exc:
+        console.print(f"[red]BIOS unavailable for {console_name}:[/red] {exc}")
+        raise typer.Exit(2) from exc
+    files = catalog.files[:limit] if limit is not None and limit > 0 else catalog.files
+    if not files:
+        console.print(f"[yellow]No BIOS files found for {catalog.console}[/yellow]")
+        raise typer.Exit(1)
+    target = Path(config.bios_root) / catalog.console
+    console.print(
+        f"[cyan]BIOS:[/cyan] {catalog.console} - {len(files)} file(s) -> {target}"
+    )
+    for bios_file in files[:10]:
+        console.print(f"  - {bios_file.filename} [{bios_file.source}]")
+    if len(files) > 10:
+        console.print(f"  ... and {len(files) - 10} more")
+    try:
+        paths = source.download(catalog.console, config.bios_root, limit=limit)
+    except SourceUnavailable as exc:
+        console.print(f"[red]BIOS download failed:[/red] {exc}")
+        raise typer.Exit(1) from exc
+    console.print(f"[green]BIOS complete:[/green] {len(paths)} file(s) in {target}")
 
 
 @app.command()
@@ -331,11 +372,11 @@ def verify(
     setup_logging(config.log_file)
     consoles_yml_path = Path.cwd() / "consoles.yml"
     if not consoles_yml_path.exists():
-        consoles_yml_path = _REPO_DIR / "consoles.yml"
+        consoles_yml_path = _resources.find_data_file("consoles.yml")
     consoles_yml = _load_consoles(consoles_yml_path)
     dats_dir = Path.cwd() / "dats"
     if not dats_dir.exists():
-        dats_dir = _REPO_DIR / "dats"
+        dats_dir = _resources.find_data_file("dats")
 
     verify_entries: list[dict[str, Any]] = list(consoles_yml.get("consoles", []) or [])
     if console_name:
@@ -399,7 +440,7 @@ def report(
     config = _resolve_config(config_path)
     consoles_yml_path = Path.cwd() / "consoles.yml"
     if not consoles_yml_path.exists():
-        consoles_yml_path = _REPO_DIR / "consoles.yml"
+        consoles_yml_path = _resources.find_data_file("consoles.yml")
     path = generate_coverage_report(consoles_yml_path, config.roms_root, output)
     console.print(f"[green]Report written:[/green] {path}")
 
@@ -428,9 +469,10 @@ def tui(
         )
         raise typer.Exit(2)
 
+    config_path = config_path.expanduser().resolve()
     consoles_yml_path = Path.cwd() / "consoles.yml"
     if not consoles_yml_path.exists():
-        consoles_yml_path = _REPO_DIR / "consoles.yml"
+        consoles_yml_path = _resources.find_data_file("consoles.yml")
     if not consoles_yml_path.exists():
         console.print(
             f"[red]consoles.yml not found at {consoles_yml_path} or repo dir[/red]"
@@ -441,24 +483,35 @@ def tui(
     except ConfigError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(2) from exc
+    overrides_path = config_path.with_name("overrides.yml")
     try:
-        overrides = load_overrides(Path("overrides.yml"))
+        overrides = load_overrides(overrides_path)
     except ConfigError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(2) from exc
 
-    existing = _try_load_config(config_path)
-    first_run = existing is None
+    first_run = not config_path.exists()
     if first_run:
-        minimal_config = Config(roms_root=Path.cwd() / "ROMs")
+        library_root = default_library_root()
+        minimal_config = Config(
+            roms_root=library_root,
+            bios_root=library_root.parent / "BIOS",
+            cache_dir=config_path.parent / "cache",
+            log_file=config_path.parent / "retrofetch.log",
+        )
     else:
-        minimal_config = existing
+        try:
+            minimal_config = load_config(config_path)
+        except ConfigError as exc:
+            console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(2) from exc
 
     from retrofetch.tui.app import RetrofetchApp
 
     tui_app = RetrofetchApp(
         config=minimal_config,
         config_path=config_path,
+        overrides_path=overrides_path,
         consoles_yml=consoles_yml,
         overrides=overrides,
         first_run=first_run,

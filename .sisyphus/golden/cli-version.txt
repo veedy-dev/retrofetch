@@ -1,5 +1,0 @@
-# retrofetch golden baseline: retrofetch --version
-# captured: 2026-04-17T23:38:38.3727646Z
-# commit: d490d30
-# ---
-retrofetch 0.1.0

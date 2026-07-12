@@ -1,7 +1,0 @@
-status=PASS
-returncode=0
---- stdout ---
-wave5 sample: OK
-
---- stderr ---
-

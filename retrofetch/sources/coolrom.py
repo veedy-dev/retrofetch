@@ -23,7 +23,7 @@ _BASE_URL = "https://coolrom.com.au"
 
 
 class CoolROMSource:
-    """Wantlist-only adapter.
+    """Catalog-only adapter.
 
     CoolROM can intermittently return Cloudflare challenge pages. When that
     happens, list_popular records a failure and returns an empty result so the
@@ -72,7 +72,7 @@ class CoolROMSource:
     def _extract_titles(self, body: str) -> list[str]:
         slug = re.escape(str(self.slug or ""))
         section_match = re.search(
-            rf'Top 25 .*? ROMs</b></font></center><br>(.*?)(?:</font>\s*</td></tr></table>|<br>\s*</font>\s*</td></tr></table>)',
+            r'Top 25 .*? ROMs</b></font></center><br>(.*?)(?:</font>\s*</td></tr></table>|<br>\s*</font>\s*</td></tr></table>)',
             body,
             re.IGNORECASE | re.DOTALL,
         )
@@ -119,5 +119,5 @@ class CoolROMSource:
         event_bus: EventBus | None = None,
     ) -> Path:
         raise SourceUnavailable(
-            "coolrom download not implemented in wantlist-only adapter"
+            "coolrom download not implemented in catalog-only adapter"
         )

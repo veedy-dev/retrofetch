@@ -24,6 +24,7 @@ Shutdown decision tree (T23 - single Textual-native path):
   per-iteration (see DownloadWorker). After cancellation is observed (or
   after a 3s best-effort wait), we call ``self.exit(0)``.
 """
+
 from __future__ import annotations
 
 import asyncio as _asyncio
@@ -32,11 +33,20 @@ from typing import Any
 
 from textual.app import App  # pyright: ignore[reportMissingImports]
 
-from retrofetch.config import Config, ConfigError, ConsoleOverride, load_config, load_overrides
+from retrofetch.config import (
+    Config,
+    ConfigError,
+    ConsoleOverride,
+    load_config,
+    load_overrides,
+)
+from retrofetch.wantlist_cache import invalidate_all
 
 
 class RetrofetchApp(App[int]):
     CSS_PATH = "styles.tcss"
+    TITLE = "Retrofetch"
+    SUB_TITLE = "retro library manager"
 
     BINDINGS = [
         ("q", "quit", "Quit"),
@@ -50,11 +60,13 @@ class RetrofetchApp(App[int]):
         config_path: Path,
         consoles_yml: dict[str, Any],
         overrides: dict[str, ConsoleOverride],
+        overrides_path: Path | None = None,
         first_run: bool = False,
     ) -> None:
         super().__init__()
         self.config = config
         self.config_path = config_path
+        self.overrides_path = overrides_path or config_path.with_name("overrides.yml")
         self.consoles_yml = consoles_yml
         self.overrides = overrides
         self._first_run = first_run
@@ -73,19 +85,31 @@ class RetrofetchApp(App[int]):
                     self.exit(2)
                     return
                 try:
-                    self.overrides = load_overrides(Path("overrides.yml"))
+                    self.overrides = load_overrides(self.overrides_path)
                 except ConfigError:
                     self.overrides = {}
-                from retrofetch.tui.screens.home import HomeScreen
-                self.push_screen(HomeScreen())
+                self._open_fresh_home()
 
-            self.push_screen(SetupScreen(), _on_setup_done)
+            self.push_screen(
+                SetupScreen(config_path=self.config_path, defaults=self.config),
+                _on_setup_done,
+            )
         else:
-            from retrofetch.tui.screens.home import HomeScreen
-            self.push_screen(HomeScreen())
+            self._open_fresh_home()
+
+    def _open_fresh_home(self) -> None:
+        invalidate_all(self.config.cache_dir)
+        self.overrides = {
+            shortname: override.model_copy(update={"include": [], "exclude": []})
+            for shortname, override in self.overrides.items()
+        }
+        from retrofetch.tui.screens.home import HomeScreen
+
+        self.push_screen(HomeScreen())
 
     def action_help(self) -> None:
         from retrofetch.tui.screens.help import HelpScreen
+
         self.push_screen(HelpScreen())
 
     async def action_quit(self) -> None:
@@ -102,10 +126,24 @@ class RetrofetchApp(App[int]):
         except Exception:
             # Textual API compat: private _workers attribute may differ between releases
             workers = []
+        if any(
+            getattr(worker, "group", None) == "torrent-install"
+            and not worker.is_finished
+            for worker in workers
+        ):
+            self.show_toast(
+                "qBittorrent setup is still running; quit after it finishes.",
+                "warning",
+            )
+            return
         download_workers = [
             w for w in workers if getattr(w, "group", None) == "download"
         ]
         if download_workers:
+            for screen in tuple(self.screen_stack):
+                stop_event = getattr(screen, "_stop_event", None)
+                if stop_event is not None:
+                    stop_event.set()
             try:
                 self.workers.cancel_group(self, "download")
             except TypeError:
@@ -117,11 +155,18 @@ class RetrofetchApp(App[int]):
             except Exception:
                 # shutdown race: worker group may already be cancelled by Textual
                 pass
-            for _ in range(30):
+            still_running = download_workers
+            for _ in range(80):
                 await _asyncio.sleep(0.1)
                 still_running = [w for w in download_workers if not w.is_finished]
                 if not still_running:
                     break
+            if still_running:
+                self.show_toast(
+                    "Downloads are still stopping safely; press Quit again after cleanup.",
+                    "warning",
+                )
+                return
         self.exit(0)
 
     def show_toast(self, message: str, severity: str = "info") -> None:
@@ -130,6 +175,7 @@ class RetrofetchApp(App[int]):
         Called from any screen/handler. Severity: 'info' | 'warning' | 'error'.
         """
         from retrofetch.tui.widgets.toast import Toast, Severity
+
         sev: Severity = severity if severity in ("info", "warning", "error") else "info"  # type: ignore[assignment]
         try:
             toast = Toast(message, severity=sev)

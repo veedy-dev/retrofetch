@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "retrofetch"
-version = "0.1.0"
-description = "Automated ROM collection filler for retro console emulation"
+version = "2.0.0"
+description = "Keyboard-first retro game library browser, downloader, and verifier"
 requires-python = ">=3.10,<3.14"
 license = { text = "MIT" }
 readme = "README.md"
@@ -25,9 +25,65 @@ dependencies = [
     "textual>=8.0.0,<9.0.0",
     "ruamel.yaml>=0.18",
 ]
+authors = [{ name = "veedy-dev", email = "veedy.dev@gmail.com" }]
+keywords = ["roms", "emulation", "retro", "archive", "tui", "internetarchive", "no-intro", "redump"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console :: Curses",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Archiving :: Mirroring",
+    "Topic :: Games/Entertainment",
+]
 
 [project.scripts]
 retrofetch = "retrofetch.cli:app"
 
+[project.urls]
+Homepage = "https://github.com/veedy-dev/retrofetch"
+Repository = "https://github.com/veedy-dev/retrofetch"
+Issues = "https://github.com/veedy-dev/retrofetch/issues"
+Changelog = "https://github.com/veedy-dev/retrofetch/releases"
+
+[project.optional-dependencies]
+build = ["pyinstaller==6.21.0"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["retrofetch"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/retrofetch",
+    "/dats",
+    "/.env.example",
+    "/config.yml.example",
+    "/consoles.yml",
+    "/launch.sh",
+    "/LICENSE",
+    "/overrides.yml.example",
+    "/pyproject.toml",
+    "/README.md",
+    "/packaging",
+]
+
+[tool.hatch.build.targets.wheel.force-include]
+"consoles.yml" = "retrofetch/consoles.yml"
+"dats" = "retrofetch/dats"
+"config.yml.example" = "retrofetch/config.yml.example"
+"overrides.yml.example" = "retrofetch/overrides.yml.example"
+".env.example" = "retrofetch/.env.example"
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.13"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

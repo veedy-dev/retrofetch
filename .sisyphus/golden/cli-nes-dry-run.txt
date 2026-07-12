@@ -1,8 +1,0 @@
-# retrofetch golden baseline: retrofetch download --console nes --limit 3 --dry-run
-# captured: 2026-04-17T23:38:38.3727646Z
-# commit: d490d30
-# ---
-Console: nes (Class A) - wantlist: 3 games
-  - Chrono Trigger
-  - Super Mario 5000
-  - PolyGirl&#8217;s Adventure 3: The Final chapter

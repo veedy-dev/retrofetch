@@ -1,4 +1,5 @@
 """Help modal — global bindings and per-screen hints."""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
@@ -8,7 +9,7 @@ from textual.screen import ModalScreen  # pyright: ignore[reportMissingImports]
 from textual.widgets import Label, Static  # pyright: ignore[reportMissingImports]
 
 
-HELP_TEXT = """retrofetch TUI - keyboard reference
+HELP_TEXT = """Retrofetch TUI - keyboard reference
 
 Global
   q          quit
@@ -20,18 +21,45 @@ Home screen
   j / down   next console
   k / up     prev console
   enter      select console
-  w          wantlist curation
+  g          select games
   d          download screen
+  b          BIOS download screen
   s          state browser
   C          coverage viewer
+  ,          settings
+  Ctrl+R     retry fetch (invalidate cache + re-fetch)
+  [          previous page in preview
+  ]          next page in preview
+
+Sidebar color legend
+  green      console has a ranking provider (you can browse games)
+  grey       no provider for this console - skipped or unsupported
 
 Editors
   Ctrl+S     save
   Esc        cancel
 
-Download screen
+Download confirmation
   Enter      start download
-  c          cancel in-flight download
+  x / Delete remove highlighted game from this download
+  c / Esc    back without starting
+
+Download progress
+  c / Esc    stop/cancel (torrent pieces remain resumable)
+
+Torrent setup (shown only when an exact torrent attempt needs it)
+  Enter      run highlighted setup option
+  Esc        not now; continue to other providers
+
+Game selection
+  Space      include / uninclude selected title
+  x          exclude / unexclude selected title
+  /          search titles
+  Enter      apply for this session and return to Home
+  Esc        cancel without applying
+
+BIOS screen
+  Enter      download BIOS files to BIOS/<console>/
   Esc        back to Home
 
 Exit codes
@@ -42,8 +70,8 @@ Exit codes
 
 class HelpScreen(ModalScreen[None]):
     BINDINGS = [
-        Binding("escape", "dismiss", "Close", show=True),
-        Binding("question_mark", "dismiss", "Close", show=True, key_display="?"),
+        Binding("escape", "close", "Close", show=True),
+        Binding("question_mark", "close", "Close", show=True, key_display="?"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -52,5 +80,5 @@ class HelpScreen(ModalScreen[None]):
             yield Static(HELP_TEXT, id="help-body")
             yield Label("press esc or ? to close", id="help-footer")
 
-    def action_dismiss(self) -> None:
+    def action_close(self) -> None:
         self.dismiss(None)

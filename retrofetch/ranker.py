@@ -39,13 +39,19 @@ def get_wantlist(
     config: Config,
     limit: int,
 ) -> list[str]:
+    """Return the raw ranked browse catalog for a console.
+
+    Include/exclude overrides are intentionally not applied here. Use
+    resolve_download_set() for the final download queue.
+    """
+
     class_key = str(console_entry.get("class", ""))
     source_order = (config.ranking_sources_by_class or {}).get(class_key, [])
     region_priority = (
         overrides.region_priority if overrides and overrides.region_priority else None
     ) or config.region_priority
-    include = list(overrides.include if overrides else [])
-    exclude = [title.lower() for title in (overrides.exclude if overrides else [])]
+    source_entry = dict(console_entry)
+    source_entry["exclude_keywords"] = list(config.exclude_keywords)
 
     titles: list[str] = []
     for source_name in source_order:
@@ -54,7 +60,7 @@ def get_wantlist(
             log.warning("ranker: unknown source %s for class %s", source_name, class_key)
             continue
         try:
-            source = factory(console_entry)
+            source = factory(source_entry)
             fetched = source.list_popular(limit=limit, region_priority=region_priority)
         except Exception as exc:
             log.warning(
@@ -76,12 +82,54 @@ def get_wantlist(
 
     seen: set[str] = set()
     result: list[str] = []
-    for title in include + titles:
-        key = title.lower()
+    for title in titles:
+        key = title.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(title)
+        if limit > 0 and len(result) >= limit:
+            break
+    return result
+
+
+def resolve_download_set(
+    titles: list[str],
+    override: ConsoleOverride | None,
+    limit: int,
+) -> list[str]:
+    """Resolve the actual download queue from a raw catalog and overrides.
+
+    If include is non-empty, the queue is exactly include minus exclude with
+    include order preserved. Missing include titles are kept so user-authored
+    overrides can still be attempted by exact source lookup.
+    """
+
+    include = list(override.include if override else [])
+    exclude = {title.casefold() for title in (override.exclude if override else [])}
+    catalog_keys = {title.casefold() for title in titles}
+
+    if include:
+        result: list[str] = []
+        seen: set[str] = set()
+        for title in include:
+            key = title.casefold()
+            if key in seen or key in exclude:
+                continue
+            seen.add(key)
+            if key not in catalog_keys:
+                log.warning("ranker: included title not found in catalog: %s", title)
+            result.append(title)
+        return result
+
+    result = []
+    seen = set()
+    for title in titles:
+        key = title.casefold()
         if key in seen or key in exclude:
             continue
         seen.add(key)
         result.append(title)
-        if len(result) >= limit:
+        if limit > 0 and len(result) >= limit:
             break
     return result

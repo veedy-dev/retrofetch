@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Typed progress events and a small synchronous event bus.
 
 Example:
@@ -8,8 +6,10 @@ Example:
     >>> _handle = bus.subscribe(seen.append)
     >>> bus.publish(GameStartEvent(game="Mario", source="archive_org", console="nes"))
     >>> seen[0]
-    GameStartEvent(game='Mario', source='archive_org', console='nes')
+    GameStartEvent(game='Mario', source='archive_org', console='nes', item_id=None)
 """
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 import threading
@@ -26,6 +26,7 @@ class GameStartEvent(ProgressEvent):
     game: str
     source: str
     console: str
+    item_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,19 @@ class GameBytesEvent(ProgressEvent):
     game: str
     downloaded: int
     total: int
+    item_id: str | None = None
+    speed_bps: int | None = None
+    eta_seconds: int | None = None
+    seeds: int | None = None
+    peers: int | None = None
+
+
+@dataclass(frozen=True)
+class GameStageEvent(ProgressEvent):
+    game: str
+    stage: str
+    detail: str | None = None
+    item_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -41,12 +55,37 @@ class GameDoneEvent(ProgressEvent):
     source: str
     size: int
     sha1: str | None
+    item_id: str | None = None
+
+
+@dataclass(frozen=True)
+class GameUnverifiedEvent(ProgressEvent):
+    game: str
+    source: str
+    reason: str | None = None
+    item_id: str | None = None
 
 
 @dataclass(frozen=True)
 class GameFailedEvent(ProgressEvent):
     game: str
     reason: str
+    item_id: str | None = None
+
+
+@dataclass(frozen=True)
+class GameSkippedEvent(ProgressEvent):
+    game: str
+    reason: str
+    filename: str | None = None
+    item_id: str | None = None
+
+
+@dataclass(frozen=True)
+class GameCancelledEvent(ProgressEvent):
+    game: str
+    reason: str | None = None
+    item_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -77,6 +116,8 @@ class DatLoadStartEvent(ProgressEvent):
 class DatLoadDoneEvent(ProgressEvent):
     console: str
     games_loaded: int
+    status: str = "loaded"
+    detail: str | None = None
 
 
 @dataclass(frozen=True)
@@ -104,7 +145,9 @@ class EventBus:
         self._subscribers: list[tuple[int, Callable[[ProgressEvent], None]]] = []
         self._next_id = 0
 
-    def subscribe(self, callback: Callable[[ProgressEvent], None]) -> SubscriptionHandle:
+    def subscribe(
+        self, callback: Callable[[ProgressEvent], None]
+    ) -> SubscriptionHandle:
         with self._lock:
             sid = self._next_id
             self._next_id += 1

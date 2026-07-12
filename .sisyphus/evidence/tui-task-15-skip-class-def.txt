@@ -1,1 +1,0 @@
-﻿T15 skip-class-def: OK (class D/E/F items don't emit ConsoleSelected)

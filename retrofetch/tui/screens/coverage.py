@@ -10,6 +10,7 @@ from textual.screen import Screen  # pyright: ignore[reportMissingImports]
 from textual.widgets import DataTable, Footer, Header, Label  # pyright: ignore[reportMissingImports]
 from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
 
+from retrofetch import _resources
 from retrofetch.coverage import CoverageReport, compute_coverage
 from retrofetch.report import write_coverage_markdown
 from retrofetch.tui.messages import CoverageReady
@@ -42,8 +43,7 @@ class CoverageScreen(Screen[None]):
     def _kick_compute(self) -> None:
         consoles_yml_path = Path("consoles.yml")
         if not consoles_yml_path.exists():
-            from retrofetch.cli import _REPO_DIR
-            consoles_yml_path = _REPO_DIR / "consoles.yml"
+            consoles_yml_path = _resources.find_data_file("consoles.yml")
         roms_root = self.app.config.roms_root  # pyright: ignore[reportAttributeAccessIssue]
         report = compute_coverage(consoles_yml_path, roms_root)
         self.post_message(CoverageReady(report))

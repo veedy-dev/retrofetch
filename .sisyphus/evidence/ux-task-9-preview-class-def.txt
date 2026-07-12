@@ -1,5 +1,0 @@
-status=PASS
-skipped_console=adam
-skipped_class=E
-worker_calls=[]
-preview_state=IDLE

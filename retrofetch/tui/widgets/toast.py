@@ -3,8 +3,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from textual.widget import Widget  # pyright: ignore[reportMissingImports]
-from textual.widgets import Static  # pyright: ignore[reportMissingImports]
+from textual.widgets import Static
 
 
 Severity = Literal["info", "warning", "error"]

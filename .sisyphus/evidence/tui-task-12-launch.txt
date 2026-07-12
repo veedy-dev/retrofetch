@@ -1,1 +1,0 @@
-T12 launch: OK (return_code=0)

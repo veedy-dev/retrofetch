@@ -1,8 +1,0 @@
-# scenario: wave4-task23-exit130.py
-# rc: 0
-
---- stdout ---
-T23 exit130: OK (rc=2, platform=Windows)
-
---- stderr ---
-

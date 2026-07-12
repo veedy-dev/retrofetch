@@ -1,1 +1,0 @@
-T16 tcss: OK (sidebar width=32, class-tier rules loaded, no emoji)

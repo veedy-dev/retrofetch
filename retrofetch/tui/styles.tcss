@@ -25,13 +25,18 @@ Input#filter {
     margin: 0;
 }
 
-/* Class-tier colors. Stock Textual provides $success (green), $primary (blue/cyan),
- * $warning (yellow/orange). We use $text-muted for skipped classes.
+/* Simplified availability coloring. A console is "available" iff:
+ *   class is A/B/C AND it has at least one ranking-source slug populated
+ *   (romsfun_slug, romsretro_slug, archive_org_identifier, vimm_slug,
+ *   coolrom_slug).
+ * Anything else (class D/E/F, or Class A/B/C with no provider) is
+ * unavailable - shown dim + italic so the user knows not to expect games.
  */
 .class-a { color: $success; }
-.class-b { color: $primary; }
-.class-c { color: $warning; }
-.class-def { color: $text-muted; text-style: italic; }
+.class-b { color: $success; }
+.class-c { color: $success; }
+.class-available   { color: $success; }
+.class-unavailable { color: $text-muted; text-style: italic; }
 
 /* Status colors for downstream screens (state browser, download progress, etc.). */
 .status-acquired  { color: $success; }
@@ -52,4 +57,96 @@ Input#filter {
 }
 ListView > ListItem.--highlight {
     background: $accent 50%;
+}
+
+/* Download flow screens — Confirm, Progress, and Cancel modal.
+ * IDs and classes are referenced by:
+ *   download_confirm.py    — #dl-title, #summary-line, #dry-run-toggle, #wantlist-preview
+ *   download_progress.py   — #dl-title, #summary-line, #progress-overall, #progress-overall-bar,
+ *                            #progress-active, #progress-completed, .dl-active-row,
+ *                            .dl-status-row, .dl-section-title
+ *   cancel_confirm.py      — CancelConfirmScreen, #cancel-confirm-modal,
+ *                            #cancel-confirm-question, #cancel-confirm-actions
+ */
+
+#dl-title {
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+#summary-line {
+    color: $text;
+    margin-bottom: 1;
+}
+
+#dry-run-toggle {
+    margin-bottom: 1;
+}
+
+#wantlist-preview {
+    height: 1fr;
+    border: round $primary;
+    padding: 0 1;
+    background: $surface-darken-1;
+}
+
+#progress-overall {
+    height: auto;
+    padding: 0 1;
+    margin-bottom: 1;
+    border: round $accent;
+}
+
+#progress-overall-bar {
+    width: 1fr;
+}
+
+#progress-active {
+    height: auto;
+    max-height: 8;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+#progress-completed {
+    height: 1fr;
+    padding: 0 1;
+    border-top: solid $surface;
+    margin-top: 1;
+}
+
+.dl-active-row {
+    color: $warning;
+}
+
+.dl-status-row {
+    padding: 0 1;
+}
+
+.dl-section-title {
+    color: $text-muted;
+    text-style: bold;
+    margin-top: 1;
+}
+
+CancelConfirmScreen {
+    align: center middle;
+}
+
+CancelConfirmScreen #cancel-confirm-modal {
+    width: 50;
+    height: 9;
+    border: round $error;
+    background: $surface;
+    padding: 1 2;
+}
+
+#cancel-confirm-question {
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#cancel-confirm-actions {
+    text-align: center;
 }

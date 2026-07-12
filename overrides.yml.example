@@ -1,5 +1,6 @@
 consoles:
   nes:
+    # include: when non-empty, these titles are the EXACT download set (not prepended to the ranked list)
     include:
       - Chrono Trigger
     exclude:

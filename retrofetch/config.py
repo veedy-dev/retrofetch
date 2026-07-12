@@ -17,6 +17,7 @@ from __future__ import annotations
 import io
 import os
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, Field, ValidationError
 from ruamel.yaml import YAML, YAMLError
@@ -24,6 +25,7 @@ from ruamel.yaml import YAML, YAMLError
 _yaml_rt = YAML(typ="rt")
 _yaml_rt.preserve_quotes = True
 _yaml_rt.indent(mapping=2, sequence=4, offset=2)
+_yaml_rt.width = 4096
 
 
 class ConfigError(Exception):
@@ -32,9 +34,10 @@ class ConfigError(Exception):
 
 class Config(BaseModel):
     roms_root: Path
+    bios_root: Path = Path("BIOS")
     cache_dir: Path = Path(".cache")
     log_file: Path = Path("retrofetch.log")
-    default_limit: int = 75
+    default_limit: int = Field(default=75, ge=1, le=1000)
     dry_run: bool = False
     region_priority: list[str] = Field(
         default_factory=lambda: ["USA", "World", "Europe", "Japan"]
@@ -50,19 +53,23 @@ class Config(BaseModel):
         ]
     )
     max_game_size_gb: float | None = None
-    max_concurrent_downloads: int = 3
+    max_concurrent_downloads: int = Field(default=3, ge=1, le=16)
+    extract_archives: bool = False
+    torrent_mode: Literal["managed", "existing", "disabled"] = "managed"
+    qbittorrent_path: Path | None = None
+    qbittorrent_url: str = "http://127.0.0.1:8080"
     source_fallback_by_class: dict[str, list[str]] = Field(
         default_factory=lambda: {
-            "A": ["archive_org", "minerva_http", "minerva_torrent", "romsfun"],
-            "B": ["minerva_torrent", "minerva_http", "archive_org", "romsretro"],
-            "C": ["romsfun", "romsretro", "archive_org"],
+            "A": ["minerva_torrent", "archive_org", "romsfun", "romsretro"],
+            "B": ["minerva_torrent", "archive_org", "romsretro"],
+            "C": ["minerva_torrent", "archive_org", "romsfun", "romsretro"],
         }
     )
     ranking_sources_by_class: dict[str, list[str]] = Field(
         default_factory=lambda: {
-            "A": ["romsfun", "romsretro", "archive_org", "vimm", "coolrom"],
-            "B": ["archive_org", "romsretro", "vimm", "coolrom"],
-            "C": ["romsfun", "romsretro", "vimm"],
+            "A": ["minerva_http", "archive_org", "romsfun", "romsretro"],
+            "B": ["minerva_http", "archive_org", "romsretro"],
+            "C": ["minerva_http", "archive_org", "romsfun", "romsretro"],
         }
     )
 
@@ -72,6 +79,23 @@ class ConsoleOverride(BaseModel):
     exclude: list[str] = Field(default_factory=list)
     limit: int | None = None
     region_priority: list[str] | None = None
+
+
+def user_config_dir() -> Path:
+    """Writable per-user directory used by the standalone application."""
+    if os.name == "nt":
+        base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
+        return base / "Retrofetch"
+    base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    return base / "retrofetch"
+
+
+def user_config_path() -> Path:
+    return user_config_dir() / "config.yml"
+
+
+def default_library_root() -> Path:
+    return Path.home() / "Retrofetch" / "ROMs"
 
 
 def load_config(path: Path = Path("config.yml")) -> Config:

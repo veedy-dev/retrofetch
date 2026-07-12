@@ -1,2 +1,0 @@
-status_text=invalid default_limit: 'abc'
-status=PASS

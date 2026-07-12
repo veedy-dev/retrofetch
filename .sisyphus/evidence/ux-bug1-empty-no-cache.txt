@@ -1,3 +1,0 @@
-status=PASS
-empty_result_no_cache=OK
-nonempty_result_cached=OK
