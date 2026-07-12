@@ -10,12 +10,15 @@
 
 <p align="center">
   <a href="https://github.com/veedy-dev/retrofetch/releases">Download for Windows</a>
+  &middot; <a href="#linux-and-macos">Linux/macOS setup</a>
   &middot; <a href="#how-it-works">How it works</a>
-  &middot; <a href="#run-from-source">Develop and contribute</a>
+  &middot; <a href="#development-and-contributing">Develop and contribute</a>
 </p>
 
 <p align="center">
   <img alt="Windows" src="https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows11&logoColor=white">
+  <img alt="Linux" src="https://img.shields.io/badge/Linux-From%20source-FCC624?logo=linux&logoColor=black">
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-From%20source-000000?logo=apple&logoColor=white">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/License-MIT-2ea44f"></a>
 </p>
 
@@ -25,7 +28,9 @@ Retrofetch brings game listings from supported archives and online providers int
 
 ![Retrofetch library browser](docs/assets/screenshot-library.png)
 
-## Install on Windows
+## Install
+
+### Windows
 
 1. Open the [Releases page](https://github.com/veedy-dev/retrofetch/releases).
 2. Download **`RetrofetchSetup.exe`**.
@@ -36,7 +41,22 @@ No Python installation or terminal commands are needed.
 
 > Current builds are not code-signed yet, so Windows may show an **Unknown publisher** warning. Only download Retrofetch from this repository.
 
-Prefer a portable app? Download **`Retrofetch.exe`** from the same Releases page and double-click it. If no release is available yet, use the source instructions below.
+Prefer a portable app? Download **`Retrofetch.exe`** from the same Releases page and double-click it.
+
+### Linux and macOS
+
+There is no packaged app for Linux or macOS yet. Install Git and Python 3.10 or newer, then run:
+
+```bash
+git clone https://github.com/veedy-dev/retrofetch.git
+cd retrofetch
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -e .
+retrofetch tui
+```
+
+The guided qBittorrent setup is currently Windows-only, so some torrent-backed downloads require Windows for now.
 
 ## How it works
 
@@ -47,7 +67,7 @@ Prefer a portable app? Download **`Retrofetch.exe`** from the same Releases page
 
 Retrofetch keeps active downloads and completed history when you close and reopen it. If a provider needs qBittorrent, the app explains what is needed and guides you through setup.
 
-## What you get
+## Features
 
 - Game listings from multiple supported providers.
 - Search and selection without opening several websites.
@@ -74,41 +94,26 @@ Retrofetch keeps active downloads and completed history when you close and reope
 
 The available controls are always shown at the bottom of the app.
 
-## Good to know
+## Notes
 
 - Some games may disappear when a provider removes a file or becomes unavailable.
 - Torrent speed depends on the people sharing that file, not only your internet speed.
 - Retrofetch resets game selections when reopened, but keeps active and completed downloads.
 - Files are marked verified only when matching verification data is available.
 
-## Run from source
+## Development and contributing
 
-Requires Python 3.10 or newer.
+Feature requests, bug reports, and pull requests are welcome. [Open an issue](https://github.com/veedy-dev/retrofetch/issues) to share an idea or report a problem.
 
-### Windows PowerShell
-
-```powershell
-git clone https://github.com/veedy-dev/retrofetch.git
-cd retrofetch
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e .
-.\.venv\Scripts\retrofetch.exe tui
-```
-
-### Linux or macOS
+To work on Retrofetch locally:
 
 ```bash
 git clone https://github.com/veedy-dev/retrofetch.git
 cd retrofetch
-python3 -m venv .venv
-. .venv/bin/activate
-pip install -e .
-retrofetch tui
+python -m venv .venv
 ```
 
-## Contributing
-
-Install the development tools and run the checks before opening a pull request:
+Activate the environment with `.\.venv\Scripts\Activate.ps1` on Windows or `. .venv/bin/activate` on Linux and macOS, then run:
 
 ```bash
 python -m pip install -e ".[build]" pytest ruff pyright
