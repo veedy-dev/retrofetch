@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "retrofetch"
-version = "2.0.0"
+version = "0.1.0"
 description = "Keyboard-first retro game library browser, downloader, and verifier"
 requires-python = ">=3.10,<3.14"
 license = { text = "MIT" }
@@ -28,7 +28,7 @@ dependencies = [
 authors = [{ name = "veedy-dev", email = "veedy.dev@gmail.com" }]
 keywords = ["roms", "emulation", "retro", "archive", "tui", "internetarchive", "no-intro", "redump"]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 3 - Alpha",
     "Environment :: Console :: Curses",
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import os
 from dataclasses import replace
 from pathlib import Path
 from urllib.parse import parse_qs
@@ -22,6 +23,17 @@ VALID_IDENTITY = qb.WindowsExecutableIdentity(
     product_version="v5.2.3",
     signature_status="NotSigned",
 )
+
+
+def _test_executable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    name = "qbittorrent.exe" if os.name == "nt" else "qbittorrent"
+    executable = tmp_path / name
+    executable.touch()
+    if os.name == "nt":
+        monkeypatch.setattr(qb, "_windows_executable_identity", lambda _: VALID_IDENTITY)
+    else:
+        executable.chmod(0o700)
+    return executable
 
 
 def _metadata(*, path: str = "PSP/Game.zip") -> dict[str, object]:
@@ -284,7 +296,7 @@ def test_metadata_fetch_and_add_share_qbittorrents_decoded_cache_key(
 
 
 def test_managed_paths_profile_and_commands_are_pinned(tmp_path: Path) -> None:
-    paths = qb.windows_managed_paths(tmp_path)
+    paths = qb.managed_paths(tmp_path / "Retrofetch", platform_name="win32")
     qb.prepare_managed_profile(paths, api_key=API_KEY, port=9191)
     config = paths.config.read_text(encoding="utf-8")
     assert paths.config == (
@@ -311,6 +323,9 @@ def test_managed_paths_profile_and_commands_are_pinned(tmp_path: Path) -> None:
     assert install[:4] == ("winget", "install", "--id", qb.QBITTORRENT_PACKAGE_ID)
     assert "--silent" in install
     assert "--accept-package-agreements" in install
+
+    posix = qb.managed_paths(tmp_path / "retrofetch", platform_name="linux")
+    assert posix.config.name == "qBittorrent.conf"
 
 
 def test_webui_basic_hash_matches_qbittorrent_pbkdf2(
@@ -397,13 +412,43 @@ def test_discovery_never_uses_path(
     arbitrary = tmp_path / "path" / "qbittorrent.exe"
     arbitrary.parent.mkdir()
     arbitrary.touch()
-    assert qb.discover_qbittorrent(environ={"PATH": str(arbitrary.parent)}) is None
+    assert (
+        qb.discover_qbittorrent(
+            environ={"PATH": str(arbitrary.parent)}, platform_name="win32"
+        )
+        is None
+    )
 
     known = tmp_path / "qBittorrent" / "qbittorrent.exe"
     known.parent.mkdir()
     known.touch()
-    assert qb.discover_qbittorrent(environ={"ProgramFiles": str(tmp_path)}) == known.resolve()
-    assert qb.discover_qbittorrent(known) == known.resolve()
+    assert qb.discover_qbittorrent(
+        environ={"ProgramFiles": str(tmp_path)}, platform_name="win32"
+    ) == known.resolve()
+    assert qb.discover_qbittorrent(known, platform_name="win32") == known.resolve()
+
+
+@pytest.mark.parametrize(
+    ("platform_name", "parts"),
+    [
+        ("linux", (".local", "bin", "qbittorrent")),
+        (
+            "darwin",
+            ("Applications", "qBittorrent.app", "Contents", "MacOS", "qbittorrent"),
+        ),
+    ],
+)
+def test_posix_discovery_uses_known_user_install_locations(
+    tmp_path: Path, platform_name: str, parts: tuple[str, ...]
+) -> None:
+    executable = tmp_path.joinpath(*parts)
+    executable.parent.mkdir(parents=True)
+    executable.touch()
+    executable.chmod(0o700)
+
+    assert qb.discover_qbittorrent(
+        platform_name=platform_name, home=tmp_path
+    ) == executable.resolve()
 
 
 def test_exclusive_lock_rejects_second_owner(tmp_path: Path) -> None:
@@ -422,11 +467,9 @@ def test_exclusive_lock_rejects_second_owner(tmp_path: Path) -> None:
 def test_start_and_shutdown_managed_process(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    executable = tmp_path / "qbittorrent.exe"
-    executable.touch()
-    paths = qb.windows_managed_paths(tmp_path)
+    executable = _test_executable(tmp_path, monkeypatch)
+    paths = qb.managed_paths(tmp_path)
     commands: list[tuple[str, ...]] = []
-    monkeypatch.setattr(qb, "_windows_executable_identity", lambda _: VALID_IDENTITY)
 
     class FakeProcess:
         def __init__(self, command: tuple[str, ...], **_: object) -> None:
@@ -473,10 +516,8 @@ def test_start_and_shutdown_managed_process(
 def test_managed_command_requires_explicit_legal_acceptance(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    executable = tmp_path / "qbittorrent.exe"
-    executable.touch()
-    paths = qb.windows_managed_paths(tmp_path)
-    monkeypatch.setattr(qb, "_windows_executable_identity", lambda _: VALID_IDENTITY)
+    executable = _test_executable(tmp_path, monkeypatch)
+    paths = qb.managed_paths(tmp_path)
     with pytest.raises(qb.QbittorrentSecurityError, match="legal notice"):
         qb.start_managed(
             executable,

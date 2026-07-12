@@ -9,6 +9,7 @@ import shutil
 import socket
 import stat
 import subprocess
+import sys
 import threading
 import time
 from dataclasses import dataclass
@@ -23,6 +24,7 @@ from retrofetch.events import EventBus, GameBytesEvent, GameStageEvent
 from retrofetch.qbittorrent import (
     QBITTORRENT_INSTALLER_SHA256,
     QBITTORRENT_INSTALLER_URL,
+    QBITTORRENT_LINUX_APPIMAGES,
     QBITTORRENT_PACKAGE_ID,
     QBITTORRENT_PUBLISHER,
     QBITTORRENT_VERSION,
@@ -34,8 +36,8 @@ from retrofetch.qbittorrent import (
     QbittorrentUnavailable,
     discover_qbittorrent,
     generate_api_key,
+    managed_paths,
     start_managed,
-    windows_managed_paths,
     winget_install_command,
     winget_show_command,
 )
@@ -107,6 +109,8 @@ def _validate_winget_show(output: str) -> None:
 
 def install_qbittorrent_winget() -> Path:
     """Validate then install the pinned WinGet package after TUI consent."""
+    if os.name != "nt":
+        raise SourceUnavailable("WinGet qBittorrent setup is only available on Windows")
     try:
         shown = _run_hidden(winget_show_command(), timeout=60)
     except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
@@ -141,7 +145,9 @@ def install_qbittorrent_winget() -> Path:
 
 def install_qbittorrent_official() -> Path:
     """Download the pinned official installer, verify it, and open its visible UI."""
-    paths = windows_managed_paths()
+    if os.name != "nt":
+        raise SourceUnavailable("The automatic qBittorrent installer is only available on Windows")
+    paths = managed_paths()
     cache = paths.root / "installer"
     cache.mkdir(parents=True, exist_ok=True)
     installer = cache / f"qbittorrent_{QBITTORRENT_VERSION}_x64_setup.exe"
@@ -190,6 +196,49 @@ def install_qbittorrent_official() -> Path:
             "qBittorrent installer finished but the program was not found"
         )
     return executable
+
+
+def install_qbittorrent_appimage(downloads_dir: str | Path | None = None) -> Path:
+    """Verify a downloaded official AppImage and copy it into Retrofetch app data."""
+    if not sys.platform.startswith("linux"):
+        raise SourceUnavailable("AppImage qBittorrent setup is only available on Linux")
+    downloads = (
+        Path(downloads_dir).expanduser()
+        if downloads_dir is not None
+        else Path.home() / "Downloads"
+    )
+    for name, expected_digest in QBITTORRENT_LINUX_APPIMAGES.items():
+        source = downloads / name
+        if not source.is_file():
+            continue
+        if source.stat().st_size > _INSTALLER_MAX_BYTES:
+            raise SourceUnavailable("qBittorrent AppImage exceeded the expected size")
+        digest = hashlib.sha256()
+        with source.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        if digest.hexdigest() != expected_digest:
+            raise SourceUnavailable(
+                "qBittorrent AppImage checksum did not match the official release",
+                retryable=False,
+            )
+        target_dir = managed_paths().root / "bin"
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target = target_dir / name
+        temporary = target.with_suffix(".download")
+        try:
+            shutil.copyfile(source, temporary)
+            temporary.chmod(stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+            temporary.replace(target)
+        finally:
+            temporary.unlink(missing_ok=True)
+        executable = discover_qbittorrent(target)
+        if executable is None:
+            raise SourceUnavailable("qBittorrent AppImage could not be prepared")
+        return executable
+    raise SourceUnavailable(
+        f"Download qBittorrent {QBITTORRENT_VERSION} from the official page, then retry"
+    )
 
 
 def _free_loopback_port() -> int:
@@ -514,7 +563,7 @@ class TorrentCoordinator:
                 self._client = client
                 return client
 
-            paths = windows_managed_paths()
+            paths = managed_paths()
             consent = paths.root / _SETUP_MARKER
             if consent.exists():
                 reattached = self._reattach_managed(paths)

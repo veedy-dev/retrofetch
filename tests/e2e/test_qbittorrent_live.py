@@ -18,7 +18,7 @@ from retrofetch.qbittorrent import (
     discover_qbittorrent,
     generate_api_key,
     start_managed,
-    windows_managed_paths,
+    managed_paths,
 )
 from retrofetch.sources import DownloadCancelled, DownloadCandidate
 from retrofetch.state import State
@@ -122,14 +122,14 @@ def test_real_exact_file_cancel_resume_and_finalize() -> None:
         root = Path(temporary)
         seed = start_managed(
             executable,
-            windows_managed_paths(root / "seed-profile"),
+            managed_paths(root / "seed-profile"),
             api_key=generate_api_key(),
             port=_free_port(),
             legal_notice_accepted=True,
         )
         leech = start_managed(
             executable,
-            windows_managed_paths(root / "leech-profile"),
+            managed_paths(root / "leech-profile"),
             api_key=generate_api_key(),
             port=_free_port(),
             legal_notice_accepted=True,

@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 from pathlib import Path
+import sys
 
 from PyInstaller.utils.hooks import collect_all, collect_data_files, collect_submodules
 
@@ -43,7 +44,7 @@ exe = EXE(
     a.datas,
     [],
     name="Retrofetch",
-    icon=str(ROOT / "packaging" / "retrofetch.ico"),
+    icon=str(ROOT / "packaging" / "retrofetch.ico") if sys.platform == "win32" else None,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
