@@ -285,17 +285,27 @@ class CoverageReady(Message):
 
 
 class WantlistReady(Message):
-    def __init__(self, console: str, titles: list[str], from_cache: bool) -> None:
+    def __init__(
+        self,
+        console: str,
+        titles: list[str],
+        from_cache: bool,
+        request_id: int | None = None,
+    ) -> None:
         self.console = console
         self.titles = titles
         self.from_cache = from_cache
+        self.request_id = request_id
         super().__init__()
 
 
 class WantlistFailed(Message):
-    def __init__(self, console: str, reason: str) -> None:
+    def __init__(
+        self, console: str, reason: str, request_id: int | None = None
+    ) -> None:
         self.console = console
         self.reason = reason
+        self.request_id = request_id
         super().__init__()
 
 

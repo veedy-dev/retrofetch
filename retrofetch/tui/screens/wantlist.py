@@ -1,8 +1,8 @@
 """Wantlist curation screen - session-only DataTable multi-select.
 
 Pushed from HomeScreen when the user presses 'w' on a selected Class A/B/C console.
-Displays up to 200 ranked titles with include/exclude state, paginated 50 rows/page
-(T1 verdict: raw DataTable filtering is NO-GO at 5000 rows; paginate instead).
+Displays ranked titles with include/exclude state, paginated to keep the table
+responsive for large catalogs.
 
 Selections update the running TUI only. Reopening Retrofetch starts with a clean
 wantlist while download progress/history remains persisted separately.
@@ -65,7 +65,7 @@ class WantlistScreen(Screen[None]):
         self._page = 0
         self._status = ""
         self._primary_source: str = "-"
-        self._loaded_source: str = ""  # "cached" / "fresh" / "error" / ""
+        self._loaded = False
         self._spinner_timer = None
         self._spinner_index: int = 0
 
@@ -115,7 +115,7 @@ class WantlistScreen(Screen[None]):
         # Stop ticking once the load finishes (either way, the status line
         # gets overwritten by _refresh_status_line on WantlistReady or
         # _set_status on WantlistFailed).
-        if self._loaded_source:
+        if self._loaded:
             self._stop_loading_spinner()
             return
         self._spinner_index = (self._spinner_index + 1) % len(_SPINNER_FRAMES)
@@ -144,7 +144,8 @@ class WantlistScreen(Screen[None]):
             return
         self._wantlist = list(message.titles)
         self._apply_title_filter(reset_page=True)
-        self._loaded_source = "cached" if message.from_cache else "fresh"
+        self._loaded = True
+        self._status = ""
         self._page = 0
         self._stop_loading_spinner()
         self._render_page()
@@ -154,7 +155,7 @@ class WantlistScreen(Screen[None]):
             return
         self._wantlist = []
         self._filtered_wantlist = []
-        self._loaded_source = "error"
+        self._loaded = True
         self._stop_loading_spinner()
         self._set_status(f"error: {message.reason}")
         self._render_page()
@@ -208,14 +209,13 @@ class WantlistScreen(Screen[None]):
         if total == 0 and self._status:
             # Preserve an error/failure status when the list is empty
             return
-        source = self._loaded_source or "loading"
         search_note = (
             f" matched from {raw_total}"
             if self._filter_query and raw_total != total
             else ""
         )
         status = (
-            f"{total} titles{search_note} ({source})  |  "
+            f"{total} titles{search_note}  |  "
             f"page {self._page + 1}/{total_pages}  |  "
             f"included: {len(self._include)}  excluded: {len(self._exclude)}"
         )
@@ -254,7 +254,7 @@ class WantlistScreen(Screen[None]):
             return
         self._filter_query = event.value
         self._apply_title_filter(reset_page=True)
-        if self._loaded_source:
+        if self._loaded:
             self._render_page()
 
     def action_focus_filter(self) -> None:
@@ -306,7 +306,7 @@ class WantlistScreen(Screen[None]):
             pass
         self._wantlist = []
         self._filtered_wantlist = []
-        self._loaded_source = ""
+        self._loaded = False
         self._page = 0
         self._render_page()
         self._start_loading_spinner()

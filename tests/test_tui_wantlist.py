@@ -33,7 +33,7 @@ class _WantlistApp(App[None]):
 
 async def _wait_loaded(screen: WantlistScreen, pilot) -> None:
     for _ in range(50):
-        if screen._loaded_source:
+        if screen._loaded:
             return
         await pilot.pause(0.05)
     raise AssertionError("wantlist did not load")

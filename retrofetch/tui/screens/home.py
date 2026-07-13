@@ -35,6 +35,7 @@ from retrofetch.wantlist_cache import (
     get_or_fetch_wantlist,
     invalidate,
     load_cached,
+    project_wantlist_titles,
 )
 
 
@@ -77,10 +78,6 @@ class HomeScreen(Screen[None]):
     _FILTER_DEBOUNCE_MS = 200
     # Debounce for ListView.Highlighted auto-fetch, per UX plan (U6).
     _PREVIEW_DEBOUNCE_MS = 400
-    # Upper bound on titles we ask any source for. The preview paginates
-    # internally at WantlistPreview.PAGE_SIZE; the wantlist screen wants all
-    # of them. 500 is practically "everything the source has".
-    _PREVIEW_FETCH_LIMIT = 500
 
     def __init__(self) -> None:
         super().__init__()
@@ -90,6 +87,7 @@ class HomeScreen(Screen[None]):
         # Remember the last shortname whose preview we started to kick, so
         # Ctrl+R can re-trigger the same console without asking the ListView.
         self._last_highlighted: str | None = None
+        self._preview_generation = 0
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -205,13 +203,18 @@ class HomeScreen(Screen[None]):
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
         """Debounced auto-fetch on console highlight (arrow keys / page up/down)."""
         item = event.item
-        if item is None:
-            return
         preview = self.query_one("#main-panel", WantlistPreview)
         # Cancel pending debounce regardless of class - new highlight supersedes.
         if self._preview_timer is not None:
             self._preview_timer.stop()
             self._preview_timer = None
+        self._preview_generation += 1
+        request_id = self._preview_generation
+
+        if item is None:
+            self._last_highlighted = None
+            preview.show_idle()
+            return
 
         if not getattr(item, "_rf_available", False):
             # Skipped classes: no fetch, show IDLE placeholder.
@@ -221,9 +224,13 @@ class HomeScreen(Screen[None]):
 
         shortname = str(getattr(item, "_rf_shortname", ""))
         if not shortname:
+            self._last_highlighted = None
+            preview.show_idle()
             return
         entry = self._lookup_entry(shortname)
         if entry is None:
+            self._last_highlighted = None
+            preview.show_idle()
             return
         self._last_highlighted = shortname
 
@@ -231,19 +238,23 @@ class HomeScreen(Screen[None]):
         cache_dir = self.app.config.cache_dir
         hit = load_cached(cache_dir, shortname)
         if hit is not None:
+            override = self.app.overrides.get(shortname)
+            titles = project_wantlist_titles(
+                list(hit.titles), override, 0
+            )
             counts = self._compute_state_counts(shortname)
-            preview.show_ready(shortname, list(hit.titles), True, counts)
+            preview.show_ready(shortname, titles, counts)
             return
 
         # Miss / stale -> show loading + schedule debounced worker.
         preview.show_loading(shortname)
         self._preview_timer = self.set_timer(
             self._PREVIEW_DEBOUNCE_MS / 1000.0,
-            lambda e=entry: self._kick_preview_fetch(e),
+            lambda e=entry, r=request_id: self._kick_preview_fetch(e, r),
         )
 
     @work(thread=True, exclusive=True, group="preview")
-    def _kick_preview_fetch(self, entry: dict[str, Any]) -> None:
+    def _kick_preview_fetch(self, entry: dict[str, Any], request_id: int) -> None:
         """Background worker: fetch wantlist via cache, post result to self."""
         shortname = str(entry.get("shortname", ""))
         override = self.app.overrides.get(shortname)
@@ -252,12 +263,12 @@ class HomeScreen(Screen[None]):
                 console_entry=entry,
                 overrides=override,
                 config=self.app.config,
-                limit=self._PREVIEW_FETCH_LIMIT,
+                limit=0,
             )
         except Exception as exc:
-            self.post_message(WantlistFailed(shortname, str(exc)))
+            self.post_message(WantlistFailed(shortname, str(exc), request_id))
             return
-        self.post_message(WantlistReady(shortname, titles, from_cache))
+        self.post_message(WantlistReady(shortname, titles, from_cache, request_id))
 
     # ------------------------------------------------------------------
     # Message handlers - run on UI thread
@@ -265,7 +276,10 @@ class HomeScreen(Screen[None]):
     def on_wantlist_ready(self, message: WantlistReady) -> None:
         # Only accept if the highlighted console still matches, to avoid
         # stale worker results clobbering a newer highlight.
-        if self._last_highlighted and message.console != self._last_highlighted:
+        if (
+            message.console != self._last_highlighted
+            or message.request_id != self._preview_generation
+        ):
             return
         counts = self._compute_state_counts(message.console)
         preview = self.query_one("#main-panel", WantlistPreview)
@@ -274,12 +288,14 @@ class HomeScreen(Screen[None]):
         preview.show_ready(
             message.console,
             list(message.titles),
-            message.from_cache,
             counts,
         )
 
     def on_wantlist_failed(self, message: WantlistFailed) -> None:
-        if self._last_highlighted and message.console != self._last_highlighted:
+        if (
+            message.console != self._last_highlighted
+            or message.request_id != self._preview_generation
+        ):
             return
         try:
             self.app.show_toast(f"Fetch failed: {message.reason}", severity="warning")
@@ -321,11 +337,13 @@ class HomeScreen(Screen[None]):
             pass
         preview = self.query_one("#main-panel", WantlistPreview)
         preview.show_loading(shortname)
+        self._preview_generation += 1
+        request_id = self._preview_generation
         if self._preview_timer is not None:
             self._preview_timer.stop()
             self._preview_timer = None
         # Retry kicks immediately (no debounce - user explicitly asked).
-        self._kick_preview_fetch(entry)
+        self._kick_preview_fetch(entry, request_id)
 
     # ------------------------------------------------------------------
     # Existing Enter handler (unchanged)

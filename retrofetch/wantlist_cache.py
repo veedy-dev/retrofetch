@@ -224,7 +224,7 @@ def is_recently_empty(cache_dir: Path, shortname: str) -> bool:
     return is_fresh
 
 
-def _filter_and_limit_titles(
+def project_wantlist_titles(
     titles: list[str], overrides: ConsoleOverride | None, limit: int | None
 ) -> list[str]:
     excluded = {title.casefold() for title in (overrides.exclude if overrides else [])}
@@ -244,8 +244,7 @@ def get_or_fetch_wantlist(
     cache_dir = Path(config.cache_dir)
     hit = load_cached(cache_dir, shortname)
     if hit is not None:
-        titles = [html.unescape(t) for t in hit.titles]
-        return (_filter_and_limit_titles(titles, overrides, limit), True)
+        return (project_wantlist_titles(list(hit.titles), overrides, limit), True)
 
     ranking_override = None
     if overrides is not None and overrides.region_priority:
@@ -288,4 +287,4 @@ def get_or_fetch_wantlist(
         save_cached(cache_dir, entry)
     except OSError as exc:
         log.warning("wantlist_cache: save failed for %s: %s", shortname, exc)
-    return (_filter_and_limit_titles(titles, overrides, limit), False)
+    return (project_wantlist_titles(titles, overrides, limit), False)

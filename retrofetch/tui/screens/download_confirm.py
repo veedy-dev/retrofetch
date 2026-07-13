@@ -90,9 +90,8 @@ class DownloadConfirmScreen(Screen[None]):
                 "No games selected. Press Esc, then press g to select games."
             )
             return
-        indicator = "cached" if message.from_cache else "fresh"
         self.query_one("#summary-line", Label).update(
-            f"Queued {len(self._wantlist)} selected games ({indicator}); source availability is checked at start. Use arrows and x/delete to remove."
+            f"Queued {len(self._wantlist)} selected games; source availability is checked at start. Use arrows and x/delete to remove."
         )
         preview = self.query_one("#wantlist-preview", OptionList)
         for title in self._wantlist:

@@ -11,6 +11,7 @@ from retrofetch.tui.app import RetrofetchApp
 from retrofetch.wantlist_cache import (
     CachedWantlist,
     cache_path,
+    get_or_fetch_wantlist,
     is_recently_empty,
     load_cached,
     mark_empty,
@@ -52,6 +53,35 @@ def test_current_cache_roundtrips(scratch_path) -> None:
     assert raw["schema_version"] == CATALOG_SCHEMA_VERSION
     assert loaded is not None
     assert loaded.titles == ["Game A", "Game B"]
+
+
+def test_first_fetch_and_cache_hit_have_identical_full_projection(
+    monkeypatch, scratch_path
+) -> None:
+    raw_titles = ["Tom &amp;amp; Jerry", "Excluded"] + [
+        f"Game {index:04d}" for index in range(1001)
+    ]
+    monkeypatch.setattr(
+        "retrofetch.ranker.get_wantlist", lambda **kwargs: raw_titles
+    )
+    config = Config(
+        roms_root=scratch_path / "ROMs",
+        cache_dir=scratch_path / ".cache",
+    )
+    override = ConsoleOverride(exclude=["Excluded"])
+    entry: dict[str, object] = {"shortname": "psx", "class": "B"}
+
+    first, first_from_cache = get_or_fetch_wantlist(entry, override, config, limit=0)
+    revisit, revisit_from_cache = get_or_fetch_wantlist(
+        entry, override, config, limit=0
+    )
+
+    assert first_from_cache is False
+    assert revisit_from_cache is True
+    assert first == revisit
+    assert first[0] == "Tom &amp; Jerry"
+    assert "Excluded" not in first
+    assert len(first) == 1002
 
 
 def test_corrupt_cache_is_miss_and_deleted(scratch_path) -> None:
