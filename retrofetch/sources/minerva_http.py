@@ -56,6 +56,27 @@ class _DirectoryEntry:
         self.is_dir = is_dir
 
 
+def effective_minerva_paths(console_entry: dict[str, Any]) -> list[str]:
+    primary = console_entry.get("minerva_path")
+    if not isinstance(primary, str):
+        return []
+    primary = primary.strip().strip("/")
+    if not primary:
+        return []
+    roots = [primary]
+
+    supplements = console_entry.get("minerva_paths")
+    if not isinstance(supplements, list):
+        return roots
+    for value in supplements:
+        if not isinstance(value, str):
+            continue
+        root = value.strip().strip("/")
+        if root and root not in roots:
+            roots.append(root)
+    return roots
+
+
 class MinervaHttpSource:
     name = _SOURCE_NAME
 
@@ -66,7 +87,8 @@ class MinervaHttpSource:
         timeout: float = 30.0,
     ):
         self.console_entry = console_entry
-        self.minerva_path = console_entry.get("minerva_path")
+        self.minerva_paths = effective_minerva_paths(console_entry)
+        self.minerva_path = self.minerva_paths[0] if self.minerva_paths else None
         self.extensions = tuple(console_entry.get("extensions") or [])
         self.base_url = base_url.rstrip("/") + "/"
         self.timeout = timeout
@@ -74,7 +96,7 @@ class MinervaHttpSource:
             console_entry.get("exclude_keywords")
             or Config(roms_root=Path("ROMs")).exclude_keywords
         )
-        self._catalog_cache: dict[tuple[str, ...], list[CatalogEntry]] = {}
+        self._catalog_cache: dict[tuple[str, ...], list[tuple[str, CatalogEntry]]] = {}
         self._catalog_lock = threading.Lock()
 
     @staticmethod
@@ -85,10 +107,11 @@ class MinervaHttpSource:
             raise SourceUnavailable(f"selectolax not installed: {exc}") from exc
         return parser_mod.HTMLParser(body)
 
-    def _build_index_url(self) -> str | None:
-        if not self.minerva_path:
+    def _build_index_url(self, minerva_path: str | None = None) -> str | None:
+        selected_path = self.minerva_path if minerva_path is None else minerva_path
+        if not selected_path:
             return None
-        path = str(self.minerva_path).strip("/")
+        path = str(selected_path).strip("/")
         return urljoin(self.base_url, path + "/")
 
     def _fetch_text(self, url: str) -> str:
@@ -237,36 +260,74 @@ class MinervaHttpSource:
         visit(root_url, 0)
         return files
 
-    def _catalog_entries(
+    def _catalog_entries_with_roots(
         self, region_priority: list[str] | None = None
-    ) -> list[CatalogEntry]:
+    ) -> list[tuple[str, CatalogEntry]]:
         priority = tuple(region_priority or Config(roms_root=Path("ROMs")).region_priority)
         with self._catalog_lock:
             cached = self._catalog_cache.get(priority)
             if cached is not None:
                 return cached
-        url = self._build_index_url()
-        if not url:
+
+        if not self.minerva_paths:
             return []
-        files = self._list_catalog_files(url)
-        entries = build_catalog(
-            files,
-            region_priority=list(priority),
-            exclude_keywords=self.exclude_keywords,
-        )
-        for entry in entries:
-            entry.source = _SOURCE_NAME
+
+        merged: list[tuple[str, CatalogEntry]] = []
+        seen_titles: set[str] = set()
+        failures: list[SourceUnavailable] = []
+        successful_roots = 0
+        for index, root in enumerate(self.minerva_paths):
+            url = self._build_index_url(root)
+            assert url is not None
+            try:
+                files = self._list_catalog_files(url)
+            except SourceUnavailable as exc:
+                failures.append(exc)
+                _log.warning("minerva collection unavailable (%s): %s", root, exc)
+                continue
+
+            successful_roots += 1
+            entries = build_catalog(
+                files,
+                region_priority=list(priority),
+                exclude_keywords=self.exclude_keywords,
+            )
+            for entry in entries:
+                if index > 0 and len(entry.files) != 1:
+                    continue
+                key = entry.title.casefold()
+                if key in seen_titles:
+                    continue
+                seen_titles.add(key)
+                entry.source = _SOURCE_NAME
+                merged.append((root, entry))
+
+        if successful_roots == 0 and failures:
+            raise failures[0]
         with self._catalog_lock:
-            self._catalog_cache[priority] = entries
-        return entries
+            self._catalog_cache[priority] = merged
+        return merged
+
+    def _catalog_entries(
+        self, region_priority: list[str] | None = None
+    ) -> list[CatalogEntry]:
+        return [
+            entry for _root, entry in self._catalog_entries_with_roots(region_priority)
+        ]
 
     def get_entry(
         self, title: str, region_priority: list[str] | None = None
     ) -> CatalogEntry | None:
+        resolved = self.get_entry_with_root(title, region_priority)
+        return resolved[1] if resolved is not None else None
+
+    def get_entry_with_root(
+        self, title: str, region_priority: list[str] | None = None
+    ) -> tuple[str, CatalogEntry] | None:
         title_lc = title.casefold()
-        for entry in self._catalog_entries(region_priority):
+        for root, entry in self._catalog_entries_with_roots(region_priority):
             if entry.title.casefold() == title_lc:
-                return entry
+                return root, entry
         return None
 
     def find_url_for_game(
@@ -274,8 +335,11 @@ class MinervaHttpSource:
         title: str,
         region_priority: list[str] | None = None,
     ) -> DownloadCandidate | None:
-        entry = self.get_entry(title, region_priority)
-        if entry is None or not entry.files:
+        resolved = self.get_entry_with_root(title, region_priority)
+        if resolved is None:
+            return None
+        root, entry = resolved
+        if not entry.files:
             return None
         catalog_file = entry.files[0]
         # MiNERVA's /rom endpoint is an information page; its documented
@@ -288,7 +352,7 @@ class MinervaHttpSource:
             source=_SOURCE_NAME,
             expected_size=catalog_file.size,
             extra={
-                "minerva_path": self.minerva_path,
+                "minerva_path": root,
                 "catalog_title": entry.title,
                 "catalog_region": entry.region,
                 "catalog_files": [

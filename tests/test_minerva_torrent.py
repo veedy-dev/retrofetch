@@ -41,13 +41,20 @@ def _torrent(*files: dict[bytes, object]) -> tuple[bytes, str]:
 
 
 class _Catalog:
-    def __init__(self, entry: CatalogEntry | None) -> None:
+    def __init__(
+        self,
+        entry: CatalogEntry | None,
+        root: str = "Redump/Sony - PlayStation Portable",
+    ) -> None:
         self.entry = entry
+        self.root = root
 
-    def get_entry(
+    def get_entry_with_root(
         self, title: str, region_priority: list[str] | None = None
-    ) -> CatalogEntry | None:
-        return self.entry if self.entry and self.entry.title == title else None
+    ) -> tuple[str, CatalogEntry] | None:
+        if self.entry is None or self.entry.title != title:
+            return None
+        return self.root, self.entry
 
     def list_popular(
         self, limit: int, region_priority: list[str] | None = None
@@ -56,14 +63,25 @@ class _Catalog:
 
 
 class _FixtureSource(MinervaTorrentSource):
-    def __init__(self, entry: CatalogEntry | None, torrent: bytes) -> None:
-        super().__init__({"minerva_path": "Redump/Sony - PlayStation Portable"})
-        self._catalog = _Catalog(entry)  # type: ignore[assignment]
+    def __init__(
+        self,
+        entry: CatalogEntry | None,
+        torrent: bytes,
+        *,
+        root: str = "Redump/Sony - PlayStation Portable",
+        console_entry: dict[str, object] | None = None,
+    ) -> None:
+        super().__init__(
+            console_entry
+            if console_entry is not None
+            else {"minerva_path": "Redump/Sony - PlayStation Portable"}
+        )
+        self._catalog = _Catalog(entry, root)  # type: ignore[assignment]
         self.torrent = torrent
-        self.fetches = 0
+        self.fetch_urls: list[str] = []
 
     def _fetch_torrent_bytes(self, url: str) -> bytes:
-        self.fetches += 1
+        self.fetch_urls.append(url)
         return self.torrent
 
 
@@ -125,7 +143,7 @@ def test_resolves_exact_file_and_caches_collection_metadata() -> None:
         "catalog_region": "USA",
         "artifact_md5": "33" * 16,
     }
-    assert source.fetches == 1
+    assert len(source.fetch_urls) == 1
 
 
 def test_missing_or_ambiguous_catalog_match_returns_none() -> None:
@@ -153,6 +171,18 @@ def test_missing_torrent_path_returns_none() -> None:
     assert (
         _FixtureSource(_entry(path), missing).find_url_for_game("Example Game") is None
     )
+
+
+def test_exact_case_mismatch_returns_none() -> None:
+    path = "Redump/Sony - PlayStation Portable/Example Game (USA).zip"
+    torrent, _ = _torrent(
+        {
+            b"length": 1,
+            b"path": [part.swapcase().encode() for part in path.split("/")],
+        }
+    )
+
+    assert _FixtureSource(_entry(path), torrent).find_url_for_game("Example Game") is None
 
 
 def test_rejects_traversal_in_torrent_metadata() -> None:
@@ -204,3 +234,136 @@ def test_download_requires_qbittorrent_coordinator(tmp_path: object) -> None:
 
     with pytest.raises(SourceUnavailable, match="qBittorrent coordinator"):
         source.download(None, tmp_path)  # type: ignore[arg-type]
+
+
+def test_supplemental_title_uses_its_torrent_root_and_metadata() -> None:
+    root = "RetroAchievements/RA - Sony PSP"
+    path = f"{root}/Example Game (USA).zip"
+    torrent, _ = _torrent(
+        {b"length": 123, b"path": [part.encode() for part in path.split("/")]}
+    )
+    source = _FixtureSource(
+        _entry(path),
+        torrent,
+        root=root,
+        console_entry={
+            "minerva_path": "Redump/Sony - PlayStation Portable",
+            "minerva_paths": [root],
+        },
+    )
+
+    candidate = source.find_url_for_game("Example Game", ["USA"])
+
+    assert candidate is not None
+    assert candidate.url == (
+        "https://minerva-archive.org/assets/Minerva_Myrient_v0.3/"
+        "Minerva_Myrient%20-%20RetroAchievements%20-%20RA%20-%20Sony%20PSP.torrent"
+    )
+    assert candidate.extra is not None
+    assert candidate.extra["minerva_path"] == root
+    assert candidate.extra["torrent_internal_path"] == path
+    assert source.fetch_urls == [candidate.url]
+
+
+def test_selected_root_owns_catalog_containment_check() -> None:
+    primary = "Redump/Sony - PlayStation Portable"
+    supplement = "RetroAchievements/RA - Sony PSP"
+    primary_path = f"{primary}/Example Game (USA).zip"
+    torrent, _ = _torrent(
+        {
+            b"length": 1,
+            b"path": [part.encode() for part in primary_path.split("/")],
+        }
+    )
+    source = _FixtureSource(
+        _entry(primary_path),
+        torrent,
+        root=supplement,
+        console_entry={"minerva_path": primary, "minerva_paths": [supplement]},
+    )
+
+    with pytest.raises(SourceUnavailable, match="escapes its console collection"):
+        source.find_url_for_game("Example Game", ["USA"])
+
+
+def test_duplicate_title_selected_from_primary_does_not_probe_supplement() -> None:
+    primary = "Redump/Sony - PlayStation Portable"
+    path = f"{primary}/Example Game (USA).zip"
+    torrent_without_selected_path, _ = _torrent(
+        {
+            b"length": 1,
+            b"path": [
+                part.encode()
+                for part in f"{primary}/Other Game (USA).zip".split("/")
+            ],
+        }
+    )
+    source = _FixtureSource(
+        _entry(path),
+        torrent_without_selected_path,
+        root=primary,
+        console_entry={
+            "minerva_path": primary,
+            "minerva_paths": ["RetroAchievements/RA - Sony PSP"],
+        },
+    )
+
+    assert source.find_url_for_game("Example Game", ["USA"]) is None
+    assert len(source.fetch_urls) == 1
+    assert "Redump%20-%20Sony%20-%20PlayStation%20Portable" in source.fetch_urls[0]
+
+
+def test_download_re_resolves_current_root_priority() -> None:
+    primary = "Redump/Sony - PlayStation Portable"
+    supplement = "RetroAchievements/RA - Sony PSP"
+    primary_path = f"{primary}/Example Game (USA).zip"
+    supplement_path = f"{supplement}/Example Game (USA).zip"
+    torrent, _ = _torrent(
+        {
+            b"length": 1,
+            b"path": [part.encode() for part in primary_path.split("/")],
+        }
+    )
+    console_entry = {
+        "minerva_path": primary,
+        "minerva_paths": [supplement],
+    }
+    browsed_during_outage = _FixtureSource(
+        _entry(supplement_path),
+        b"",
+        root=supplement,
+        console_entry=console_entry,
+    )
+    source_after_recovery = _FixtureSource(
+        _entry(primary_path),
+        torrent,
+        root=primary,
+        console_entry=console_entry,
+    )
+
+    assert browsed_during_outage.list_popular(0, ["USA"]) == ["Example Game"]
+    candidate = source_after_recovery.find_url_for_game("Example Game", ["USA"])
+
+    assert candidate is not None and candidate.extra is not None
+    assert candidate.extra["minerva_path"] == primary
+    assert candidate.extra["torrent_internal_path"] == primary_path
+    assert "Redump%20-%20Sony%20-%20PlayStation%20Portable" in candidate.url
+
+
+def test_supplemental_multifile_entry_never_produces_torrent_candidate() -> None:
+    root = "T-En Collection/Sony - PlayStation [T-En] Collection"
+    source = _FixtureSource(
+        _entry(
+            f"{root}/Example Game (World) (Disc 1).zip",
+            f"{root}/Example Game (World) (Disc 2).zip",
+        ),
+        b"",
+        root=root,
+        console_entry={
+            "minerva_path": "Redump/Sony - PlayStation",
+            "minerva_paths": [root],
+        },
+    )
+
+    assert source.find_url_for_game("Example Game", ["World"]) is None
+    assert source.fetch_urls == []

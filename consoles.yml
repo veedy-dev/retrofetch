@@ -5,6 +5,9 @@ consoles:
     igdb_platform_id:
     dat_system: Panasonic - 3DO Interactive Multiplayer
     minerva_path: Redump/Panasonic - 3DO Interactive Multiplayer
+    minerva_paths:
+      - RetroAchievements/RA - 3DO Interactive Multiplayer
+      - T-En Collection/Panasonic - 3DO Interactive Multiplayer [T-En] Collection
     archive_org_identifier:
     romsfun_slug: 3do
     romsretro_slug: 3do
@@ -192,6 +195,8 @@ consoles:
     igdb_platform_id: 94
     dat_system: Emerson - Arcadia 2001
     minerva_path: No-Intro/Emerson - Arcadia 2001
+    minerva_paths:
+      - RetroAchievements/RA - Emerson Arcadia 2001
     archive_org_identifier: emerson_arcadia_library
     romsfun_slug: arcadia-2001
     romsretro_slug: arcadia-2001
@@ -252,6 +257,8 @@ consoles:
     igdb_platform_id: 59
     dat_system: Atari - 2600
     minerva_path: No-Intro/Atari - Atari 2600
+    minerva_paths:
+      - RetroAchievements/RA - Atari 2600
     archive_org_identifier: atari_2600_library
     romsfun_slug: atari-2600
     romsretro_slug: atari-2600
@@ -288,6 +295,8 @@ consoles:
     igdb_platform_id: 60
     dat_system: Atari - 7800
     minerva_path: No-Intro/Atari - Atari 7800 (BIN)
+    minerva_paths:
+      - RetroAchievements/RA - Atari 7800
     archive_org_identifier: atari_7800_library
     romsfun_slug: atari-7800
     romsretro_slug: atari-7800
@@ -323,6 +332,8 @@ consoles:
     igdb_platform_id: 62
     dat_system: Atari - Jaguar
     minerva_path: No-Intro/Atari - Atari Jaguar (J64)
+    minerva_paths:
+      - RetroAchievements/RA - Atari Jaguar
     archive_org_identifier:
     romsfun_slug: atari-jaguar
     romsretro_slug: atari-jaguar
@@ -341,6 +352,8 @@ consoles:
     igdb_platform_id: 61
     dat_system: Atari - Lynx
     minerva_path: No-Intro/Atari - Atari Lynx (LNX)
+    minerva_paths:
+      - RetroAchievements/RA - Atari Lynx
     archive_org_identifier: lynx-library
     romsfun_slug: atari-lynx
     romsretro_slug: atari-lynx
@@ -493,6 +506,8 @@ consoles:
     igdb_platform_id: 127
     dat_system: Fairchild - Channel F
     minerva_path: No-Intro/Fairchild - Channel F
+    minerva_paths:
+      - RetroAchievements/RA - Fairchild Channel F
     archive_org_identifier: channelf_library
     romsfun_slug: channel-f
     romsretro_slug: channel-f
@@ -523,6 +538,8 @@ consoles:
     igdb_platform_id: 68
     dat_system: Coleco - ColecoVision
     minerva_path: No-Intro/Coleco - ColecoVision
+    minerva_paths:
+      - RetroAchievements/RA - Colecovision
     archive_org_identifier: coleco_colecovision_library
     romsfun_slug: colecovision
     romsretro_slug: colecovision
@@ -696,6 +713,9 @@ consoles:
     igdb_platform_id: 23
     dat_system: Sega - Dreamcast
     minerva_path: Redump/Sega - Dreamcast
+    minerva_paths:
+      - RetroAchievements/RA - Sega Dreamcast
+      - T-En Collection/Sega - Dreamcast [T-En] Collection
     archive_org_identifier:
     romsfun_slug: dreamcast
     romsretro_slug: dreamcast
@@ -776,6 +796,8 @@ consoles:
     igdb_platform_id: 18
     dat_system: Nintendo - Nintendo Entertainment System
     minerva_path: No-Intro/Nintendo - Nintendo Entertainment System (Headered)
+    minerva_paths:
+      - T-En Collection/Nintendo - Famicom [T-En] Collection
     archive_org_identifier:
     romsfun_slug: famicom
     romsretro_slug: famicom
@@ -824,6 +846,9 @@ consoles:
     igdb_platform_id: 51
     dat_system: Nintendo - Family Computer Disk System
     minerva_path: No-Intro/Nintendo - Family Computer Disk System (FDS)
+    minerva_paths:
+      - RetroAchievements/RA - Nintendo Famicom Disk System
+      - T-En Collection/Nintendo - Family Computer Disk System [T-En] Collection
     archive_org_identifier:
     romsfun_slug: famicom-disk-system
     romsretro_slug: famicom-disk-system
@@ -930,6 +955,9 @@ consoles:
     igdb_platform_id: 35
     dat_system: Sega - Game Gear
     minerva_path: No-Intro/Sega - Game Gear
+    minerva_paths:
+      - RetroAchievements/RA - Sega Game Gear
+      - T-En Collection/Sega - Game Gear [T-En] Collection
     archive_org_identifier: gamegear_library
     romsfun_slug: sega-game-gear
     romsretro_slug: sega-game-gear
@@ -947,6 +975,9 @@ consoles:
     igdb_platform_id: 33
     dat_system: Nintendo - Game Boy
     minerva_path: No-Intro/Nintendo - Game Boy
+    minerva_paths:
+      - RetroAchievements/RA - Nintendo Game Boy
+      - T-En Collection/Nintendo - Game Boy [T-En] Collection
     archive_org_identifier:
     romsfun_slug: gameboy
     romsretro_slug: gameboy
@@ -963,6 +994,9 @@ consoles:
     igdb_platform_id: 24
     dat_system: Nintendo - Game Boy Advance
     minerva_path: No-Intro/Nintendo - Game Boy Advance
+    minerva_paths:
+      - RetroAchievements/RA - Nintendo Game Boy Advance
+      - T-En Collection/Nintendo - Game Boy Advance [T-En] Collection
     archive_org_identifier:
     romsfun_slug: game-boy-advance
     romsretro_slug: gba
@@ -979,6 +1013,9 @@ consoles:
     igdb_platform_id: 22
     dat_system: Nintendo - Game Boy Color
     minerva_path: No-Intro/Nintendo - Game Boy Color
+    minerva_paths:
+      - RetroAchievements/RA - Nintendo Game Boy Color
+      - T-En Collection/Nintendo - Game Boy Color [T-En] Collection
     archive_org_identifier:
     romsfun_slug: game-boy-color
     romsretro_slug: gameboy-color
@@ -996,6 +1033,9 @@ consoles:
     igdb_platform_id: 21
     dat_system: Nintendo - GameCube
     minerva_path: Redump/Nintendo - GameCube - NKit RVZ [zstd-19-128k]
+    minerva_paths:
+      - RetroAchievements/RA - Nintendo GameCube
+      - T-En Collection/Nintendo - GameCube [T-En] Collection
     archive_org_identifier:
     romsfun_slug: gamecube
     romsretro_slug: gamecube
@@ -1015,6 +1055,8 @@ consoles:
     igdb_platform_id: 29
     dat_system: Sega - Mega Drive - Genesis
     minerva_path: No-Intro/Sega - Mega Drive - Genesis
+    minerva_paths:
+      - RetroAchievements/RA - Sega Genesis
     archive_org_identifier: sega_genesis_library
     romsfun_slug: sega-genesis
     romsretro_slug: sega-genesis
@@ -1065,6 +1107,8 @@ consoles:
     igdb_platform_id: 67
     dat_system: Mattel - Intellivision
     minerva_path: No-Intro/Mattel - Intellivision
+    minerva_paths:
+      - RetroAchievements/RA - Mattel Intellivision
     archive_org_identifier: intellivision
     romsfun_slug: intellivision
     romsretro_slug: intellivision
@@ -1203,6 +1247,9 @@ consoles:
     igdb_platform_id: 64
     dat_system: Sega - Master System - Mark III
     minerva_path: No-Intro/Sega - Master System - Mark III
+    minerva_paths:
+      - RetroAchievements/RA - Sega Master System
+      - T-En Collection/Sega - Master System [T-En] Collection
     archive_org_identifier: sega_sms_library
     romsfun_slug: sega-master-system
     romsretro_slug: sega-master-system
@@ -1220,6 +1267,8 @@ consoles:
     igdb_platform_id: 78
     dat_system: Sega - Mega CD & Sega CD
     minerva_path: Redump/Sega - Mega CD & Sega CD
+    minerva_paths:
+      - T-En Collection/Sega - Mega CD [T-En] Collection
     archive_org_identifier:
     romsfun_slug: sega-cd
     romsretro_slug: sega-cd
@@ -1240,6 +1289,8 @@ consoles:
     igdb_platform_id:
     dat_system:
     minerva_path: Redump/Sega - Mega CD & Sega CD
+    minerva_paths:
+      - T-En Collection/Sega - Mega CD [T-En] Collection
     archive_org_identifier:
     romsfun_slug: sega-cd
     romsretro_slug: sega-cd
@@ -1262,6 +1313,8 @@ consoles:
     igdb_platform_id: 29
     dat_system: Sega - Mega Drive - Genesis
     minerva_path: No-Intro/Sega - Mega Drive - Genesis
+    minerva_paths:
+      - T-En Collection/Sega - Mega Drive [T-En] Collection
     archive_org_identifier: sega_genesis_library
     romsfun_slug: sega-genesis
     romsretro_slug: sega-genesis
@@ -1282,6 +1335,8 @@ consoles:
     igdb_platform_id:
     dat_system:
     minerva_path: No-Intro/Sega - Mega Drive - Genesis
+    minerva_paths:
+      - T-En Collection/Sega - Mega Drive [T-En] Collection
     archive_org_identifier: sega_genesis_library
     romsfun_slug: sega-genesis
     romsretro_slug: sega-genesis
@@ -1304,6 +1359,8 @@ consoles:
     igdb_platform_id:
     dat_system: Creatronic - Mega Duck
     minerva_path: No-Intro/Welback - Mega Duck
+    minerva_paths:
+      - RetroAchievements/RA - Mega Duck
     archive_org_identifier: megaduck_library
     romsfun_slug: mega-duck
     romsretro_slug: mega-duck
@@ -1456,6 +1513,8 @@ consoles:
     igdb_platform_id: 37
     dat_system: Nintendo - Nintendo 3DS
     minerva_path: No-Intro/Nintendo - Nintendo 3DS (Encrypted)
+    minerva_paths:
+      - T-En Collection/Nintendo - Nintendo 3DS [T-En] Collection
     archive_org_identifier:
     romsfun_slug: nintendo-3ds
     romsretro_slug: 3ds-cia
@@ -1474,6 +1533,9 @@ consoles:
     igdb_platform_id: 4
     dat_system: Nintendo - Nintendo 64
     minerva_path: No-Intro/Nintendo - Nintendo 64 (BigEndian)
+    minerva_paths:
+      - RetroAchievements/RA - Nintendo 64
+      - T-En Collection/Nintendo - Nintendo 64 [T-En] Collection
     archive_org_identifier:
     romsfun_slug: nintendo-64
     romsretro_slug: nintendo-64
@@ -1492,6 +1554,8 @@ consoles:
     igdb_platform_id:
     dat_system: Nintendo - Nintendo 64DD
     minerva_path: No-Intro/Nintendo - Nintendo 64DD
+    minerva_paths:
+      - T-En Collection/Nintendo - Nintendo 64DD [T-En] Collection
     archive_org_identifier:
     romsfun_slug: nintendo-64dd
     romsretro_slug: nintendo-64dd
@@ -1556,6 +1620,9 @@ consoles:
     igdb_platform_id: 20
     dat_system: Nintendo - Nintendo DS
     minerva_path: No-Intro/Nintendo - Nintendo DS (Decrypted)
+    minerva_paths:
+      - RetroAchievements/RA - Nintendo DS
+      - T-En Collection/Nintendo - Nintendo DS [T-En] Collection
     archive_org_identifier:
     romsfun_slug: nintendo-ds
     romsretro_slug: nds
@@ -1589,6 +1656,9 @@ consoles:
     igdb_platform_id: 136
     dat_system: SNK - Neo Geo CD
     minerva_path: Redump/SNK - Neo Geo CD
+    minerva_paths:
+      - RetroAchievements/RA - SNK Neo Geo CD
+      - T-En Collection/SNK - Neo Geo CD [T-En] Collection
     archive_org_identifier:
     romsfun_slug: neo-geo-cd
     romsretro_slug: neo-geo-cd
@@ -1608,6 +1678,9 @@ consoles:
     igdb_platform_id:
     dat_system:
     minerva_path: Redump/SNK - Neo Geo CD
+    minerva_paths:
+      - RetroAchievements/RA - SNK Neo Geo CD
+      - T-En Collection/SNK - Neo Geo CD [T-En] Collection
     archive_org_identifier:
     romsfun_slug: neo-geo-cd
     romsretro_slug: neo-geo-cd
@@ -1629,6 +1702,8 @@ consoles:
     igdb_platform_id: 18
     dat_system: Nintendo - Nintendo Entertainment System
     minerva_path: No-Intro/Nintendo - Nintendo Entertainment System (Headered)
+    minerva_paths:
+      - RetroAchievements/RA - Nintendo Entertainment System
     archive_org_identifier:
     romsfun_slug: nes
     romsretro_slug: nes
@@ -1662,6 +1737,8 @@ consoles:
     igdb_platform_id: 119
     dat_system: SNK - Neo Geo Pocket
     minerva_path: No-Intro/SNK - NeoGeo Pocket
+    minerva_paths:
+      - RetroAchievements/RA - SNK Neo Geo Pocket
     archive_org_identifier: ngp_library
     romsfun_slug: neo-geo-pocket
     romsretro_slug: neo-geo-pocket
@@ -1678,6 +1755,8 @@ consoles:
     igdb_platform_id: 120
     dat_system: SNK - Neo Geo Pocket Color
     minerva_path: No-Intro/SNK - NeoGeo Pocket Color
+    minerva_paths:
+      - T-En Collection/SNK - Neo Geo Pocket Color [T-En] Collection
     archive_org_identifier: ngp_library
     romsfun_slug: snk-neo-geo-pocket-color
     romsretro_slug: neo-geo-pocket-color
@@ -1695,6 +1774,8 @@ consoles:
     igdb_platform_id: 133
     dat_system: Magnavox - Odyssey 2
     minerva_path: No-Intro/Magnavox - Odyssey 2
+    minerva_paths:
+      - RetroAchievements/RA - Magnavox Odyssey 2
     archive_org_identifier: library_magnavox_odyssey2
     romsfun_slug: odyssey-2
     romsretro_slug: odyssey-2
@@ -1816,6 +1897,8 @@ consoles:
     igdb_platform_id: 86
     dat_system: NEC - PC Engine - TurboGrafx 16
     minerva_path: No-Intro/NEC - PC Engine - TurboGrafx-16
+    minerva_paths:
+      - T-En Collection/NEC - PC Engine [T-En] Collection
     archive_org_identifier: tg16_library
     romsfun_slug: pc-engine
     romsretro_slug: pc-engine
@@ -1831,6 +1914,8 @@ consoles:
     igdb_platform_id: 150
     dat_system: NEC - PC Engine CD & TurboGrafx CD
     minerva_path: Redump/NEC - PC Engine CD & TurboGrafx CD
+    minerva_paths:
+      - T-En Collection/NEC - PC Engine CD [T-En] Collection
     archive_org_identifier:
     romsfun_slug: pc-engine-cd
     romsretro_slug: pc-engine-cd
@@ -1849,6 +1934,9 @@ consoles:
     igdb_platform_id: 274
     dat_system: NEC - PC-FX & PC-FXGA
     minerva_path: Redump/NEC - PC-FX & PC-FXGA
+    minerva_paths:
+      - RetroAchievements/RA - NEC PC-FX
+      - T-En Collection/NEC - PC-FX [T-En] Collection
     archive_org_identifier:
     romsfun_slug: nec-pc-fx
     romsretro_slug: pc-fx
@@ -1899,6 +1987,9 @@ consoles:
     igdb_platform_id: 166
     dat_system: Nintendo - Pokemon Mini
     minerva_path: No-Intro/Nintendo - Pokemon Mini
+    minerva_paths:
+      - RetroAchievements/RA - Nintendo Pokemon Mini
+      - T-En Collection/Nintendo - Pokemon Mini [T-En] Collection
     archive_org_identifier:
     romsfun_slug: nintendo-pokemon-mini
     romsretro_slug: pokemon-mini
@@ -1929,6 +2020,9 @@ consoles:
     igdb_platform_id: 8
     dat_system: Sony - PlayStation 2
     minerva_path: Redump/Sony - PlayStation 2
+    minerva_paths:
+      - RetroAchievements/RA - Sony Playstation 2
+      - T-En Collection/Sony - PlayStation 2 [T-En] Collection
     archive_org_identifier:
     romsfun_slug: playstation-2
     romsretro_slug: ps2
@@ -1949,6 +2043,8 @@ consoles:
     igdb_platform_id: 9
     dat_system: Sony - PlayStation 3
     minerva_path: Redump/Sony - PlayStation 3
+    minerva_paths:
+      - T-En Collection/Sony - PlayStation 3 [T-En] Collection
     archive_org_identifier:
     romsfun_slug: ps3
     romsretro_slug: ps3
@@ -2002,6 +2098,9 @@ consoles:
     igdb_platform_id: 7
     dat_system: Sony - PlayStation
     minerva_path: Redump/Sony - PlayStation
+    minerva_paths:
+      - RetroAchievements/RA - Sony Playstation
+      - T-En Collection/Sony - PlayStation [T-En] Collection
     archive_org_identifier: psxgames
     romsfun_slug: playstation
     romsretro_slug: playstation
@@ -2084,6 +2183,9 @@ consoles:
     igdb_platform_id: 32
     dat_system: Sega - Saturn
     minerva_path: Redump/Sega - Saturn
+    minerva_paths:
+      - RetroAchievements/RA - Sega Saturn
+      - T-En Collection/Sega - Saturn [T-En] Collection
     archive_org_identifier:
     romsfun_slug: sega-saturn
     romsretro_slug: saturn
@@ -2104,6 +2206,9 @@ consoles:
     igdb_platform_id:
     dat_system:
     minerva_path: Redump/Sega - Saturn
+    minerva_paths:
+      - RetroAchievements/RA - Sega Saturn
+      - T-En Collection/Sega - Saturn [T-En] Collection
     archive_org_identifier:
     romsfun_slug: sega-saturn
     romsretro_slug: saturn
@@ -2156,6 +2261,8 @@ consoles:
     igdb_platform_id: 30
     dat_system: Sega - 32X
     minerva_path: No-Intro/Sega - 32X
+    minerva_paths:
+      - RetroAchievements/RA - Sega 32X
     archive_org_identifier: sega_genesis_library
     romsfun_slug: 32x
     romsretro_slug: sega-32x
@@ -2173,6 +2280,8 @@ consoles:
     igdb_platform_id:
     dat_system:
     minerva_path: No-Intro/Sega - 32X
+    minerva_paths:
+      - RetroAchievements/RA - Sega 32X
     archive_org_identifier: sega_genesis_library
     romsfun_slug: 32x
     romsretro_slug: sega-32x
@@ -2192,6 +2301,8 @@ consoles:
     igdb_platform_id:
     dat_system:
     minerva_path: No-Intro/Sega - 32X
+    minerva_paths:
+      - RetroAchievements/RA - Sega 32X
     archive_org_identifier: sega_genesis_library
     romsfun_slug: 32x
     romsretro_slug: sega-32x
@@ -2211,6 +2322,8 @@ consoles:
     igdb_platform_id: 78
     dat_system: Sega - Mega CD & Sega CD
     minerva_path: Redump/Sega - Mega CD & Sega CD
+    minerva_paths:
+      - RetroAchievements/RA - Sega CD
     archive_org_identifier:
     romsfun_slug: sega-cd
     romsretro_slug: sega-cd
@@ -2231,6 +2344,8 @@ consoles:
     igdb_platform_id:
     dat_system: Nintendo - Super Nintendo Entertainment System
     minerva_path: No-Intro/Nintendo - Super Nintendo Entertainment System
+    minerva_paths:
+      - T-En Collection/Nintendo - Super Famicom [T-En] Collection
     archive_org_identifier:
     romsfun_slug: super-famicom
     romsretro_slug: super-famicom
@@ -2247,6 +2362,9 @@ consoles:
     igdb_platform_id: 84
     dat_system: Sega - SG-1000
     minerva_path: No-Intro/Sega - SG-1000
+    minerva_paths:
+      - RetroAchievements/RA - Sega SG-1000
+      - T-En Collection/Sega - SG-1000 [T-En] Collection
     archive_org_identifier: sg_1000_library
     romsfun_slug: sega-sg-1000
     romsretro_slug: sg-1000
@@ -2279,6 +2397,8 @@ consoles:
     igdb_platform_id: 19
     dat_system: Nintendo - Super Nintendo Entertainment System
     minerva_path: No-Intro/Nintendo - Super Nintendo Entertainment System
+    minerva_paths:
+      - RetroAchievements/RA - Super Nintendo Entertainment System
     archive_org_identifier:
     romsfun_slug: super-nintendo
     romsretro_slug: snes
@@ -2298,6 +2418,8 @@ consoles:
     igdb_platform_id:
     dat_system:
     minerva_path: No-Intro/Nintendo - Super Nintendo Entertainment System
+    minerva_paths:
+      - RetroAchievements/RA - Super Nintendo Entertainment System
     archive_org_identifier:
     romsfun_slug: super-nintendo
     romsretro_slug: snes
@@ -2394,6 +2516,8 @@ consoles:
     igdb_platform_id:
     dat_system: Watara - Supervision
     minerva_path: No-Intro/Watara - Supervision
+    minerva_paths:
+      - RetroAchievements/RA - Watara Supervision
     archive_org_identifier: supervision_library
     romsfun_slug: supervision
     romsretro_slug: supervision
@@ -2472,6 +2596,8 @@ consoles:
     igdb_platform_id: 150
     dat_system: NEC - PC Engine CD & TurboGrafx CD
     minerva_path: Redump/NEC - PC Engine CD & TurboGrafx CD
+    minerva_paths:
+      - RetroAchievements/RA - NEC TurboGrafx-CD
     archive_org_identifier:
     romsfun_slug: turbografx-cd
     romsretro_slug: turbografx-cd
@@ -2491,6 +2617,8 @@ consoles:
     igdb_platform_id: 86
     dat_system: NEC - PC Engine - TurboGrafx 16
     minerva_path: No-Intro/NEC - PC Engine - TurboGrafx-16
+    minerva_paths:
+      - RetroAchievements/RA - NEC TurboGrafx-16
     archive_org_identifier: tg16_library
     romsfun_slug: turbografx
     romsretro_slug: turbografx-16
@@ -2583,6 +2711,8 @@ consoles:
     igdb_platform_id: 70
     dat_system: GCE - Vectrex
     minerva_path: No-Intro/GCE - Vectrex
+    minerva_paths:
+      - RetroAchievements/RA - GCE Vectrex
     archive_org_identifier: vectrex
     romsfun_slug: vectrex
     romsretro_slug: vectrex
@@ -2646,6 +2776,9 @@ consoles:
     igdb_platform_id: 87
     dat_system: Nintendo - Virtual Boy
     minerva_path: No-Intro/Nintendo - Virtual Boy
+    minerva_paths:
+      - RetroAchievements/RA - Nintendo Virtual Boy
+      - T-En Collection/Nintendo - Virtual Boy [T-En] Collection
     archive_org_identifier:
     romsfun_slug: nintendo-virtual-boy
     romsretro_slug: virtual-boy
@@ -2709,6 +2842,8 @@ consoles:
     igdb_platform_id: 5
     dat_system: Nintendo - Wii
     minerva_path: Redump/Nintendo - Wii - NKit RVZ [zstd-19-128k]
+    minerva_paths:
+      - T-En Collection/Nintendo - Wii [T-En] Collection
     archive_org_identifier:
     romsfun_slug: nintendo-wii
     romsretro_slug: wii
@@ -2792,6 +2927,9 @@ consoles:
     igdb_platform_id: 57
     dat_system: Bandai - WonderSwan
     minerva_path: No-Intro/Bandai - WonderSwan
+    minerva_paths:
+      - RetroAchievements/RA - WonderSwan
+      - T-En Collection/Bandai - WonderSwan [T-En] Collection
     archive_org_identifier: wonderswan-library
     romsfun_slug: wonderswan
     romsretro_slug: wonderswan
@@ -2807,6 +2945,8 @@ consoles:
     igdb_platform_id: 123
     dat_system: Bandai - WonderSwan Color
     minerva_path: No-Intro/Bandai - WonderSwan Color
+    minerva_paths:
+      - T-En Collection/Bandai - WonderSwan Color [T-En] Collection
     archive_org_identifier: wonderswan-library
     romsfun_slug: wonderswan-color
     romsretro_slug: wonderswan-color

@@ -52,6 +52,10 @@ def get_wantlist(
     ) or config.region_priority
     source_entry = dict(console_entry)
     source_entry["exclude_keywords"] = list(config.exclude_keywords)
+    minerva_path = source_entry.get("minerva_path")
+    has_minerva_path = isinstance(minerva_path, str) and bool(
+        minerva_path.strip().strip("/")
+    )
 
     titles: list[str] = []
     for source_name in source_order:
@@ -70,7 +74,9 @@ def get_wantlist(
                 exc,
             )
             continue
-        if fetched:
+        if fetched or (
+            source_name in {"minerva_http", "minerva_torrent"} and has_minerva_path
+        ):
             titles = list(fetched)
             log.info(
                 "ranker: %s supplied %d titles for %s",

@@ -27,7 +27,11 @@ a = Analysis(
     pathex=[str(ROOT)],
     binaries=curl_binaries,
     datas=datas,
-    hiddenimports=collect_submodules("retrofetch.sources") + curl_hidden,
+    hiddenimports=(
+        collect_submodules("retrofetch.sources")
+        + collect_submodules("selectolax")
+        + curl_hidden
+    ),
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

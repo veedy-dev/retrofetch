@@ -125,7 +125,7 @@ class RomsfunSource:
                 continue
             seen.add(title.lower())
             titles.append(title)
-            if len(titles) >= limit:
+            if limit > 0 and len(titles) >= limit:
                 break
         return titles
 

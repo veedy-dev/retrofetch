@@ -13,7 +13,7 @@ import httpx
 from retrofetch.catalog import CatalogEntry, CatalogFile
 from retrofetch.events import EventBus
 from retrofetch.sources import DownloadCandidate, SourceUnavailable
-from retrofetch.sources.minerva_http import MinervaHttpSource
+from retrofetch.sources.minerva_http import MinervaHttpSource, effective_minerva_paths
 
 _SOURCE_NAME = "minerva_torrent"
 _ASSETS_BASE_URL = "https://minerva-archive.org/assets/Minerva_Myrient_v0.3/"
@@ -250,16 +250,18 @@ class MinervaTorrentSource:
     def __init__(self, console_entry: dict[str, Any], enabled: bool = True):
         self.console_entry = console_entry
         self.enabled = enabled
-        self.minerva_path = console_entry.get("minerva_path")
+        minerva_paths = effective_minerva_paths(console_entry)
+        self.minerva_path = minerva_paths[0] if minerva_paths else None
         self.timeout = 30.0
         self._catalog = MinervaHttpSource(console_entry)
         self._metadata_cache: dict[str, _TorrentMetadata] = {}
 
-    def _collection_torrent_url(self) -> str | None:
-        if not self.minerva_path:
+    def _collection_torrent_url(self, minerva_path: str | None = None) -> str | None:
+        selected_path = self.minerva_path if minerva_path is None else minerva_path
+        if not selected_path:
             return None
         try:
-            path = _safe_path(str(self.minerva_path).strip("/"))
+            path = _safe_path(str(selected_path).strip("/"))
         except ValueError as exc:
             raise SourceUnavailable(
                 f"Invalid Minerva path: {exc}", retryable=False
@@ -330,8 +332,8 @@ class MinervaTorrentSource:
 
     def _get_entry(
         self, title: str, region_priority: list[str] | None
-    ) -> CatalogEntry | None:
-        return self._catalog.get_entry(title, region_priority)
+    ) -> tuple[str, CatalogEntry] | None:
+        return self._catalog.get_entry_with_root(title, region_priority)
 
     def find_url_for_game(
         self,
@@ -340,15 +342,18 @@ class MinervaTorrentSource:
     ) -> DownloadCandidate | None:
         if not self.enabled:
             return None
-        entry = self._get_entry(title, region_priority)
-        if entry is None or len(entry.files) != 1:
+        resolved = self._get_entry(title, region_priority)
+        if resolved is None:
+            return None
+        root, entry = resolved
+        if len(entry.files) != 1:
             return None
         full_path = self._catalog_full_path(entry.files[0])
-        torrent_url = self._collection_torrent_url()
+        torrent_url = self._collection_torrent_url(root)
         if full_path is None or torrent_url is None:
             return None
 
-        root = _safe_path(str(self.minerva_path).strip("/"))
+        root = _safe_path(root.strip("/"))
         if full_path != root and not full_path.startswith(root + "/"):
             raise SourceUnavailable(
                 "Minerva catalog path escapes its console collection", retryable=False

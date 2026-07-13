@@ -5,7 +5,7 @@ from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.screen import Screen
-from textual.widgets import Input, Label
+from textual.widgets import Button, Input, Label
 
 from retrofetch import _resources
 from retrofetch.config import Config, _yaml_rt, load_config, save_config
@@ -50,6 +50,9 @@ def test_first_run_setup_saves_to_requested_user_path(scratch_path) -> None:
         bios_root=scratch_path / "default-bios",
         cache_dir=config_path.parent / "cache",
         log_file=config_path.parent / "retrofetch.log",
+        default_limit=120,
+        max_concurrent_downloads=4,
+        region_priority=["Europe", "Japan"],
     )
     screen = SetupScreen(config_path=config_path, defaults=defaults)
     app = _SettingsApp(screen, defaults, config_path)
@@ -57,12 +60,23 @@ def test_first_run_setup_saves_to_requested_user_path(scratch_path) -> None:
     chosen_bios = scratch_path / "My BIOS"
 
     async def run() -> None:
-        async with app.run_test() as pilot:
+        async with app.run_test(size=(120, 30)) as pilot:
+            assert {field.id for field in screen.query(Input)} == {
+                "setup-roms-root",
+                "setup-bios-root",
+            }
             screen.query_one("#setup-roms-root", Input).value = str(chosen_roms)
             screen.query_one("#setup-bios-root", Input).value = str(chosen_bios)
-            screen.query_one("#setup-limit", Input).value = "120"
-            screen.query_one("#setup-concurrency", Input).value = "4"
-            screen.action_save()
+            assert screen.query_one("#setup-save", Button)
+            assert all(
+                screen.query_one(selector, Button).flat
+                for selector in (
+                    "#setup-browse-roms",
+                    "#setup-browse-bios",
+                    "#setup-cancel",
+                )
+            )
+            await pilot.click("#setup-save")
             await pilot.pause()
 
     asyncio.run(run())
@@ -71,7 +85,46 @@ def test_first_run_setup_saves_to_requested_user_path(scratch_path) -> None:
     assert saved.bios_root == chosen_bios
     assert saved.default_limit == 120
     assert saved.max_concurrent_downloads == 4
+    assert saved.region_priority == ["Europe", "Japan"]
     assert chosen_roms.is_dir() and chosen_bios.is_dir()
+
+
+def test_setup_browse_buttons_update_paths(scratch_path, monkeypatch) -> None:
+    config_path = scratch_path / "user-data" / "config.yml"
+    defaults = Config(
+        roms_root=scratch_path / "default-roms",
+        bios_root=scratch_path / "default-bios",
+        cache_dir=config_path.parent / "cache",
+        log_file=config_path.parent / "retrofetch.log",
+    )
+    chosen_roms = scratch_path / "Picked Games"
+    chosen_bios = scratch_path / "Picked BIOS"
+    selections = iter((str(chosen_roms), str(chosen_bios)))
+    calls: list[tuple[str, str]] = []
+
+    def choose(*, initial_dir: str, title: str) -> str:
+        calls.append((initial_dir, title))
+        return next(selections)
+
+    monkeypatch.setattr("retrofetch.tui.screens.setup.select_directory", choose)
+    screen = SetupScreen(config_path=config_path, defaults=defaults)
+    app = _SettingsApp(screen, defaults, config_path)
+    values: dict[str, str] = {}
+
+    async def run() -> None:
+        async with app.run_test(size=(120, 30)) as pilot:
+            await pilot.click("#setup-browse-roms")
+            await pilot.click("#setup-browse-bios")
+            await pilot.pause()
+            values["roms"] = screen.query_one("#setup-roms-root", Input).value
+            values["bios"] = screen.query_one("#setup-bios-root", Input).value
+
+    asyncio.run(run())
+    assert values == {"roms": str(chosen_roms), "bios": str(chosen_bios)}
+    assert calls == [
+        (str(defaults.roms_root), "Choose games folder"),
+        (str(defaults.bios_root), "Choose BIOS folder"),
+    ]
 
 
 def test_settings_save_applies_runtime_paths_immediately(scratch_path) -> None:

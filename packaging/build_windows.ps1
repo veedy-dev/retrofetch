@@ -26,6 +26,11 @@ try {
     if (-not (Test-Path -LiteralPath $PortableExe)) {
         throw "Portable executable was not created."
     }
+    $ArchiveViewer = Join-Path $Root ".venv\Scripts\pyi-archive_viewer.exe"
+    $ArchiveListing = (& $ArchiveViewer -l $PortableExe | Out-String)
+    if ($LASTEXITCODE -ne 0 -or $ArchiveListing -notmatch 'selectolax[\\/].*parser') {
+        throw "Portable executable is missing the selectolax parser."
+    }
     $Version = (& $PortableExe --version).Trim()
     if ($LASTEXITCODE -ne 0 -or $Version -notmatch '^retrofetch \d+\.\d+\.\d+$') {
         throw "Portable executable smoke test failed: $Version"

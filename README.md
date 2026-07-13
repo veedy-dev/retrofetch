@@ -24,6 +24,8 @@
 
 Retrofetch brings game listings from supported archives and online providers into one easy app. Search for a console, choose the games you want, review the list, and follow every download without jumping between websites or setting up each transfer by hand.
 
+For each supported console, Retrofetch checks its main No-Intro or Redump collection first, then verified extra collections for more titles.
+
 > **Please note:** Retrofetch does not host or include games or firmware. Downloads come from independent third-party providers, so availability can change. You are responsible for following local laws and each provider's terms.
 
 ![Retrofetch library browser](docs/assets/screenshot-library.png)
@@ -104,6 +106,7 @@ The available controls are always shown at the bottom of the app.
 ## Notes
 
 - Some games may disappear when a provider removes a file or becomes unavailable.
+- Large arcade and bulk archive collections are not enabled yet because they need separate handling.
 - Torrent speed depends on the people sharing that file, not only your internet speed.
 - Retrofetch resets game selections when reopened, but keeps active and completed downloads.
 - Files are marked verified only when matching verification data is available.
