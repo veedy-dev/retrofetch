@@ -43,7 +43,6 @@ class WantlistPreview(Static):
     Display-only. Public API:
     - show_idle()
     - show_loading(console)
-    - show_unloaded(console)
     - show_ready(console, titles, state_counts)
     - show_failed(console, reason)
     - next_page() / prev_page()
@@ -124,16 +123,6 @@ class WantlistPreview(Static):
         self._current_console = console
         self._set_body(f"Fetching games for {console}...\n\n{_HINTS}")
         self.loading = True
-
-    def show_unloaded(self, console: str) -> None:
-        self.loading = False
-        self._reset_state()
-        self.state = "IDLE"
-        self._current_console = console
-        self._set_body(
-            f"{console}\n\nTitles are not cached yet.\n"
-            f"Press g to select and load games, or r to refresh now.\n\n{_HINTS}"
-        )
 
     def show_ready(
         self,

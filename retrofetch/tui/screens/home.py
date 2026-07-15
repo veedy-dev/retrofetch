@@ -1,11 +1,11 @@
-"""Home screen: 178-console sidebar + cache-only wantlist preview panel.
+"""Home screen: 178-console sidebar + cache-first wantlist preview panel.
 
-The main panel mirrors the highlighted console from the local wantlist cache.
-Cold catalog retrieval happens only after an explicit refresh or in Select Games.
+The main panel mirrors the highlighted console. Cache hits render immediately;
+cold catalogs load automatically after a short navigation debounce.
 
 Keybindings:
 - ``Enter`` on a class A/B/C row -> ``ConsoleSelected`` (existing).
-- Any highlight (arrow keys, page up/down) -> cache-only preview.
+- Any highlight (arrow keys, page up/down) -> cached or debounced live preview.
 - ``Ctrl+R`` -> invalidate cache for the highlighted console and re-fetch.
 
 Workers all carry explicit ``group=`` names per Metis K.6:
@@ -72,15 +72,18 @@ class HomeScreen(Screen[None]):
         Binding("right", "preview_next_page", "Next page", show=True, key_display="->"),
     ]
 
-    # Debounce for filter Input.Changed events, per T2 spike.
+    # Debounce input and cold preview fetches so rapid navigation stays cheap.
     _FILTER_DEBOUNCE_MS = 200
+    _PREVIEW_DEBOUNCE_MS = 250
+
     def __init__(self) -> None:
         super().__init__()
         self._all_items: list[tuple[dict[str, Any], ListItem]] = []
         self._filter_timer = None
+        self._preview_timer = None
         self._last_highlighted: str | None = None
         self._preview_generation = 0
-        self._preview_fetching: set[str] = set()
+        self._preview_fetching: dict[str, int] = {}
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -168,7 +171,7 @@ class HomeScreen(Screen[None]):
             item.display = matches
 
     # ------------------------------------------------------------------
-    # Cache-only preview; explicit refresh owns network work
+    # Cache-first preview
     # ------------------------------------------------------------------
     def _lookup_entry(self, shortname: str) -> dict[str, Any] | None:
         entries = self.app.consoles_yml.get("consoles", []) or []
@@ -205,10 +208,14 @@ class HomeScreen(Screen[None]):
         return True
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
-        """Show cached titles without starting network work from navigation."""
+        """Show cached titles or fetch them after navigation settles."""
         item = event.item
         preview = self.query_one("#main-panel", WantlistPreview)
+        if self._preview_timer is not None:
+            self._preview_timer.stop()
+            self._preview_timer = None
         self._preview_generation += 1
+        request_id = self._preview_generation
 
         if item is None:
             self._last_highlighted = None
@@ -234,7 +241,22 @@ class HomeScreen(Screen[None]):
         self._last_highlighted = shortname
 
         if not self._show_cached_preview(shortname):
-            preview.show_unloaded(shortname)
+            preview.show_loading(shortname)
+            self._preview_timer = self.set_timer(
+                self._PREVIEW_DEBOUNCE_MS / 1000.0,
+                lambda e=entry, r=request_id: self._start_preview_fetch(e, r),
+            )
+
+    def _start_preview_fetch(self, entry: dict[str, Any], request_id: int) -> None:
+        shortname = str(entry.get("shortname", ""))
+        if (
+            not shortname
+            or shortname != self._last_highlighted
+            or shortname in self._preview_fetching
+        ):
+            return
+        self._preview_fetching[shortname] = request_id
+        self._kick_preview_fetch(entry, request_id)
 
     @work(thread=True, group="preview")
     def _kick_preview_fetch(self, entry: dict[str, Any], request_id: int) -> None:
@@ -257,13 +279,10 @@ class HomeScreen(Screen[None]):
     # Message handlers - run on UI thread
     # ------------------------------------------------------------------
     def on_wantlist_ready(self, message: WantlistReady) -> None:
-        self._preview_fetching.discard(message.console)
-        # Only accept if the highlighted console still matches, to avoid
-        # stale worker results clobbering a newer highlight.
-        if (
-            message.console != self._last_highlighted
-            or message.request_id != self._preview_generation
-        ):
+        if self._preview_fetching.get(message.console) != message.request_id:
+            return
+        del self._preview_fetching[message.console]
+        if message.console != self._last_highlighted:
             return
         counts = self._compute_state_counts(message.console)
         preview = self.query_one("#main-panel", WantlistPreview)
@@ -276,11 +295,10 @@ class HomeScreen(Screen[None]):
         )
 
     def on_wantlist_failed(self, message: WantlistFailed) -> None:
-        self._preview_fetching.discard(message.console)
-        if (
-            message.console != self._last_highlighted
-            or message.request_id != self._preview_generation
-        ):
+        if self._preview_fetching.get(message.console) != message.request_id:
+            return
+        del self._preview_fetching[message.console]
+        if message.console != self._last_highlighted:
             return
         try:
             self.app.show_toast(f"Fetch failed: {message.reason}", severity="warning")
@@ -316,7 +334,6 @@ class HomeScreen(Screen[None]):
         entry = self._lookup_entry(shortname)
         if entry is None:
             return
-        self._preview_fetching.add(shortname)
         cache_dir = self.app.config.cache_dir
         try:
             invalidate(cache_dir, shortname)
@@ -327,7 +344,10 @@ class HomeScreen(Screen[None]):
         preview.show_loading(shortname)
         self._preview_generation += 1
         request_id = self._preview_generation
-        self._kick_preview_fetch(entry, request_id)
+        if self._preview_timer is not None:
+            self._preview_timer.stop()
+            self._preview_timer = None
+        self._start_preview_fetch(entry, request_id)
 
     # ------------------------------------------------------------------
     # Existing Enter handler (unchanged)
@@ -382,7 +402,9 @@ class HomeScreen(Screen[None]):
             if self._last_highlighted != shortname:
                 return
             if not self._show_cached_preview(shortname):
-                self.query_one("#main-panel", WantlistPreview).show_unloaded(shortname)
+                self.query_one("#main-panel", WantlistPreview).show_loading(shortname)
+                self._preview_generation += 1
+                self._start_preview_fetch(entry, self._preview_generation)
 
         self.app.push_screen(
             WantlistScreen(console_entry=entry, override=override), refresh_preview
