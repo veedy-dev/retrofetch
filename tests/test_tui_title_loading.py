@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import threading
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
@@ -16,7 +17,7 @@ from retrofetch.tui.screens import home as home_module
 from retrofetch.tui.screens.home import HomeScreen
 from retrofetch.tui.screens.wantlist import WantlistScreen
 from retrofetch.tui.widgets.wantlist_preview import WantlistPreview
-from retrofetch.wantlist_cache import load_cached
+from retrofetch.wantlist_cache import CachedWantlist, load_cached, save_cached
 
 
 class _PreviewApp(App[None]):
@@ -60,6 +61,7 @@ def test_explicit_home_refresh_requests_the_complete_catalog(monkeypatch) -> Non
     )
 
     assert captured["limit"] == 0
+    assert captured["force_refresh"] is False
     assert len(messages) == 1
     assert isinstance(messages[0], WantlistReady)
     assert messages[0].titles == titles
@@ -140,6 +142,76 @@ def test_home_cache_miss_automatically_loads_catalog(monkeypatch, scratch_path) 
     assert calls == 1
 
 
+def test_fresh_cache_renders_then_refreshes_once_per_session(
+    monkeypatch, scratch_path
+) -> None:
+    cache_dir = scratch_path / ".cache"
+    save_cached(
+        cache_dir,
+        CachedWantlist(
+            console="ps2",
+            titles=["Old Game"],
+            cached_at=datetime.now(timezone.utc),
+            ttl_hours=24,
+        ),
+    )
+    started = threading.Event()
+    release = threading.Event()
+    force_refreshes: list[bool] = []
+
+    def fetch(**kwargs):
+        force_refreshes.append(bool(kwargs["force_refresh"]))
+        started.set()
+        assert release.wait(5)
+        return ["New Game"], False
+
+    monkeypatch.setattr(home_module, "get_or_fetch_wantlist", fetch)
+    screen = HomeScreen()
+    monkeypatch.setattr(screen, "_PREVIEW_DEBOUNCE_MS", 1)
+    app = _HomeApp(screen)
+    app.config = Config(roms_root=scratch_path / "ROMs", cache_dir=cache_dir)
+    app.consoles_yml = {
+        "consoles": [
+            {
+                "shortname": "ps2",
+                "display_name": "Sony PlayStation 2",
+                "class": "B",
+                "minerva_path": "Redump/Sony - PlayStation 2",
+            }
+        ]
+    }
+
+    async def run() -> None:
+        async with app.run_test() as pilot:
+            try:
+                list_view = screen.query_one("#console-list", ListView)
+                list_view.index = 0
+                for _ in range(100):
+                    if started.is_set():
+                        break
+                    await pilot.pause(0.01)
+                assert started.is_set()
+                preview = screen.query_one("#main-panel", WantlistPreview)
+                assert preview.state == "READY"
+                assert "Old Game" in str(preview.render())
+
+                release.set()
+                for _ in range(100):
+                    if "New Game" in str(preview.render()):
+                        break
+                    await pilot.pause(0.01)
+                assert "New Game" in str(preview.render())
+
+                item = cast(ListItem, list_view.children[0])
+                screen.on_list_view_highlighted(ListView.Highlighted(list_view, item))
+                await pilot.pause(0.05)
+            finally:
+                release.set()
+
+    asyncio.run(run())
+    assert force_refreshes == [True]
+
+
 def test_rapid_highlight_before_debounce_only_starts_latest_console(
     monkeypatch, scratch_path
 ) -> None:
@@ -159,7 +231,7 @@ def test_rapid_highlight_before_debounce_only_starts_latest_console(
 
     async def run() -> None:
         async with app.run_test() as pilot:
-            def record_fetch(entry, request_id) -> None:
+            def record_fetch(entry, request_id, _force_refresh=False) -> None:
                 calls.append((str(entry["shortname"]), request_id))
                 started.set()
 
@@ -226,12 +298,12 @@ def test_overlapping_console_workers_accept_revisited_console_only(
             start_attempts: list[str] = []
             start_fetch = screen._start_preview_fetch
 
-            def observe_start(entry, request_id) -> None:
+            def observe_start(entry, request_id, force_refresh=False) -> None:
                 shortname = str(entry["shortname"])
                 start_attempts.append(shortname)
                 if start_attempts.count("psp") == 2:
                     psp_revisited.set()
-                start_fetch(entry, request_id)
+                start_fetch(entry, request_id, force_refresh)
 
             monkeypatch.setattr(screen, "_start_preview_fetch", observe_start)
 
@@ -417,5 +489,27 @@ def test_only_current_request_can_update_the_same_console() -> None:
             assert preview.state == "READY"
             assert preview.loading is False
             assert "Current Game" in str(preview.render())
+
+    asyncio.run(run())
+
+
+def test_failed_background_refresh_keeps_cached_preview() -> None:
+    screen = HomeScreen()
+    app = _HomeApp(screen)
+
+    async def run() -> None:
+        async with app.run_test():
+            preview = screen.query_one("#main-panel", WantlistPreview)
+            preview.show_ready("psx", ["Cached Game"], {})
+            screen._last_highlighted = "psx"
+            screen._preview_fetching["psx"] = 3
+
+            screen.on_wantlist_failed(
+                WantlistFailed("psx", "offline", request_id=3)
+            )
+
+            assert preview.state == "READY"
+            assert "Cached Game" in str(preview.render())
+            assert not screen._preview_fetching
 
     asyncio.run(run())

@@ -58,6 +58,36 @@ def test_current_cache_roundtrips(scratch_path) -> None:
     assert loaded.titles == ["Game A", "Game B"]
 
 
+def test_force_refresh_replaces_fresh_cache(monkeypatch, scratch_path) -> None:
+    save_cached(
+        scratch_path,
+        CachedWantlist(
+            console="psp",
+            titles=["Old Game"],
+            cached_at=datetime.now(timezone.utc),
+            ttl_hours=24,
+        ),
+    )
+    monkeypatch.setattr(
+        "retrofetch.ranker.get_wantlist", lambda **_kwargs: ["New Game"]
+    )
+    config = Config(roms_root=scratch_path / "ROMs", cache_dir=scratch_path)
+
+    titles, from_cache = get_or_fetch_wantlist(
+        {"shortname": "psp", "class": "B"},
+        None,
+        config,
+        0,
+        force_refresh=True,
+    )
+
+    assert titles == ["New Game"]
+    assert from_cache is False
+    loaded = load_cached(scratch_path, "psp")
+    assert loaded is not None
+    assert loaded.titles == ["New Game"]
+
+
 def test_first_fetch_and_cache_hit_have_identical_full_projection(
     monkeypatch, scratch_path
 ) -> None:

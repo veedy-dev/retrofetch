@@ -256,14 +256,19 @@ def get_or_fetch_wantlist(
     overrides: ConsoleOverride | None,
     config: Config,
     limit: int | None,
+    force_refresh: bool = False,
 ) -> tuple[list[str], bool]:
     shortname = str(console_entry.get("shortname", ""))
     cache_dir = Path(config.cache_dir)
     key = _cache_key(cache_dir, shortname)
     with _fetch_lock(key):
-        hit = load_cached(cache_dir, shortname)
-        if hit is not None:
-            return (project_wantlist_titles(list(hit.titles), overrides, limit), True)
+        if not force_refresh:
+            hit = load_cached(cache_dir, shortname)
+            if hit is not None:
+                return (
+                    project_wantlist_titles(list(hit.titles), overrides, limit),
+                    True,
+                )
 
         with _fetch_state_lock:
             generation = _cache_generations.get(key, 0)

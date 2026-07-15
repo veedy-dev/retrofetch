@@ -1,7 +1,7 @@
 """Home screen: 178-console sidebar + cache-first wantlist preview panel.
 
-The main panel mirrors the highlighted console. Cache hits render immediately;
-cold catalogs load automatically after a short navigation debounce.
+The main panel mirrors the highlighted console. Cache hits render immediately,
+then refresh once per session; cold catalogs load after a short debounce.
 
 Keybindings:
 - ``Enter`` on a class A/B/C row -> ``ConsoleSelected`` (existing).
@@ -84,6 +84,7 @@ class HomeScreen(Screen[None]):
         self._last_highlighted: str | None = None
         self._preview_generation = 0
         self._preview_fetching: dict[str, int] = {}
+        self._preview_refreshed: set[str] = set()
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -240,14 +241,23 @@ class HomeScreen(Screen[None]):
             return
         self._last_highlighted = shortname
 
-        if not self._show_cached_preview(shortname):
+        cached = self._show_cached_preview(shortname)
+        if not cached:
             preview.show_loading(shortname)
+        if not cached or shortname not in self._preview_refreshed:
             self._preview_timer = self.set_timer(
                 self._PREVIEW_DEBOUNCE_MS / 1000.0,
-                lambda e=entry, r=request_id: self._start_preview_fetch(e, r),
+                lambda e=entry, r=request_id, refresh=cached: self._start_preview_fetch(
+                    e, r, refresh
+                ),
             )
 
-    def _start_preview_fetch(self, entry: dict[str, Any], request_id: int) -> None:
+    def _start_preview_fetch(
+        self,
+        entry: dict[str, Any],
+        request_id: int,
+        force_refresh: bool = False,
+    ) -> None:
         shortname = str(entry.get("shortname", ""))
         if (
             not shortname
@@ -255,11 +265,17 @@ class HomeScreen(Screen[None]):
             or shortname in self._preview_fetching
         ):
             return
+        self._preview_refreshed.add(shortname)
         self._preview_fetching[shortname] = request_id
-        self._kick_preview_fetch(entry, request_id)
+        self._kick_preview_fetch(entry, request_id, force_refresh)
 
     @work(thread=True, group="preview")
-    def _kick_preview_fetch(self, entry: dict[str, Any], request_id: int) -> None:
+    def _kick_preview_fetch(
+        self,
+        entry: dict[str, Any],
+        request_id: int,
+        force_refresh: bool = False,
+    ) -> None:
         """Background worker: fetch wantlist via cache, post result to self."""
         shortname = str(entry.get("shortname", ""))
         override = self.app.overrides.get(shortname)
@@ -269,9 +285,15 @@ class HomeScreen(Screen[None]):
                 overrides=override,
                 config=self.app.config,
                 limit=0,
+                force_refresh=force_refresh,
             )
         except Exception as exc:
             self.post_message(WantlistFailed(shortname, str(exc), request_id))
+            return
+        if force_refresh and not titles:
+            self.post_message(
+                WantlistFailed(shortname, "refresh returned no titles", request_id)
+            )
             return
         self.post_message(WantlistReady(shortname, titles, from_cache, request_id))
 
@@ -279,7 +301,11 @@ class HomeScreen(Screen[None]):
     # Message handlers - run on UI thread
     # ------------------------------------------------------------------
     def on_wantlist_ready(self, message: WantlistReady) -> None:
-        if self._preview_fetching.get(message.console) != message.request_id:
+        request_id = message.request_id
+        if (
+            request_id is None
+            or self._preview_fetching.get(message.console) != request_id
+        ):
             return
         del self._preview_fetching[message.console]
         if message.console != self._last_highlighted:
@@ -295,17 +321,23 @@ class HomeScreen(Screen[None]):
         )
 
     def on_wantlist_failed(self, message: WantlistFailed) -> None:
-        if self._preview_fetching.get(message.console) != message.request_id:
+        request_id = message.request_id
+        if (
+            request_id is None
+            or self._preview_fetching.get(message.console) != request_id
+        ):
             return
         del self._preview_fetching[message.console]
         if message.console != self._last_highlighted:
+            return
+        preview = self.query_one("#main-panel", WantlistPreview)
+        if preview.state == "READY":
             return
         try:
             self.app.show_toast(f"Fetch failed: {message.reason}", severity="warning")
         except Exception:
             # shutdown race: toast container may already be gone
             pass
-        preview = self.query_one("#main-panel", WantlistPreview)
         preview.show_failed(message.console, message.reason)
 
     # ------------------------------------------------------------------
