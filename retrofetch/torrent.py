@@ -28,6 +28,7 @@ from retrofetch.qbittorrent import (
     QBITTORRENT_PACKAGE_ID,
     QBITTORRENT_PUBLISHER,
     QBITTORRENT_VERSION,
+    MAX_METADATA_BYTES,
     ManagedProcess,
     ExclusiveFileLock,
     QbittorrentClient,
@@ -384,6 +385,16 @@ def _item_update(
             save_state(state, roms_root)
 
 
+def _persist_state(
+    state: State, state_lock: threading.Lock | None, roms_root: Path
+) -> None:
+    if state_lock is None:
+        save_state(state, roms_root)
+        return
+    with state_lock:
+        save_state(state, roms_root)
+
+
 def _job_tags(job: dict[str, Any]) -> set[str]:
     raw = job.get("tags", "")
     return {part.strip() for part in str(raw).split(",") if part.strip()}
@@ -691,13 +702,22 @@ class TorrentCoordinator:
     @staticmethod
     def _candidate_fields(
         candidate: DownloadCandidate,
-    ) -> tuple[str, str, str, int, str]:
+    ) -> tuple[str, str, str, int, str, bytes | None]:
         extra = candidate.extra or {}
         url = extra.get("torrent_url")
         infohash = extra.get("torrent_infohash")
         path = extra.get("torrent_internal_path")
         index = extra.get("torrent_file_index")
         name = extra.get("torrent_name")
+        content = extra.get("torrent_bytes")
+        if content is not None and (
+            not isinstance(content, bytes)
+            or not content
+            or len(content) > MAX_METADATA_BYTES
+        ):
+            raise SourceUnavailable(
+                "torrent candidate metadata bytes are invalid", retryable=False
+            )
         if (
             not isinstance(url, str)
             or not isinstance(infohash, str)
@@ -711,7 +731,7 @@ class TorrentCoordinator:
             raise SourceUnavailable(
                 "torrent candidate metadata is incomplete", retryable=False
             )
-        return url, infohash, path, index, name
+        return url, infohash, path, index, name, content
 
     @staticmethod
     def _qbittorrent_file_path(torrent_name: str, internal_path: str) -> str:
@@ -742,8 +762,11 @@ class TorrentCoordinator:
         game: str,
         item_id: str,
         bus: EventBus | None,
+        content: bytes | None = None,
     ):
         self._emit_stage(bus, game, item_id, "Reading metadata")
+        if content is not None:
+            return client.parse_metadata(content)
         deadline = time.monotonic() + 30
         while True:
             metadata = client.fetch_metadata(url)
@@ -885,27 +908,49 @@ class TorrentCoordinator:
             raise ValueError("torrent batch item IDs must be unique")
 
         results: dict[str, PreparedTorrent | SourceUnavailable] = {}
-        parsed: list[tuple[TorrentBatchItem, str, str, str, int, str]] = []
+        parsed: list[
+            tuple[TorrentBatchItem, str, str, str, int, str, bytes | None]
+        ] = []
         for item in items:
             try:
-                url, infohash, internal_path, file_index, torrent_name = (
+                url, infohash, internal_path, file_index, torrent_name, content = (
                     self._candidate_fields(item.candidate)
                 )
             except SourceUnavailable as exc:
                 results[item.item_id] = exc
                 continue
             parsed.append(
-                (item, url, infohash, internal_path, file_index, torrent_name)
+                (
+                    item,
+                    url,
+                    infohash,
+                    internal_path,
+                    file_index,
+                    torrent_name,
+                    content,
+                )
             )
         if not parsed:
             return results
 
         parsed.sort(key=lambda parsed_item: parsed_item[0].item_id)
-        first_item, _first_url, infohash, _path, _index, _first_name = parsed[0]
+        (
+            first_item,
+            _first_url,
+            infohash,
+            _path,
+            _index,
+            _first_name,
+            _first_content,
+        ) = parsed[0]
         target_root = Path(first_item.target_dir).resolve()
-        eligible: list[tuple[TorrentBatchItem, str, str, str, int, str]] = []
+        eligible: list[
+            tuple[TorrentBatchItem, str, str, str, int, str, bytes | None]
+        ] = []
         for parsed_item in parsed:
-            item, _item_url, item_hash, _path, _index, _item_name = parsed_item
+            item, _item_url, item_hash, _path, _index, _item_name, _content = (
+                parsed_item
+            )
             if item_hash != infohash or Path(item.target_dir).resolve() != target_root:
                 results[item.item_id] = SourceUnavailable(
                     "torrent batch candidates do not share one exact collection",
@@ -916,6 +961,10 @@ class TorrentCoordinator:
         if not eligible:
             return results
         url = min(parsed_item[1] for parsed_item in eligible)
+        torrent_bytes = next(
+            (parsed_item[6] for parsed_item in eligible if parsed_item[6] is not None),
+            None,
+        )
 
         active_ids = [item.item_id for item, *_fields in eligible]
         try:
@@ -935,11 +984,18 @@ class TorrentCoordinator:
                     first_item.game_title,
                     first_item.item_id,
                     None,
+                    torrent_bytes,
                 )
                 self._raise_if_stopped()
                 if metadata.infohash_v1 != infohash:
                     raise SourceUnavailable(
                         "qBittorrent torrent infohash does not match MiNERVA",
+                        retryable=False,
+                    )
+                job_id = metadata.torrent_id
+                if job_id is None:
+                    raise SourceUnavailable(
+                        "qBittorrent torrent metadata has no cache identity",
                         retryable=False,
                     )
                 if metadata.name is None:
@@ -964,6 +1020,7 @@ class TorrentCoordinator:
                     internal_path,
                     file_index,
                     candidate_name,
+                    _content,
                 ) in eligible:
                     if candidate_name != torrent_name:
                         results[item.item_id] = SourceUnavailable(
@@ -1079,7 +1136,6 @@ class TorrentCoordinator:
                         state_lock,
                         item.game_title,
                         item.item_id,
-                        roms_root=self.config.roms_root,
                         status="pending",
                         provider=item.candidate.source,
                         infohash=infohash,
@@ -1094,25 +1150,28 @@ class TorrentCoordinator:
                         outcome=None,
                         verification=None,
                     )
+                _persist_state(state, state_lock, self.config.roms_root)
 
-                job = self._owned_job(client.info(infohash), infohash, tag, stage_root)
+                job = self._owned_job(client.info(job_id), job_id, tag, stage_root)
+                existing_job = job is not None
                 if job is None:
                     self._raise_if_stopped()
+                    add_source = job_id if torrent_bytes is not None else url
                     added = client.add(
-                        url,
+                        add_source,
                         file_priorities=priorities,
                         save_path=stage_root,
                         tag=tag,
                         stopped=True,
                     )
-                    if added.failure_count or infohash not in added.torrent_ids:
+                    if added.failure_count or job_id not in added.torrent_ids:
                         raise SourceUnavailable(
                             "qBittorrent refused the exact torrent job"
                         )
                     deadline = time.monotonic() + 10
                     while job is None and time.monotonic() < deadline:
                         job = self._owned_job(
-                            client.info(infohash), infohash, tag, stage_root
+                            client.info(job_id), job_id, tag, stage_root
                         )
                         if job is None:
                             time.sleep(0.1)
@@ -1121,15 +1180,16 @@ class TorrentCoordinator:
                             "qBittorrent did not attach the added torrent"
                         )
 
-                client.stop(infohash)
-                self._wait_stopped(client, infohash, timeout=2)
-                all_indexes = list(range(len(priorities)))
-                for start in range(0, len(all_indexes), 500):
-                    client.set_file_priority(
-                        infohash, all_indexes[start : start + 500], 0
-                    )
-                client.set_file_priority(infohash, sorted(selected_indexes), 1)
-                files = client.files(infohash)
+                client.stop(job_id)
+                self._wait_stopped(client, job_id, timeout=2)
+                if existing_job:
+                    all_indexes = list(range(len(priorities)))
+                    for start in range(0, len(all_indexes), 500):
+                        client.set_file_priority(
+                            job_id, all_indexes[start : start + 500], 0
+                        )
+                    client.set_file_priority(job_id, sorted(selected_indexes), 1)
+                files = client.files(job_id)
                 for (
                     _item,
                     _path,
@@ -1152,7 +1212,6 @@ class TorrentCoordinator:
                         state_lock,
                         item.game_title,
                         item.item_id,
-                        roms_root=self.config.roms_root,
                         phase="attached",
                     )
                     self._emit_stage(
@@ -1161,15 +1220,16 @@ class TorrentCoordinator:
                         item.item_id,
                         "Starting torrent",
                     )
+                _persist_state(state, state_lock, self.config.roms_root)
 
-                self._active.add(infohash)
+                self._active.add(job_id)
                 safe_to_release = False
                 stage_reported = False
                 stopped_polls = 0
                 try:
-                    client.set_share_limits(infohash)
+                    client.set_share_limits(job_id)
                     limited_job = self._owned_job(
-                        client.info(infohash), infohash, tag, stage_root
+                        client.info(job_id), job_id, tag, stage_root
                     )
                     if limited_job is None or not all(
                         isinstance(limited_job.get(key), (int, float))
@@ -1194,37 +1254,37 @@ class TorrentCoordinator:
                             retryable=False,
                         )
                     if self.stop_event is not None and self.stop_event.is_set():
-                        client.stop(infohash)
-                        self._wait_stopped(client, infohash, timeout=2)
+                        client.stop(job_id)
+                        self._wait_stopped(client, job_id, timeout=2)
                         safe_to_release = True
                         raise DownloadCancelled("torrent stopped before starting")
-                    client.start(infohash)
+                    client.start(job_id)
                     for item, *_fields in selections.values():
                         _item_update(
                             state,
                             state_lock,
                             item.game_title,
                             item.item_id,
-                            roms_root=self.config.roms_root,
                             phase="downloading",
                         )
+                    _persist_state(state, state_lock, self.config.roms_root)
                     while True:
                         if self.stop_event is not None and self.stop_event.is_set():
-                            client.stop(infohash)
+                            client.stop(job_id)
                             for item, *_fields in selections.values():
                                 _item_update(
                                     state,
                                     state_lock,
                                     item.game_title,
                                     item.item_id,
-                                    roms_root=self.config.roms_root,
                                     status="cancelled",
                                     phase="terminal",
                                     outcome="cancelled",
                                     verification="not_applicable",
                                 )
+                            _persist_state(state, state_lock, self.config.roms_root)
                             try:
-                                self._wait_stopped(client, infohash, timeout=2)
+                                self._wait_stopped(client, job_id, timeout=2)
                                 safe_to_release = True
                             except SourceUnavailable:
                                 raise DownloadCancelled(
@@ -1232,13 +1292,15 @@ class TorrentCoordinator:
                                 ) from None
                             raise DownloadCancelled("torrent stopped; rerun to resume")
                         job = self._owned_job(
-                            client.info(infohash), infohash, tag, stage_root
+                            client.info(job_id), job_id, tag, stage_root
                         )
                         if job is None:
                             raise SourceUnavailable(
                                 "qBittorrent torrent job disappeared"
                             )
-                        current_files = client.files(infohash)
+                        current_files = client.files(
+                            job_id, indexes=sorted(selected_indexes)
+                        )
                         speed_bps = max(0, int(job.get("dlspeed", 0) or 0))
                         eta_seconds = max(0, int(job.get("eta", 0) or 0))
                         if eta_seconds >= 8_640_000:
@@ -1274,7 +1336,6 @@ class TorrentCoordinator:
                                 state_lock,
                                 item.game_title,
                                 item.item_id,
-                                roms_root=self.config.roms_root,
                                 completed_bytes=downloaded,
                             )
                             if event_bus is not None:
@@ -1292,6 +1353,7 @@ class TorrentCoordinator:
                                         peers=peers,
                                     )
                                 )
+                        _persist_state(state, state_lock, self.config.roms_root)
                         if complete:
                             break
                         state_folded = str(job.get("state", "")).casefold()
@@ -1331,10 +1393,10 @@ class TorrentCoordinator:
                             item.item_id,
                             "Finalizing",
                         )
-                    client.stop(infohash)
-                    self._wait_stopped(client, infohash, timeout=5)
+                    client.stop(job_id)
+                    self._wait_stopped(client, job_id, timeout=5)
                     final_job = self._owned_job(
-                        client.info(infohash), infohash, tag, stage_root
+                        client.info(job_id), job_id, tag, stage_root
                     )
                     if final_job is None:
                         raise SourceUnavailable(
@@ -1363,11 +1425,11 @@ class TorrentCoordinator:
                             )
                         staged_paths.add(resolved)
                         prepared[item_id] = PreparedTorrent(staged, stage_root)
-                    client.delete(infohash)
+                    client.delete(job_id)
                     deadline = time.monotonic() + 5
-                    while client.info(infohash) and time.monotonic() < deadline:
+                    while client.info(job_id) and time.monotonic() < deadline:
                         time.sleep(0.1)
-                    if client.info(infohash):
+                    if client.info(job_id):
                         raise SourceUnavailable(
                             "qBittorrent job did not detach cleanly"
                         )
@@ -1377,16 +1439,16 @@ class TorrentCoordinator:
                             state_lock,
                             item.game_title,
                             item.item_id,
-                            roms_root=self.config.roms_root,
                             phase="finalizing",
                         )
+                    _persist_state(state, state_lock, self.config.roms_root)
                     safe_to_release = True
                 except DownloadCancelled:
                     raise
                 except Exception as exc:
                     try:
-                        client.stop(infohash)
-                        self._wait_stopped(client, infohash, timeout=2)
+                        client.stop(job_id)
+                        self._wait_stopped(client, job_id, timeout=2)
                         safe_to_release = True
                     except (QbittorrentError, SourceUnavailable):
                         pass
@@ -1397,7 +1459,7 @@ class TorrentCoordinator:
                     raise
                 finally:
                     if safe_to_release:
-                        self._active.discard(infohash)
+                        self._active.discard(job_id)
         except QbittorrentError as exc:
             error: SourceUnavailable = SourceUnavailable(
                 f"qBittorrent transfer failed: {exc}"

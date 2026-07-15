@@ -8,18 +8,21 @@ from typing import Any
 import pytest
 
 from retrofetch.config import Config
+from retrofetch.dat import DatEntry, GameEntry as DatGameEntry
+from retrofetch.dispatcher import DeferredTorrentAttempt, SourceDispatcher
 from retrofetch.downloader import DownloadResult
 from retrofetch.events import DatLoadDoneEvent, EventBus
 from retrofetch.orchestrator import run_console
 from retrofetch.sources import DownloadCandidate
-from retrofetch.dispatcher import DeferredTorrentAttempt, SourceDispatcher
 from retrofetch.state import State
 from retrofetch.torrent import PreparedTorrent
 
 
 class _ConcurrentFakeDispatcher:
     active = 0
+    created = 0
     max_active = 0
+    seen_games: list[Any] = []
     lock = threading.Lock()
 
     def __init__(
@@ -31,6 +34,8 @@ class _ConcurrentFakeDispatcher:
         self.console_entry = console_entry
         self.source_names = source_names
         self.allow_torrent = allow_torrent
+        with self.lock:
+            type(self).created += 1
 
     def dispatch_download(
         self,
@@ -50,6 +55,7 @@ class _ConcurrentFakeDispatcher:
         with self.lock:
             type(self).active += 1
             type(self).max_active = max(type(self).max_active, type(self).active)
+            type(self).seen_games.append(game)
         try:
             time.sleep(0.05)
             return DownloadResult(status="acquired", filename=f"{game_title}.zip")
@@ -60,7 +66,9 @@ class _ConcurrentFakeDispatcher:
 
 def test_run_console_uses_bounded_concurrency(monkeypatch, scratch_path) -> None:
     _ConcurrentFakeDispatcher.active = 0
+    _ConcurrentFakeDispatcher.created = 0
     _ConcurrentFakeDispatcher.max_active = 0
+    _ConcurrentFakeDispatcher.seen_games = []
     monkeypatch.setattr(
         "retrofetch.orchestrator.SourceDispatcher",
         _ConcurrentFakeDispatcher,
@@ -81,6 +89,84 @@ def test_run_console_uses_bounded_concurrency(monkeypatch, scratch_path) -> None
 
     assert report.acquired == 6
     assert 2 <= _ConcurrentFakeDispatcher.max_active <= 3
+    assert _ConcurrentFakeDispatcher.created == _ConcurrentFakeDispatcher.max_active
+
+
+def test_run_console_reuses_dispatcher_in_serial_mode(
+    monkeypatch, scratch_path
+) -> None:
+    _ConcurrentFakeDispatcher.active = 0
+    _ConcurrentFakeDispatcher.created = 0
+    _ConcurrentFakeDispatcher.max_active = 0
+    _ConcurrentFakeDispatcher.seen_games = []
+    monkeypatch.setattr(
+        "retrofetch.orchestrator.SourceDispatcher",
+        _ConcurrentFakeDispatcher,
+    )
+    config = Config(
+        roms_root=scratch_path,
+        source_fallback_by_class={"A": ["fake"]},
+        max_concurrent_downloads=1,
+    )
+
+    report = run_console(
+        {"shortname": "fake", "class": "A"},
+        [f"Game {idx}" for idx in range(4)],
+        config,
+        allow_torrent=False,
+        consoles_yml={"consoles": [{"shortname": "fake", "class": "A"}]},
+    )
+
+    assert report.acquired == 4
+    assert _ConcurrentFakeDispatcher.created == 1
+
+
+def test_run_console_builds_dat_lookup_once(monkeypatch, scratch_path) -> None:
+    dat_games = [
+        DatGameEntry(name=f"Game {idx}", description="", category=None)
+        for idx in range(50)
+    ]
+    titles = [f"Game {idx}" for idx in range(40, 50)]
+    strip_calls = 0
+
+    from retrofetch import orchestrator as orchestrator_mod
+
+    original_strip_disc_marker = orchestrator_mod.strip_disc_marker
+
+    def counted_strip_disc_marker(title: str) -> str:
+        nonlocal strip_calls
+        strip_calls += 1
+        return original_strip_disc_marker(title)
+
+    _ConcurrentFakeDispatcher.active = 0
+    _ConcurrentFakeDispatcher.created = 0
+    _ConcurrentFakeDispatcher.max_active = 0
+    _ConcurrentFakeDispatcher.seen_games = []
+    monkeypatch.setattr(orchestrator_mod, "SourceDispatcher", _ConcurrentFakeDispatcher)
+    monkeypatch.setattr(orchestrator_mod, "strip_disc_marker", counted_strip_disc_marker)
+    monkeypatch.setattr(
+        orchestrator_mod,
+        "find_dat_for_console",
+        lambda shortname, consoles_yml, dats_dir: scratch_path / "fake.dat",
+    )
+    monkeypatch.setattr(orchestrator_mod, "parse_dat", lambda path: DatEntry(dat_games))
+    config = Config(
+        roms_root=scratch_path,
+        source_fallback_by_class={"A": ["fake"]},
+        max_concurrent_downloads=1,
+    )
+
+    report = run_console(
+        {"shortname": "fake", "class": "A"},
+        titles,
+        config,
+        allow_torrent=False,
+        consoles_yml={"consoles": [{"shortname": "fake", "class": "A"}]},
+    )
+
+    assert report.acquired == len(titles)
+    assert strip_calls == len(dat_games) + len(titles)
+    assert [game.name for game in _ConcurrentFakeDispatcher.seen_games] == titles
 
 
 def test_pre_cancelled_run_reports_every_item_cancelled(scratch_path) -> None:

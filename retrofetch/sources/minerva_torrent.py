@@ -254,7 +254,7 @@ class MinervaTorrentSource:
         self.minerva_path = minerva_paths[0] if minerva_paths else None
         self.timeout = 30.0
         self._catalog = MinervaHttpSource(console_entry)
-        self._metadata_cache: dict[str, _TorrentMetadata] = {}
+        self._metadata_cache: dict[str, tuple[bytes, _TorrentMetadata]] = {}
 
     def _collection_torrent_url(self, minerva_path: str | None = None) -> str | None:
         selected_path = self.minerva_path if minerva_path is None else minerva_path
@@ -322,13 +322,14 @@ class MinervaTorrentSource:
         except (httpx.HTTPError, ValueError) as exc:
             raise SourceUnavailable(f"Minerva torrent unreachable: {exc}") from exc
 
-    def _metadata(self, url: str) -> _TorrentMetadata:
+    def _metadata(self, url: str) -> tuple[bytes, _TorrentMetadata]:
         cached = self._metadata_cache.get(url)
         if cached is not None:
             return cached
-        metadata = _parse_torrent_metadata(self._fetch_torrent_bytes(url))
-        self._metadata_cache[url] = metadata
-        return metadata
+        content = self._fetch_torrent_bytes(url)
+        cached = (content, _parse_torrent_metadata(content))
+        self._metadata_cache[url] = cached
+        return cached
 
     def _get_entry(
         self, title: str, region_priority: list[str] | None
@@ -358,7 +359,7 @@ class MinervaTorrentSource:
             raise SourceUnavailable(
                 "Minerva catalog path escapes its console collection", retryable=False
             )
-        metadata = self._metadata(torrent_url)
+        torrent_bytes, metadata = self._metadata(torrent_url)
         matches = [
             file
             for file in metadata.files
@@ -386,6 +387,7 @@ class MinervaTorrentSource:
                 "torrent_internal_path": artifact.path,
                 "torrent_file_index": artifact.index,
                 "torrent_name": metadata.name,
+                "torrent_bytes": torrent_bytes,
                 "minerva_full_path": full_path,
                 "minerva_path": root,
                 "catalog_title": entry.title,

@@ -188,6 +188,7 @@ def test_real_exact_file_cancel_resume_and_finalize() -> None:
                     "torrent_internal_path": "wanted.bin",
                     "torrent_file_index": 0,
                     "torrent_name": "fixture",
+                    "torrent_bytes": torrent_bytes,
                 },
             )
             coordinator = TorrentCoordinator(

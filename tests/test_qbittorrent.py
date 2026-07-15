@@ -185,6 +185,21 @@ def test_metadata_allows_unrelated_windows_case_collisions() -> None:
     assert len(metadata.files) == 2
 
 
+def test_files_can_request_only_selected_indexes() -> None:
+    def handle(request: httpx.Request) -> httpx.Response:
+        assert request.url.params["hash"] == HASH
+        assert request.url.params["indexes"] == "1|3"
+        return httpx.Response(200, json=[{"index": 1}, {"index": 3}])
+
+    with _client(httpx.MockTransport(handle)) as client:
+        assert [entry["index"] for entry in client.files(HASH, indexes=[1, 3])] == [
+            1,
+            3,
+        ]
+        with pytest.raises(ValueError, match="non-negative"):
+            client.files(HASH, indexes=[])
+
+
 def test_http_metadata_pending_response_may_be_empty() -> None:
     client = _client(httpx.MockTransport(lambda _: httpx.Response(202, json={})))
     with client:

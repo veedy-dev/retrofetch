@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Vertical  # pyright: ignore[reportMissingImports]
@@ -13,8 +12,6 @@ from textual.widgets import Footer, Header, Label, OptionList  # pyright: ignore
 from retrofetch.config import ConsoleOverride
 from retrofetch.ranker import resolve_download_set
 from retrofetch.tui.screens.download_progress import DownloadProgressScreen
-from retrofetch.tui.messages import WantlistFailed, WantlistReady
-from retrofetch.wantlist_cache import get_or_fetch_wantlist
 
 
 class DownloadConfirmScreen(Screen[None]):
@@ -51,41 +48,26 @@ class DownloadConfirmScreen(Screen[None]):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#summary-line", Label).update("Loading games...")
-        self._kick_load()
-
-    @work(thread=True, exclusive=True, group="confirm-load")
-    def _kick_load(self) -> None:
-        try:
-            titles, from_cache = get_or_fetch_wantlist(
-                console_entry=self.console_entry,
-                overrides=self.override,
-                config=self.app.config,  # pyright: ignore[reportAttributeAccessIssue]
-                limit=0,
+        override = self.override
+        if override is None or not override.include:
+            self._loaded = True
+            self.query_one("#summary-line", Label).update(
+                "No games selected. Press Esc, then press g to select games."
             )
-        except Exception as exc:
-            self.post_message(WantlistFailed(self.shortname, str(exc)))
             return
-        self.post_message(WantlistReady(self.shortname, titles, from_cache))
 
-    def _has_selection(self) -> bool:
-        return self.override is not None and bool(self.override.include)
-
-    def on_wantlist_ready(self, message: WantlistReady) -> None:
-        if message.console != self.shortname:
-            return
         limit = (
-            self.override.limit
-            if (self.override and self.override.limit)
+            override.limit
+            if override.limit
             else self.app.config.default_limit  # pyright: ignore[reportAttributeAccessIssue]
         )
         self._wantlist = resolve_download_set(
-            list(message.titles),
-            self.override,
+            list(override.include),
+            override,
             limit,
         )
         self._loaded = True
-        if not self._has_selection():
+        if not self._wantlist:
             self.query_one("#summary-line", Label).update(
                 "No games selected. Press Esc, then press g to select games."
             )
@@ -100,14 +82,8 @@ class DownloadConfirmScreen(Screen[None]):
         preview.highlighted = 0
         preview.focus()
 
-    def on_wantlist_failed(self, message: WantlistFailed) -> None:
-        if message.console != self.shortname:
-            return
-        self._wantlist = []
-        self._loaded = False
-        self.query_one("#summary-line", Label).update(
-            f"Failed to load games: {message.reason}"
-        )
+    def _has_selection(self) -> bool:
+        return self.override is not None and bool(self.override.include)
 
     def action_start(self) -> None:
         if not self._has_selection():

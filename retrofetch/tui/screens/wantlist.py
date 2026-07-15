@@ -44,7 +44,7 @@ class WantlistScreen(Screen[None]):
         Binding("pagedown", "page_next", "Next page", show=True),
     ]
 
-    _PAGE_SIZE = 500
+    _PAGE_SIZE = 100
 
     def __init__(
         self,
@@ -66,6 +66,7 @@ class WantlistScreen(Screen[None]):
         self._status = ""
         self._primary_source: str = "-"
         self._loaded = False
+        self._loading = False
         self._spinner_timer = None
         self._spinner_index: int = 0
 
@@ -88,7 +89,13 @@ class WantlistScreen(Screen[None]):
         klass = str(self.console_entry.get("class", "?"))
         ranking_sources = self.app.config.ranking_sources_by_class.get(klass, [])  # pyright: ignore[reportAttributeAccessIssue]
         self._primary_source = ranking_sources[0] if ranking_sources else "-"
-        # Kick background loader. UI remains responsive; handler fills the table.
+        self._begin_load()
+
+    def _begin_load(self) -> None:
+        if self._loading:
+            return
+        self._loading = True
+        self._loaded = False
         self._start_loading_spinner()
         self._kick_load()
 
@@ -142,6 +149,7 @@ class WantlistScreen(Screen[None]):
     def on_wantlist_ready(self, message: WantlistReady) -> None:
         if message.console != self.shortname:
             return
+        self._loading = False
         self._wantlist = list(message.titles)
         self._apply_title_filter(reset_page=True)
         self._loaded = True
@@ -153,6 +161,7 @@ class WantlistScreen(Screen[None]):
     def on_wantlist_failed(self, message: WantlistFailed) -> None:
         if message.console != self.shortname:
             return
+        self._loading = False
         self._wantlist = []
         self._filtered_wantlist = []
         self._loaded = True
@@ -297,6 +306,8 @@ class WantlistScreen(Screen[None]):
 
     def action_refresh(self) -> None:
         """Force a fresh fetch: invalidate cache + re-kick the worker."""
+        if self._loading:
+            return
         from retrofetch.wantlist_cache import invalidate
 
         try:
@@ -309,8 +320,7 @@ class WantlistScreen(Screen[None]):
         self._loaded = False
         self._page = 0
         self._render_page()
-        self._start_loading_spinner()
-        self._kick_load()
+        self._begin_load()
 
     def action_cancel(self) -> None:
         self.dismiss(None)

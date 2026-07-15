@@ -40,7 +40,6 @@ from retrofetch.config import (
     load_config,
     load_overrides,
 )
-from retrofetch.wantlist_cache import invalidate_all
 
 
 class RetrofetchApp(App[int]):
@@ -98,7 +97,6 @@ class RetrofetchApp(App[int]):
             self._open_fresh_home()
 
     def _open_fresh_home(self) -> None:
-        invalidate_all(self.config.cache_dir)
         self.overrides = {
             shortname: override.model_copy(update={"include": [], "exclude": []})
             for shortname, override in self.overrides.items()

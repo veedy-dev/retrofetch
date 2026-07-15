@@ -1,13 +1,11 @@
-"""Home screen: 178-console sidebar + filter + live wantlist preview panel.
+"""Home screen: 178-console sidebar + cache-only wantlist preview panel.
 
-The main panel is a :class:`WantlistPreview` that mirrors the currently
-highlighted console. Highlight changes fire a 400ms-debounced worker that
-reads :mod:`retrofetch.wantlist_cache` first (fresh hit skips network) and
-falls through to ``ranker.get_wantlist`` on miss / stale / malformed cache.
+The main panel mirrors the highlighted console from the local wantlist cache.
+Cold catalog retrieval happens only after an explicit refresh or in Select Games.
 
 Keybindings:
 - ``Enter`` on a class A/B/C row -> ``ConsoleSelected`` (existing).
-- Any highlight (arrow keys, page up/down) -> debounced preview fetch.
+- Any highlight (arrow keys, page up/down) -> cache-only preview.
 - ``Ctrl+R`` -> invalidate cache for the highlighted console and re-fetch.
 
 Workers all carry explicit ``group=`` names per Metis K.6:
@@ -76,18 +74,13 @@ class HomeScreen(Screen[None]):
 
     # Debounce for filter Input.Changed events, per T2 spike.
     _FILTER_DEBOUNCE_MS = 200
-    # Debounce for ListView.Highlighted auto-fetch, per UX plan (U6).
-    _PREVIEW_DEBOUNCE_MS = 400
-
     def __init__(self) -> None:
         super().__init__()
         self._all_items: list[tuple[dict[str, Any], ListItem]] = []
         self._filter_timer = None
-        self._preview_timer = None
-        # Remember the last shortname whose preview we started to kick, so
-        # Ctrl+R can re-trigger the same console without asking the ListView.
         self._last_highlighted: str | None = None
         self._preview_generation = 0
+        self._preview_fetching: set[str] = set()
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -175,7 +168,7 @@ class HomeScreen(Screen[None]):
             item.display = matches
 
     # ------------------------------------------------------------------
-    # Preview highlight debounce + auto-fetch (U6)
+    # Cache-only preview; explicit refresh owns network work
     # ------------------------------------------------------------------
     def _lookup_entry(self, shortname: str) -> dict[str, Any] | None:
         entries = self.app.consoles_yml.get("consoles", []) or []
@@ -200,16 +193,22 @@ class HomeScreen(Screen[None]):
             counts[status] = counts.get(status, 0) + 1
         return counts
 
+    def _show_cached_preview(self, shortname: str) -> bool:
+        hit = load_cached(self.app.config.cache_dir, shortname)
+        if hit is None:
+            return False
+        override = self.app.overrides.get(shortname)
+        titles = project_wantlist_titles(list(hit.titles), override, 0)
+        self.query_one("#main-panel", WantlistPreview).show_ready(
+            shortname, titles, self._compute_state_counts(shortname)
+        )
+        return True
+
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
-        """Debounced auto-fetch on console highlight (arrow keys / page up/down)."""
+        """Show cached titles without starting network work from navigation."""
         item = event.item
         preview = self.query_one("#main-panel", WantlistPreview)
-        # Cancel pending debounce regardless of class - new highlight supersedes.
-        if self._preview_timer is not None:
-            self._preview_timer.stop()
-            self._preview_timer = None
         self._preview_generation += 1
-        request_id = self._preview_generation
 
         if item is None:
             self._last_highlighted = None
@@ -234,26 +233,10 @@ class HomeScreen(Screen[None]):
             return
         self._last_highlighted = shortname
 
-        # Cache fast-path: a fresh JSON read is O(few ms), safe on UI thread.
-        cache_dir = self.app.config.cache_dir
-        hit = load_cached(cache_dir, shortname)
-        if hit is not None:
-            override = self.app.overrides.get(shortname)
-            titles = project_wantlist_titles(
-                list(hit.titles), override, 0
-            )
-            counts = self._compute_state_counts(shortname)
-            preview.show_ready(shortname, titles, counts)
-            return
+        if not self._show_cached_preview(shortname):
+            preview.show_unloaded(shortname)
 
-        # Miss / stale -> show loading + schedule debounced worker.
-        preview.show_loading(shortname)
-        self._preview_timer = self.set_timer(
-            self._PREVIEW_DEBOUNCE_MS / 1000.0,
-            lambda e=entry, r=request_id: self._kick_preview_fetch(e, r),
-        )
-
-    @work(thread=True, exclusive=True, group="preview")
+    @work(thread=True, group="preview")
     def _kick_preview_fetch(self, entry: dict[str, Any], request_id: int) -> None:
         """Background worker: fetch wantlist via cache, post result to self."""
         shortname = str(entry.get("shortname", ""))
@@ -274,6 +257,7 @@ class HomeScreen(Screen[None]):
     # Message handlers - run on UI thread
     # ------------------------------------------------------------------
     def on_wantlist_ready(self, message: WantlistReady) -> None:
+        self._preview_fetching.discard(message.console)
         # Only accept if the highlighted console still matches, to avoid
         # stale worker results clobbering a newer highlight.
         if (
@@ -292,6 +276,7 @@ class HomeScreen(Screen[None]):
         )
 
     def on_wantlist_failed(self, message: WantlistFailed) -> None:
+        self._preview_fetching.discard(message.console)
         if (
             message.console != self._last_highlighted
             or message.request_id != self._preview_generation
@@ -326,9 +311,12 @@ class HomeScreen(Screen[None]):
         shortname = self._last_highlighted
         if not shortname:
             return
+        if shortname in self._preview_fetching:
+            return
         entry = self._lookup_entry(shortname)
         if entry is None:
             return
+        self._preview_fetching.add(shortname)
         cache_dir = self.app.config.cache_dir
         try:
             invalidate(cache_dir, shortname)
@@ -339,10 +327,6 @@ class HomeScreen(Screen[None]):
         preview.show_loading(shortname)
         self._preview_generation += 1
         request_id = self._preview_generation
-        if self._preview_timer is not None:
-            self._preview_timer.stop()
-            self._preview_timer = None
-        # Retry kicks immediately (no debounce - user explicitly asked).
         self._kick_preview_fetch(entry, request_id)
 
     # ------------------------------------------------------------------
@@ -394,7 +378,15 @@ class HomeScreen(Screen[None]):
         override = self.app.overrides.get(shortname)
         from retrofetch.tui.screens.wantlist import WantlistScreen
 
-        self.app.push_screen(WantlistScreen(console_entry=entry, override=override))
+        def refresh_preview(_: None) -> None:
+            if self._last_highlighted != shortname:
+                return
+            if not self._show_cached_preview(shortname):
+                self.query_one("#main-panel", WantlistPreview).show_unloaded(shortname)
+
+        self.app.push_screen(
+            WantlistScreen(console_entry=entry, override=override), refresh_preview
+        )
 
     def action_open_download(self) -> None:
         list_view = self.query_one("#console-list", ListView)

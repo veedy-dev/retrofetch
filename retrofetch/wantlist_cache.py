@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import shutil
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -27,6 +28,10 @@ DEFAULT_TTL_HOURS: int = 24
 # dim across a normal session.
 EMPTY_MARKER_TTL_HOURS: int = 2
 
+_fetch_state_lock = threading.Lock()
+_fetch_locks: dict[tuple[Path, str], threading.Lock] = {}
+_cache_generations: dict[tuple[Path, str], int] = {}
+
 
 @dataclass(frozen=True)
 class CachedWantlist:
@@ -38,6 +43,15 @@ class CachedWantlist:
 
 def cache_path(cache_dir: Path, console_shortname: str) -> Path:
     return cache_dir / "wantlists" / f"{console_shortname}.json"
+
+
+def _cache_key(cache_dir: Path, shortname: str) -> tuple[Path, str]:
+    return (Path(cache_dir).resolve(), shortname)
+
+
+def _fetch_lock(key: tuple[Path, str]) -> threading.Lock:
+    with _fetch_state_lock:
+        return _fetch_locks.setdefault(key, threading.Lock())
 
 
 def _parse_cached(raw: Any) -> CachedWantlist | None:
@@ -122,11 +136,14 @@ def save_cached(cache_dir: Path, entry: CachedWantlist) -> None:
 
 
 def invalidate(cache_dir: Path, shortname: str) -> None:
+    key = _cache_key(cache_dir, shortname)
+    with _fetch_state_lock:
+        _cache_generations[key] = _cache_generations.get(key, 0) + 1
     path = cache_path(cache_dir, shortname)
     try:
         path.unlink()
     except FileNotFoundError:
-        return
+        pass
     # Clearing the cache also clears any prior empty-marker so the user's
     # manual retry starts from a clean slate.
     clear_empty_marker(cache_dir, shortname)
@@ -242,49 +259,56 @@ def get_or_fetch_wantlist(
 ) -> tuple[list[str], bool]:
     shortname = str(console_entry.get("shortname", ""))
     cache_dir = Path(config.cache_dir)
-    hit = load_cached(cache_dir, shortname)
-    if hit is not None:
-        return (project_wantlist_titles(list(hit.titles), overrides, limit), True)
+    key = _cache_key(cache_dir, shortname)
+    with _fetch_lock(key):
+        hit = load_cached(cache_dir, shortname)
+        if hit is not None:
+            return (project_wantlist_titles(list(hit.titles), overrides, limit), True)
 
-    ranking_override = None
-    if overrides is not None and overrides.region_priority:
-        ranking_override = ConsoleOverride(
-            region_priority=list(overrides.region_priority)
+        with _fetch_state_lock:
+            generation = _cache_generations.get(key, 0)
+
+        ranking_override = None
+        if overrides is not None and overrides.region_priority:
+            ranking_override = ConsoleOverride(
+                region_priority=list(overrides.region_priority)
+            )
+
+        # Re-resolve through the module to honor monkey-patches at call time.
+        # Always fetch/cache the full raw browse catalog; callers apply their own
+        # preview/download limits so a short preview never poisons the cache.
+        raw_titles = _ranker.get_wantlist(
+            console_entry=console_entry,
+            overrides=ranking_override,
+            config=config,
+            limit=0,
         )
+        titles = [html.unescape(t) for t in raw_titles]
 
-    # Re-resolve through the module to honor monkey-patches at call time.
-    # Always fetch/cache the full raw browse catalog; callers apply their own
-    # preview/download limits so a short preview never poisons the cache.
-    raw_titles = _ranker.get_wantlist(
-        console_entry=console_entry,
-        overrides=ranking_override,
-        config=config,
-        limit=0,
-    )
-    # Decode HTML entities from scraped HTML sources.
-    titles = [html.unescape(t) for t in raw_titles]
+        # Cache writes share the invalidation generation so an older threaded
+        # fetch can never restore data after the user requested a refresh.
+        with _fetch_state_lock:
+            current = _cache_generations.get(key, 0)
+            if generation == current:
+                if titles:
+                    clear_empty_marker(cache_dir, shortname)
+                    entry = CachedWantlist(
+                        console=shortname,
+                        titles=list(titles),
+                        cached_at=datetime.now(timezone.utc),
+                        ttl_hours=DEFAULT_TTL_HOURS,
+                    )
+                    try:
+                        save_cached(cache_dir, entry)
+                    except OSError as exc:
+                        log.warning(
+                            "wantlist_cache: save failed for %s: %s", shortname, exc
+                        )
+                else:
+                    log.info(
+                        "wantlist_cache: empty result for %s - recording short-lived marker",
+                        shortname,
+                    )
+                    mark_empty(cache_dir, shortname)
 
-    # We do NOT persist an empty wantlist as a normal cache file (that would
-    # block retries for 24h). Instead we write a short-lived empty-marker so
-    # the UI can grey out the sidebar row without permanently pinning it.
-    if not titles:
-        log.info(
-            "wantlist_cache: empty result for %s - recording short-lived marker",
-            shortname,
-        )
-        mark_empty(cache_dir, shortname)
-        return (titles, False)
-    # Non-empty result: clear any stale empty-marker from a prior run so the
-    # UI recovers the green state immediately.
-    clear_empty_marker(cache_dir, shortname)
-    entry = CachedWantlist(
-        console=shortname,
-        titles=list(titles),
-        cached_at=datetime.now(timezone.utc),
-        ttl_hours=DEFAULT_TTL_HOURS,
-    )
-    try:
-        save_cached(cache_dir, entry)
-    except OSError as exc:
-        log.warning("wantlist_cache: save failed for %s: %s", shortname, exc)
-    return (project_wantlist_titles(titles, overrides, limit), False)
+        return (project_wantlist_titles(titles, overrides, limit), False)

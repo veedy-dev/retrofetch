@@ -48,7 +48,12 @@ Input#filter {
 #main-panel {
     background: $surface;
     padding: 1 2;
+    height: 1fr;
     width: 1fr;
+}
+
+#main-panel > LoadingIndicator {
+    background: $surface;
 }
 
 /* Ensure list rows have some breathing room and a highlight on focus. */

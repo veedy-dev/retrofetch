@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from textual.app import App
-from textual.widgets import Input, OptionList
+from textual.widgets import Input, Label, OptionList
 
 from retrofetch.config import Config, ConsoleOverride
 from retrofetch.sources.bios import BiosFile
@@ -27,6 +27,10 @@ class _TuiApp(App[None]):
 
     async def on_mount(self) -> None:
         await self.push_screen(self.screen_to_push)
+
+
+def _fail_fetch(**_kwargs) -> None:
+    raise AssertionError("unexpected fetch")
 
 
 def test_home_availability_accepts_minerva_only_source() -> None:
@@ -86,7 +90,8 @@ def test_console_search_shortcut_filters_without_inserting_slash() -> None:
 def test_download_confirm_has_no_tui_dry_run_and_starts_real(monkeypatch) -> None:
     monkeypatch.setattr(
         "retrofetch.tui.screens.download_confirm.get_or_fetch_wantlist",
-        lambda **kwargs: (["A", "B"], False),
+        _fail_fetch,
+        raising=False,
     )
     screen = DownloadConfirmScreen(
         console_entry={"shortname": "nes", "class": "A"},
@@ -113,7 +118,8 @@ def test_download_confirm_has_no_tui_dry_run_and_starts_real(monkeypatch) -> Non
 def test_download_confirm_removes_game_from_current_queue(monkeypatch) -> None:
     monkeypatch.setattr(
         "retrofetch.tui.screens.download_confirm.get_or_fetch_wantlist",
-        lambda **kwargs: (["A", "B", "C"], True),
+        _fail_fetch,
+        raising=False,
     )
     monkeypatch.setattr(DownloadProgressScreen, "on_mount", lambda self: None)
     override = ConsoleOverride(include=["A", "B", "C"])
@@ -143,6 +149,30 @@ def test_download_confirm_removes_game_from_current_queue(monkeypatch) -> None:
             await pilot.pause()
             assert isinstance(app.screen, DownloadProgressScreen)
             assert app.screen.wantlist == ["C"]
+
+    asyncio.run(run())
+
+
+def test_download_confirm_without_selection_prompts_without_fetch(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "retrofetch.tui.screens.download_confirm.get_or_fetch_wantlist",
+        _fail_fetch,
+        raising=False,
+    )
+    screen = DownloadConfirmScreen(
+        console_entry={"shortname": "nes", "class": "A"},
+        override=ConsoleOverride(),
+    )
+    app = _TuiApp(screen)
+
+    async def run() -> None:
+        async with app.run_test():
+            assert screen._loaded
+            assert screen._wantlist == []
+            assert (
+                str(screen.query_one("#summary-line", Label).render())
+                == "No games selected. Press Esc, then press g to select games."
+            )
 
     asyncio.run(run())
 

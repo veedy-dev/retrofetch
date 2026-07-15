@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -12,6 +14,7 @@ from retrofetch.wantlist_cache import (
     CachedWantlist,
     cache_path,
     get_or_fetch_wantlist,
+    invalidate,
     is_recently_empty,
     load_cached,
     mark_empty,
@@ -84,6 +87,111 @@ def test_first_fetch_and_cache_hit_have_identical_full_projection(
     assert len(first) == 1002
 
 
+def test_concurrent_cache_misses_share_one_fetch(monkeypatch, scratch_path) -> None:
+    started = threading.Event()
+    release = threading.Event()
+    second_started = threading.Event()
+    calls = 0
+
+    def fetch(**_kwargs):
+        nonlocal calls
+        calls += 1
+        started.set()
+        assert release.wait(2)
+        return ["Game"]
+
+    monkeypatch.setattr("retrofetch.ranker.get_wantlist", fetch)
+    config = Config(roms_root=scratch_path / "ROMs", cache_dir=scratch_path)
+    entry: dict[str, object] = {"shortname": "psp", "class": "B"}
+
+    def fetch_second():
+        second_started.set()
+        return get_or_fetch_wantlist(entry, None, config, 0)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(get_or_fetch_wantlist, entry, None, config, 0)
+        assert started.wait(1)
+        second = pool.submit(fetch_second)
+        assert second_started.wait(1)
+        release.set()
+        results = [first.result(), second.result()]
+
+    assert calls == 1
+    assert sorted(from_cache for _titles, from_cache in results) == [False, True]
+
+
+def test_different_consoles_fetch_independently(monkeypatch, scratch_path) -> None:
+    psp_started = threading.Event()
+    release_psp = threading.Event()
+
+    def fetch(*, console_entry, **_kwargs):
+        shortname = console_entry["shortname"]
+        if shortname == "psp":
+            psp_started.set()
+            assert release_psp.wait(2)
+        return [str(shortname)]
+
+    monkeypatch.setattr("retrofetch.ranker.get_wantlist", fetch)
+    config = Config(roms_root=scratch_path / "ROMs", cache_dir=scratch_path)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        psp = pool.submit(
+            get_or_fetch_wantlist,
+            {"shortname": "psp", "class": "B"},
+            None,
+            config,
+            0,
+        )
+        assert psp_started.wait(1)
+        ps2 = pool.submit(
+            get_or_fetch_wantlist,
+            {"shortname": "ps2", "class": "B"},
+            None,
+            config,
+            0,
+        )
+        try:
+            assert ps2.result(timeout=1)[0] == ["ps2"]
+        finally:
+            release_psp.set()
+        assert psp.result()[0] == ["psp"]
+
+
+def test_invalidation_prevents_an_older_fetch_from_restoring_cache(
+    monkeypatch, scratch_path
+) -> None:
+    first_started = threading.Event()
+    release_first = threading.Event()
+    calls = 0
+
+    def fetch(**_kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            first_started.set()
+            assert release_first.wait(2)
+            return ["Old Game"]
+        return ["New Game"]
+
+    monkeypatch.setattr("retrofetch.ranker.get_wantlist", fetch)
+    config = Config(roms_root=scratch_path / "ROMs", cache_dir=scratch_path)
+    entry: dict[str, object] = {"shortname": "psp", "class": "B"}
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        old = pool.submit(get_or_fetch_wantlist, entry, None, config, 0)
+        assert first_started.wait(1)
+        invalidate(scratch_path, "psp")
+        new = pool.submit(get_or_fetch_wantlist, entry, None, config, 0)
+        release_first.set()
+        assert old.result()[0] == ["Old Game"]
+        assert new.result()[0] == ["New Game"]
+
+    cached = load_cached(scratch_path, "psp")
+    assert calls == 2
+    assert cached is not None
+    assert cached.titles == ["New Game"]
+
+
 def test_corrupt_cache_is_miss_and_deleted(scratch_path) -> None:
     path = cache_path(scratch_path, "psp")
     path.parent.mkdir(parents=True)
@@ -115,6 +223,17 @@ def test_empty_marker_is_versioned(scratch_path) -> None:
     assert is_recently_empty(scratch_path, "psp") is True
 
 
+def test_invalidate_clears_marker_without_cached_wantlist(scratch_path) -> None:
+    mark_empty(scratch_path, "psp")
+
+    assert not cache_path(scratch_path, "psp").exists()
+    assert is_recently_empty(scratch_path, "psp") is True
+
+    invalidate(scratch_path, "psp")
+
+    assert is_recently_empty(scratch_path, "psp") is False
+
+
 def test_legacy_empty_marker_is_ignored_and_deleted(scratch_path) -> None:
     marker = scratch_path / "empty_marks" / "psp.json"
     marker.parent.mkdir(parents=True)
@@ -133,7 +252,7 @@ def test_legacy_empty_marker_is_ignored_and_deleted(scratch_path) -> None:
     assert not marker.exists()
 
 
-def test_tui_launch_resets_browsing_but_keeps_download_state(
+def test_tui_launch_keeps_valid_cache_and_resets_session_selection(
     monkeypatch, scratch_path
 ) -> None:
     monkeypatch.chdir(scratch_path)
@@ -165,7 +284,9 @@ def test_tui_launch_resets_browsing_but_keeps_download_state(
 
     async def run() -> None:
         async with app.run_test():
-            assert load_cached(scratch_path / ".cache", "psp") is None
+            loaded = load_cached(scratch_path / ".cache", "psp")
+            assert loaded is not None
+            assert loaded.titles == ["Old Game"]
             assert app.overrides["psp"].include == []
             assert app.overrides["psp"].exclude == []
             assert app.overrides["psp"].limit == 12

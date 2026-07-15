@@ -517,9 +517,20 @@ class QbittorrentClient:
             raise QbittorrentProtocolError("qBittorrent returned an invalid torrent list")
         return tuple(payload)
 
-    def files(self, torrent_id: str) -> tuple[dict[str, Any], ...]:
+    def files(
+        self, torrent_id: str, *, indexes: Sequence[int] | None = None
+    ) -> tuple[dict[str, Any], ...]:
+        params = {"hash": _torrent_id(torrent_id)}
+        if indexes is not None:
+            values = list(indexes)
+            if not values or any(
+                not isinstance(index, int) or isinstance(index, bool) or index < 0
+                for index in values
+            ):
+                raise ValueError("qBittorrent file indexes must be non-negative integers")
+            params["indexes"] = "|".join(str(index) for index in values)
         payload = self._json(
-            self._request("GET", "torrents/files", params={"hash": _torrent_id(torrent_id)})
+            self._request("GET", "torrents/files", params=params)
         )
         if not isinstance(payload, list) or any(not isinstance(item, dict) for item in payload):
             raise QbittorrentProtocolError("qBittorrent returned an invalid file list")

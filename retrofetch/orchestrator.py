@@ -168,6 +168,11 @@ def run_console(
     state_lock = threading.Lock()
     deferred_lock = threading.Lock()
     deferred_torrents: list[_DeferredTorrentWork] = []
+    games_by_base_title: dict[str, DatGameEntry] = {}
+    if dat is not None:
+        for game in dat.games:
+            games_by_base_title.setdefault(strip_disc_marker(game.name).lower(), game)
+    dispatcher_local = threading.local()
     torrent_coordinator = (
         TorrentCoordinator(
             config,
@@ -179,12 +184,19 @@ def run_console(
     )
 
     def find_game_entry(base_title: str) -> DatGameEntry | None:
-        if dat is None:
-            return None
-        for game in dat.games:
-            if strip_disc_marker(game.name).lower() == base_title.lower():
-                return game
-        return None
+        return games_by_base_title.get(base_title.lower())
+
+    def get_dispatcher() -> SourceDispatcher:
+        dispatcher = getattr(dispatcher_local, "dispatcher", None)
+        if dispatcher is None:
+            dispatcher = SourceDispatcher(
+                console_entry=console_entry,
+                source_names=source_names,
+                allow_torrent=allow_torrent,
+            )
+            dispatcher.torrent_coordinator = torrent_coordinator
+            dispatcher_local.dispatcher = dispatcher
+        return dispatcher
 
     terminal_titles: set[str] = set()
 
@@ -212,12 +224,7 @@ def run_console(
         if stop_event is not None and stop_event.is_set():
             return
         game_entry = find_game_entry(base_title)
-        dispatcher = SourceDispatcher(
-            console_entry=console_entry,
-            source_names=source_names,
-            allow_torrent=allow_torrent,
-        )
-        dispatcher.torrent_coordinator = torrent_coordinator
+        dispatcher = get_dispatcher()
         for variant in variants:
             if stop_event is not None and stop_event.is_set():
                 break

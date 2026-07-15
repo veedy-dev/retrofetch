@@ -137,6 +137,7 @@ def test_resolves_exact_file_and_caches_collection_metadata() -> None:
         "torrent_internal_path": path,
         "torrent_file_index": 0,
         "torrent_name": "Minerva_Myrient",
+        "torrent_bytes": torrent,
         "minerva_full_path": path,
         "minerva_path": "Redump/Sony - PlayStation Portable",
         "catalog_title": "Example Game",

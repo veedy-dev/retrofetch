@@ -111,6 +111,7 @@ class _FakeClient:
         self.complete = complete
         self.owned = owned
         self.added = False
+        self.added_source: str | None = None
         self.started = False
         self.stopped = False
         self.deleted = False
@@ -119,6 +120,7 @@ class _FakeClient:
         self.share_limits_set = False
         self.stage_root: Path | None = None
         self.tag = f"retrofetch-{INFOHASH[:16]}"
+        self.job_id = INFOHASH
         self.priorities: list[int] = []
         self.selected_collision = selected_collision
 
@@ -132,13 +134,18 @@ class _FakeClient:
                 TorrentMetadataFile(2, QBITTORRENT_INTERNAL.lower(), len(PAYLOAD))
             )
         return TorrentMetadata(
-            torrent_id=INFOHASH,
+            torrent_id=self.job_id,
             infohash_v1=INFOHASH,
             infohash_v2=None,
             name="PSP collection",
             files=tuple(files),
             total_size=sum(file.length for file in files),
         )
+
+    def parse_metadata(
+        self, content: bytes, *, filename: str = "metadata.torrent"
+    ) -> TorrentMetadata:
+        return self.fetch_metadata(filename)
 
     def assert_ready(self) -> None:
         return None
@@ -164,10 +171,11 @@ class _FakeClient:
         stopped: bool = True,
     ) -> AddResult:
         self.added = True
+        self.added_source = source
         self.stage_root = save_path
         self.tag = tag
         self.priorities = list(file_priorities)
-        return AddResult((INFOHASH,), 1, 0, 0)
+        return AddResult((self.job_id,), 1, 0, 0)
 
     def info(self, torrent_id: str | None = None, *, tag: str | None = None):
         if self.deleted or (not self.added and self.owned):
@@ -177,7 +185,7 @@ class _FakeClient:
         assert self.stage_root is not None
         return (
             {
-                "hash": INFOHASH,
+                "hash": self.job_id,
                 "tags": self.tag if self.owned else "someone-else",
                 "save_path": str(self.stage_root),
                 "content_path": str(self.stage_root / "PSP collection"),
@@ -191,9 +199,11 @@ class _FakeClient:
             },
         )
 
-    def files(self, torrent_id: str) -> tuple[dict[str, object], ...]:
+    def files(
+        self, torrent_id: str, *, indexes=None
+    ) -> tuple[dict[str, object], ...]:
         progress = 1.0 if self.started and self.complete else 0.0
-        return (
+        files = (
             {
                 "index": 0,
                 "name": "PSP collection/unwanted.bin",
@@ -209,6 +219,10 @@ class _FakeClient:
                 "priority": self.priorities[1],
             },
         )
+        if indexes is None:
+            return files
+        selected = set(indexes)
+        return tuple(entry for entry in files if entry["index"] in selected)
 
     def set_file_priority(self, torrent_id: str, indexes, priority: int) -> None:
         values = [indexes] if isinstance(indexes, int) else indexes
@@ -282,14 +296,16 @@ class _BatchClient(_FakeClient):
             stopped=stopped,
         )
 
-    def files(self, torrent_id: str) -> tuple[dict[str, object], ...]:
+    def files(
+        self, torrent_id: str, *, indexes=None
+    ) -> tuple[dict[str, object], ...]:
         progress = 1.0 if self.started and self.complete else 0.0
         paths = (
             ("PSP collection/unwanted.bin", 3),
             (QBITTORRENT_INTERNAL, len(PAYLOAD)),
             (QBITTORRENT_INTERNAL_2, len(PAYLOAD_2)),
         )
-        return tuple(
+        files: tuple[dict[str, object], ...] = tuple(
             {
                 "index": index,
                 "name": name,
@@ -299,6 +315,10 @@ class _BatchClient(_FakeClient):
             }
             for index, (name, size) in enumerate(paths)
         )
+        if indexes is None:
+            return files
+        selected = set(indexes)
+        return tuple(entry for entry in files if entry["index"] in selected)
 
     def start(self, torrent_id: str) -> None:
         self.start_calls += 1
@@ -400,6 +420,102 @@ def test_transfer_many_unions_two_files_and_prepares_each(scratch_path) -> None:
         event.item_id for event in events if isinstance(event, GameBytesEvent)
     }
     assert byte_item_ids == {"item-1", "item-2"}
+
+
+def test_transfer_uses_qbittorrents_canonical_job_id(scratch_path) -> None:
+    client = _FakeClient()
+    client.job_id = "b" * 40
+    candidate = _candidate()
+    assert candidate.extra is not None
+    candidate.extra["torrent_bytes"] = b"validated torrent metadata"
+    state = State(console="psp")
+    coordinator = TorrentCoordinator(
+        Config(roms_root=scratch_path),
+        threading.Event(),
+        client=client,  # type: ignore[arg-type]
+    )
+
+    result = coordinator.transfer_many(
+        [TorrentBatchItem(candidate, scratch_path / "psp", "Game", "item-1")],
+        state=state,
+        state_lock=None,
+        event_bus=None,
+    )["item-1"]
+
+    assert isinstance(result, PreparedTorrent)
+    assert state.games[0].infohash == INFOHASH
+
+
+def test_url_metadata_fallback_adds_url_then_uses_canonical_job_id(
+    scratch_path,
+) -> None:
+    client = _FakeClient()
+    client.job_id = "b" * 40
+    candidate = _candidate()
+    coordinator = TorrentCoordinator(
+        Config(roms_root=scratch_path),
+        threading.Event(),
+        client=client,  # type: ignore[arg-type]
+    )
+
+    result = coordinator.transfer_many(
+        [TorrentBatchItem(candidate, scratch_path / "psp", "Game", "item-1")],
+        state=State(console="psp"),
+        state_lock=None,
+        event_bus=None,
+    )["item-1"]
+
+    assert isinstance(result, PreparedTorrent)
+    assert client.added_source == candidate.url
+
+
+def test_invalid_carried_metadata_is_reported_per_item(scratch_path) -> None:
+    candidate = _candidate()
+    assert candidate.extra is not None
+    candidate.extra["torrent_bytes"] = b""
+    coordinator = TorrentCoordinator(
+        Config(roms_root=scratch_path),
+        threading.Event(),
+        client=_FakeClient(),  # type: ignore[arg-type]
+    )
+
+    result = coordinator.transfer_many(
+        [TorrentBatchItem(candidate, scratch_path / "psp", "Game", "item-1")],
+        state=State(console="psp"),
+        state_lock=None,
+        event_bus=None,
+    )["item-1"]
+
+    assert isinstance(result, SourceUnavailable)
+    assert "metadata bytes are invalid" in str(result)
+
+
+def test_same_infohash_candidates_may_differ_outside_the_info_dictionary(
+    scratch_path,
+) -> None:
+    client = _BatchClient()
+    first = _candidate()
+    second = _candidate_two()
+    assert first.extra is not None and second.extra is not None
+    first.extra["torrent_bytes"] = b"announce=A; shared info dictionary"
+    second.extra["torrent_bytes"] = b"announce=B; shared info dictionary"
+    coordinator = TorrentCoordinator(
+        Config(roms_root=scratch_path),
+        threading.Event(),
+        client=client,  # type: ignore[arg-type]
+    )
+
+    results = coordinator.transfer_many(
+        [
+            TorrentBatchItem(first, scratch_path / "psp", "Game", "item-1"),
+            TorrentBatchItem(second, scratch_path / "psp", "Game Two", "item-2"),
+        ],
+        state=State(console="psp"),
+        state_lock=None,
+        event_bus=None,
+    )
+
+    assert all(isinstance(result, PreparedTorrent) for result in results.values())
 
 
 def test_single_transfer_reports_live_metrics_and_persists_progress(

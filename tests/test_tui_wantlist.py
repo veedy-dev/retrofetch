@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -116,6 +117,7 @@ def test_large_catalog_filter_preserves_selection(monkeypatch, scratch_path) -> 
         async with app.run_test() as pilot:
             await _wait_loaded(screen, pilot)
             assert len(screen._wantlist) == 3000
+            assert screen.query_one("#wantlist-table", DataTable).row_count == 100
             await pilot.press("/")
             await pilot.press(*list("mario"))
             await pilot.pause()
@@ -131,6 +133,46 @@ def test_large_catalog_filter_preserves_selection(monkeypatch, scratch_path) -> 
     asyncio.run(run())
 
 
+def test_refresh_during_load_does_not_start_another_fetch(
+    monkeypatch, scratch_path
+) -> None:
+    monkeypatch.chdir(scratch_path)
+    started = threading.Event()
+    release = threading.Event()
+    calls = 0
+
+    def fetch(**_kwargs):
+        nonlocal calls
+        calls += 1
+        started.set()
+        assert release.wait(2)
+        return ["Game"], False
+
+    monkeypatch.setattr(
+        "retrofetch.tui.screens.wantlist.get_or_fetch_wantlist", fetch
+    )
+    screen = WantlistScreen(
+        console_entry={"shortname": "snes", "class": "A"},
+        override=ConsoleOverride(),
+    )
+    app = _WantlistApp(screen)
+
+    async def run() -> None:
+        async with app.run_test() as pilot:
+            for _ in range(50):
+                if started.is_set():
+                    break
+                await pilot.pause(0.01)
+            assert started.is_set()
+            screen.action_refresh()
+            screen.action_refresh()
+            assert calls == 1
+            release.set()
+            await _wait_loaded(screen, pilot)
+
+    asyncio.run(run())
+
+
 def test_apply_updates_runtime_selection_used_by_download(
     monkeypatch, scratch_path
 ) -> None:
@@ -138,10 +180,6 @@ def test_apply_updates_runtime_selection_used_by_download(
     titles = ["FIFA", "Ben 10", "Naruto Shippuden - Kizuna Drive"]
     monkeypatch.setattr(
         "retrofetch.tui.screens.wantlist.get_or_fetch_wantlist",
-        lambda **kwargs: (titles, True),
-    )
-    monkeypatch.setattr(
-        "retrofetch.tui.screens.download_confirm.get_or_fetch_wantlist",
         lambda **kwargs: (titles, True),
     )
     initial = ConsoleOverride(include=["FIFA", "Ben 10"])

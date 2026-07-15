@@ -156,9 +156,6 @@ class DownloadProgressScreen(Screen[None]):
         if self._cancelled:
             outcomes += f", {self._cancelled} cancelled"
         text = f"Overall: {processed} / {len(self.wantlist)} games ({outcomes})"
-        if active_fraction:
-            transferred = 100 * min(processed + active_fraction, total) / total
-            text += f" | {transferred:.0f}% transferred"
         self.query_one("#progress-overall-text", Label).update(text)
         self.query_one("#progress-overall-bar", ProgressBar).update(
             progress=min(processed + active_fraction, total),

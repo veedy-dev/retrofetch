@@ -315,7 +315,7 @@ def test_torrent_metrics_drive_detailed_row_and_overall_bar(
             "ETA 1m 35s | 11 seeds / 28 peers"
         )
         assert round(_percentage(current)) == 25
-        assert _header(current).endswith("| 25% transferred")
+        assert _header(current) == "Overall: 0 / 1 games (0 failed)"
 
     _run(screen, body)
 
