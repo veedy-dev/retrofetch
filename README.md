@@ -14,7 +14,7 @@
   &middot; <a href="#development">Contribute</a>
 </p>
 
-![Browsing games and building a queue in Retrofetch](docs/assets/screenshot-library.png)
+![Browsing games and building a queue in Retrofetch](docs/assets/game-browser.png)
 
 ## Download
 
@@ -41,7 +41,7 @@ Keep Retrofetch open while downloading. Quitting asks to stop active transfers s
 
 ## Download progress
 
-![Completed, active, and queued downloads in Retrofetch](docs/assets/screenshot-download.png)
+![Completed, active, and queued downloads in Retrofetch](docs/assets/download-progress.png)
 
 *Screenshots use demonstration data.*
 
