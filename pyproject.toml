@@ -71,6 +71,7 @@ include = [
     "/pyproject.toml",
     "/README.md",
     "/packaging",
+    "/docs/handheld-setup.md",
 ]
 
 [tool.hatch.build.targets.wheel.force-include]

@@ -8,8 +8,7 @@ from typing import Any, Callable, Optional
 import typer
 from rich.console import Console
 
-from retrofetch import __version__
-from retrofetch import _resources
+from retrofetch import __version__, _resources
 from retrofetch.config import (
     Config,
     ConfigError,
@@ -34,6 +33,7 @@ from retrofetch.events import (
     RateLimitEvent,
     SourceDeadEvent,
 )
+from retrofetch.handheld import app as handheld_app
 from retrofetch.logging_setup import setup_logging
 from retrofetch.orchestrator import run_console
 from retrofetch.ranker import get_wantlist, resolve_download_set
@@ -47,6 +47,7 @@ from retrofetch.ui import console
 _log = logging.getLogger(__name__)
 
 app = typer.Typer(name="retrofetch", add_completion=False)
+app.add_typer(handheld_app, name="handheld")
 
 _PACKAGE_DIR = Path(__file__).resolve().parent
 _REPO_DIR = _PACKAGE_DIR.parent

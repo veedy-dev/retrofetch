@@ -111,6 +111,22 @@ The available controls are always shown at the bottom of the app.
 - Retrofetch resets game selections when reopened, but keeps active and completed downloads.
 - Files are marked verified only when matching verification data is available.
 
+## Android handheld setup
+
+Use the [reusable Nova/Android handheld agent prompt](docs/handheld-setup.md) for the full ES-DE, emulator, controller, artwork, and gameplay-verification workflow. It recommends the latest compatible MrPurple driver, with the tested Nova release recorded only as a reference.
+
+With Android platform-tools (`adb`) installed and debugging authorized:
+
+```sh
+retrofetch handheld inspect --serial SERIAL
+retrofetch handheld audit ./prepared-ROMs
+retrofetch handheld transfer ./prepared-ROMs --serial SERIAL --destination /storage/CARD_UUID/ROMs
+```
+
+Replace `SERIAL` and `CARD_UUID` with the discovered device values. Transfer previews by default; add `--apply` only after reviewing its JSON report. It skips identical files by SHA-256, refuses conflicting files, and reserves 5 GiB by default. Use one writer at a time. Reruns skip completed files but do not resume an interrupted file byte-by-byte. The offline audit checks playlist dependencies and readiness warnings; it does not verify game authenticity.
+
+These commands do not download games, delete existing files, or clone private emulator configs. Only supply authorized content. For source checkouts, activate the supported Python 3.10–3.13 environment and use `python -m retrofetch handheld` if the `retrofetch` executable is not on PATH.
+
 ## Development and contributing
 
 Feature requests, bug reports, and pull requests are welcome. [Open an issue](https://github.com/veedy-dev/retrofetch/issues) to share an idea or report a problem.
