@@ -113,7 +113,7 @@ The available controls are always shown at the bottom of the app.
 
 ## Android handheld setup
 
-Use the [reusable Nova/Android handheld agent prompt](docs/handheld-setup.md) for the full ES-DE, emulator, controller, artwork, and gameplay-verification workflow. It recommends the latest compatible MrPurple driver, with the tested Nova release recorded only as a reference.
+Use the [end-to-end Android handheld agent prompt](docs/handheld-setup.md): connect and authorize the device, then let the agent choose suitable consoles, research a fresh game shortlist from independent user reviews and substantial rating/popularity evidence, install/configure emulators, acquire authorized content through suitable providers, arrange artwork, and verify gameplay. Provider catalog order and fixed title lists are not treated as popularity rankings. The agent adapts to the hardware, keeps source-backed curation and progress checkpoints, and performs app UI work rather than handing routine setup steps back to the user.
 
 With Android platform-tools (`adb`) installed and debugging authorized:
 
@@ -125,7 +125,7 @@ retrofetch handheld transfer ./prepared-ROMs --serial SERIAL --destination /stor
 
 Replace `SERIAL` and `CARD_UUID` with the discovered device values. Transfer previews by default; add `--apply` only after reviewing its JSON report. It skips identical files by SHA-256, refuses conflicting files, and reserves 5 GiB by default. Use one writer at a time. Reruns skip completed files but do not resume an interrupted file byte-by-byte. The offline audit checks playlist dependencies and readiness warnings; it does not verify game authenticity.
 
-These commands do not download games, delete existing files, or clone private emulator configs. Only supply authorized content. For source checkouts, activate the supported Python 3.10–3.13 environment and use `python -m retrofetch handheld` if the `retrofetch` executable is not on PATH.
+The commands above are building blocks, not a standalone universal setup engine: they do not download games, delete existing files, or clone private emulator configs. The agent combines them with existing Retrofetch downloads and adaptive ADB/UI automation as detailed in the prompt. It needs terminal/ADB and image-inspection access; initial authorization, purchases/sign-ins, and missing private files may require the user. Only supply authorized content. For source checkouts, activate the supported Python 3.10–3.13 environment and use `python -m retrofetch handheld` if the `retrofetch` executable is not on PATH.
 
 ## Development and contributing
 
