@@ -5,7 +5,7 @@
 <h1 align="center">Retrofetch</h1>
 
 <p align="center">
-  A keyboard-first retro game browser, downloader, and verifier.
+  <strong>Find and download retro games from multiple online providers in one place.</strong>
 </p>
 
 <p align="center">
