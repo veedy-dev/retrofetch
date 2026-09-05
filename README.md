@@ -60,7 +60,7 @@ Keep Retrofetch open while downloading. Quitting asks to stop active transfers s
 | `F6` | Open current downloads |
 | `Esc` | Go back |
 | `?` | Show contextual help |
-| `q` / `Ctrl+Q` | Quit |
+| `q` / `Ctrl+C` | Quit |
 
 The footer lists the shortcuts available on each screen. In search fields, `Enter` focuses the results.
 
