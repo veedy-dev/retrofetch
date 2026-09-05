@@ -78,12 +78,6 @@ Torrent downloads need separate qBittorrent software. If it is missing, Retrofet
 
 **Background downloads last only while Retrofetch remains open.** The header shows download status while you browse, and in-app notifications report completion or errors. Quitting asks to stop active downloads safely; it does not leave a downloader running after the app exits. Reopening resets game selections to a fresh queue but retains saved download history.
 
-### In v0.1.2
-
-- Background progress, status, and notifications without locking you into the download screen.
-- A searchable, paginated browser with queued-only view and bulk actions for matching results.
-- Automatic queue cleanup for downloaded/already-present files, with explicit verification status in Details and History.
-
 ![Retrofetch download progress](docs/assets/screenshot-download.png)
 
 Progress screen shown with locally generated demonstration data.
