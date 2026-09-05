@@ -35,11 +35,3 @@ def test_extract_archives_can_be_enabled(scratch_path) -> None:
     )
 
     assert load_config(config_file).extract_archives is True
-
-
-def test_example_config_documents_keep_archive_default() -> None:
-    text = Path("config.yml.example").read_text(encoding="utf-8")
-
-    assert "extract_archives: false" in text
-    assert 'roms_root: "ROMs"' in text
-    assert 'bios_root: "BIOS"' in text

@@ -83,6 +83,21 @@ def test_minerva_limit_caps_titles_after_catalog_build() -> None:
     assert source.list_popular(limit=1, region_priority=["USA"]) == ["A Game"]
 
 
+def test_minerva_catalog_uses_label_for_id_rom_links() -> None:
+    root = "https://minerva.test/browse/Redump/PSP/"
+    source = _FixtureMinerva(
+        {root: '<a href="/rom?id=123">A Game (USA).zip</a> 1.5 GiB'}
+    )
+
+    entry = source.get_entry("A Game", ["USA"])
+
+    assert entry is not None
+    assert entry.files[0].filename == "A Game (USA).zip"
+    assert entry.files[0].url == (
+        "https://minerva.test/rom?id=123&name=Redump/PSP/A%20Game%20%28USA%29.zip"
+    )
+
+
 def test_minerva_limit_none_and_zero_are_unlimited() -> None:
     root = "https://minerva.test/browse/Redump/PSP/"
     source = _FixtureMinerva(

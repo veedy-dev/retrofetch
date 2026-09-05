@@ -98,6 +98,17 @@ def test_build_catalog_picks_highest_revision_within_best_region() -> None:
     assert entries[0].files[0].filename == "Game (USA) (Rev 2).zip"
 
 
+def test_build_catalog_prefers_base_release_over_platform_variants() -> None:
+    files = [
+        CatalogFile("Game (USA) (Rev 1) (Virtual Console).zip", "https://example/vc", None),
+        CatalogFile("Game (USA) (Rev 1).zip", "https://example/base", None),
+    ]
+
+    entries = build_catalog(files, region_priority=["USA"], exclude_keywords=[])
+
+    assert [file.filename for file in entries[0].files] == ["Game (USA) (Rev 1).zip"]
+
+
 def test_build_catalog_groups_multi_disc_release() -> None:
     files = [
         CatalogFile("Mega RPG (USA) (Disc 3).zip", "https://example/d3", None),

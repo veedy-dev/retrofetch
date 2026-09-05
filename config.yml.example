@@ -27,8 +27,9 @@ qbittorrent_url: "http://127.0.0.1:8080"
 source_fallback_by_class:
   A: [minerva_torrent, archive_org, romsfun, romsretro]
   B: [minerva_torrent, archive_org, romsretro]
-  C: [minerva_torrent, archive_org, romsfun, romsretro]
+  # ROMsIM and RomsLab apply only to Nintendo Switch.
+  C: [minerva_torrent, archive_org, romsim, romslab, romsfun, romsretro]
 ranking_sources_by_class:
   A: [minerva_http, archive_org, romsfun, romsretro]
   B: [minerva_http, archive_org, romsretro]
-  C: [minerva_http, archive_org, romsfun, romsretro]
+  C: [minerva_http, archive_org, romsim, romslab, romsfun, romsretro]

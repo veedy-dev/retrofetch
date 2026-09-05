@@ -103,6 +103,19 @@ Retrofetch keeps active downloads and completed history when you close and reope
 
 The available controls are always shown at the bottom of the app.
 
+## Switch archive providers
+
+`romsim` and `romslab` support Nintendo Switch catalogs and standalone base-game downloads:
+
+- **ROMsIM:** current Buzzheavier single-file links and Buffdrive links.
+- **RomsLab:** Filekeeper base-game links and explicitly identified base-game mirrors. A mirror labeled “Mirror 2” can be an update; Retrofetch checks file identity before accepting it.
+
+New configurations include both providers in the Class C order, after Minerva/Internet Archive and before Romsfun/Romsretro. They do not make requests for other consoles. Existing configurations with explicit provider lists are not rewritten: add `romsim, romslab` to the **C** list under both `ranking_sources_by_class` and `source_fallback_by_class`, keeping your preferred order. See `config.yml.example`. Press `r` in the game selector to refresh an existing cached catalog after changing providers.
+
+Updates, DLC, demos, and multipart downloads are not selected as base games. GoFile, legacy Buzzheavier folder links, Datanodes, and links requiring a CAPTCHA/password are not automatically resolved; unavailable links fall through to supported mirrors or the next configured provider. Not every listed title has a usable download mirror. Catalog ordering comes from the provider, not independent popularity research.
+
+Archives are kept unless extraction is explicitly enabled. Downloads remain **unverified** without matching DAT data; a working download link is not verification.
+
 ## Notes
 
 - Some games may disappear when a provider removes a file or becomes unavailable.

@@ -18,6 +18,12 @@ _SOURCE_FACTORIES: dict[str, Callable[[dict[str, object]], SourceAdapter]] = {
     "romsfun": lambda entry: __import__(
         "retrofetch.sources.romsfun", fromlist=["RomsfunSource"]
     ).RomsfunSource(entry),
+    "romsim": lambda entry: __import__(
+        "retrofetch.sources.romsim", fromlist=["RomsimSource"]
+    ).RomsimSource(entry),
+    "romslab": lambda entry: __import__(
+        "retrofetch.sources.romslab", fromlist=["RomsLabSource"]
+    ).RomsLabSource(entry),
     "romsretro": lambda entry: __import__(
         "retrofetch.sources.romsretro", fromlist=["RomsretroSource"]
     ).RomsretroSource(entry),

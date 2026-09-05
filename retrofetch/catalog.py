@@ -267,6 +267,20 @@ def build_catalog(
             for item in region_candidates
             if _revision_score(item[1].revision) == best_revision
         ]
+        disc_release = [item for item in release if item[1].disc is not None]
+        if disc_release:
+            release = disc_release
+        else:
+            release = [
+                min(
+                    release,
+                    key=lambda item: (
+                        bool(item[1].tags),
+                        len(item[1].tags),
+                        item[0].filename,
+                    ),
+                )
+            ]
         release.sort(key=lambda item: (item[1].disc is None, item[1].disc or 0, item[0].filename))
         _display_file, display_parsed = release[0]
         _rank, region = _region_rank(display_parsed.regions, region_priority)

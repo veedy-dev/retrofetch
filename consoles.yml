@@ -1512,7 +1512,7 @@ consoles:
     class: C
     igdb_platform_id: 37
     dat_system: Nintendo - Nintendo 3DS
-    minerva_path: No-Intro/Nintendo - Nintendo 3DS (Encrypted)
+    minerva_path: No-Intro/Nintendo - Nintendo 3DS (Decrypted)
     minerva_paths:
       - T-En Collection/Nintendo - Nintendo 3DS [T-En] Collection
     archive_org_identifier:
@@ -1639,7 +1639,7 @@ consoles:
     igdb_platform_id: 80
     dat_system: SNK - Neo Geo
     minerva_path: Internet Archive/megaarch1996/neo-geo-aes-romset
-    archive_org_identifier:
+    archive_org_identifier: neo-geo-aes-romset
     romsfun_slug: neo-geo
     romsretro_slug: neo-geo
     coolrom_slug: neogeo
@@ -2987,6 +2987,24 @@ consoles:
     region_filter:
     skip_reason: Home computer / engine / port - ROM download model not 
       applicable
+  - shortname: xbox
+    display_name: Microsoft Xbox
+    class: B
+    igdb_platform_id: 11
+    dat_system: Microsoft - Xbox
+    minerva_path: Redump/Microsoft - Xbox
+    minerva_paths:
+      - No-Intro/Non-Redump - Microsoft - Xbox
+    archive_org_identifier:
+    romsfun_slug: xbox
+    romsretro_slug: xbox
+    extensions:
+      - .iso
+      - .xiso
+    cd_based: true
+    region_alias_of:
+    region_filter:
+    skip_reason:
   - shortname: zmachine
     display_name: Infocom Z-machine
     class: F

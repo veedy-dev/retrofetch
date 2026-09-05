@@ -22,6 +22,8 @@ from retrofetch.sources.archive_org import ArchiveOrgSource
 from retrofetch.sources.minerva_http import MinervaHttpSource
 from retrofetch.sources.minerva_torrent import MinervaTorrentSource
 from retrofetch.sources.romsfun import RomsfunSource
+from retrofetch.sources.romsim import RomsimSource
+from retrofetch.sources.romslab import RomsLabSource
 from retrofetch.sources.romsretro import RomsretroSource
 from retrofetch.state import State
 from retrofetch.torrent import (
@@ -39,6 +41,8 @@ _SOURCE_FACTORIES: dict[str, Any] = {
     "minerva_http": MinervaHttpSource,
     "minerva_torrent": MinervaTorrentSource,
     "romsfun": RomsfunSource,
+    "romsim": RomsimSource,
+    "romslab": RomsLabSource,
     "romsretro": RomsretroSource,
 }
 

@@ -62,14 +62,14 @@ class Config(BaseModel):
         default_factory=lambda: {
             "A": ["minerva_torrent", "archive_org", "romsfun", "romsretro"],
             "B": ["minerva_torrent", "archive_org", "romsretro"],
-            "C": ["minerva_torrent", "archive_org", "romsfun", "romsretro"],
+            "C": ["minerva_torrent", "archive_org", "romsim", "romslab", "romsfun", "romsretro"],
         }
     )
     ranking_sources_by_class: dict[str, list[str]] = Field(
         default_factory=lambda: {
             "A": ["minerva_http", "archive_org", "romsfun", "romsretro"],
             "B": ["minerva_http", "archive_org", "romsretro"],
-            "C": ["minerva_http", "archive_org", "romsfun", "romsretro"],
+            "C": ["minerva_http", "archive_org", "romsim", "romslab", "romsfun", "romsretro"],
         }
     )
 

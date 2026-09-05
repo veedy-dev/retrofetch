@@ -191,6 +191,7 @@ class MinervaHttpSource:
             values = parse_qs(parts.query).get("name") or []
             if values:
                 return unquote(posixpath.basename(values[0].rstrip("/")))
+            return unquote(label.strip())
         basename = posixpath.basename(parts.path.rstrip("/"))
         if basename:
             return unquote(basename)
@@ -220,6 +221,14 @@ class MinervaHttpSource:
                 continue
             is_rom_link = urlsplit(href).path.rstrip("/") == "/rom"
             is_dir = href.endswith("/") and not is_rom_link
+            if is_rom_link and not parse_qs(urlsplit(href).query).get("name"):
+                browse_path = (
+                    unquote(urlsplit(url).path).partition("/browse/")[2].lstrip("./")
+                )
+                if browse_path:
+                    separator = "&" if "?" in href else "?"
+                    full_path = quote(posixpath.join(browse_path, name), safe="/")
+                    href = f"{href}{separator}name={full_path}"
             absolute = self._quote_url(urljoin(url, href))
             if is_dir:
                 current_path = urlsplit(url).path.rstrip("/") + "/"
