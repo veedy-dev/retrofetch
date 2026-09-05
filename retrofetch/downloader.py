@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import stat
-import zipfile
-import hashlib
 import threading
 import time
+import zipfile
 import zlib
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Protocol
@@ -24,13 +24,14 @@ from retrofetch.events import (
     GameDoneEvent,
     GameSkippedEvent,
     GameUnverifiedEvent,
+    ProgressEvent,
     RateLimitEvent,
 )
-
-from retrofetch.sources import DownloadCancelled, DownloadCandidate, SourceUnavailable
 from retrofetch.extractor import ExtractionError, extract_archive, is_archive
 from retrofetch.sanitize import sanitize_filename
-from retrofetch.state import GameAttempt, GameEntry as StateGameEntry, State, update_game
+from retrofetch.sources import DownloadCancelled, DownloadCandidate, SourceUnavailable
+from retrofetch.state import GameAttempt, State, update_game
+from retrofetch.state import GameEntry as StateGameEntry
 
 _log = logging.getLogger(__name__)
 
@@ -95,9 +96,7 @@ class FinalizeResult:
     md5: str | None = None
 
 
-def validate_candidate_file(
-    path: Path, candidate: DownloadCandidate
-) -> FinalizeResult:
+def validate_candidate_file(path: Path, candidate: DownloadCandidate) -> FinalizeResult:
     """Validate one provider artifact without moving it."""
     source = Path(path)
     resolved = source.resolve(strict=True)
@@ -106,9 +105,13 @@ def validate_candidate_file(
         getattr(info, "st_file_attributes", 0)
         & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
     ):
-        raise SourceUnavailable("candidate file is a link or reparse point", retryable=False)
+        raise SourceUnavailable(
+            "candidate file is a link or reparse point", retryable=False
+        )
     if not resolved.is_file():
-        raise SourceUnavailable("candidate payload is not a regular file", retryable=False)
+        raise SourceUnavailable(
+            "candidate payload is not a regular file", retryable=False
+        )
 
     size = resolved.stat().st_size
     if candidate.expected_size is not None and size != candidate.expected_size:
@@ -146,9 +149,7 @@ def validate_candidate_file(
     )
     for label, expected, actual in checks:
         if expected and actual != expected.lower():
-            raise SourceUnavailable(
-                f"staged torrent {label} mismatch", retryable=False
-            )
+            raise SourceUnavailable(f"staged torrent {label} mismatch", retryable=False)
     return FinalizeResult(
         path=resolved,
         size=size,
@@ -170,7 +171,9 @@ def finalize_staged_candidate(
     staged = Path(staged_path)
     resolved = staged.resolve(strict=True)
     if not resolved.is_relative_to(root):
-        raise SourceUnavailable("staged torrent file escapes its private directory", retryable=False)
+        raise SourceUnavailable(
+            "staged torrent file escapes its private directory", retryable=False
+        )
     validated = validate_candidate_file(staged, candidate)
 
     filename = Path(candidate.filename)
@@ -363,13 +366,14 @@ def stream_http_download(
                 elif resp.status_code != 200:
                     raise SourceUnavailable(
                         f"{source_name} HTTP {resp.status_code}",
-                        retryable=resp.status_code in (408, 429) or resp.status_code >= 500,
+                        retryable=resp.status_code in (408, 429)
+                        or resp.status_code >= 500,
                     )
 
                 content_type = resp.headers.get("Content-Type", "")
-                if (
-                    "text/html" in content_type.lower()
-                    and final.suffix.lower() not in (".html", ".htm")
+                if "text/html" in content_type.lower() and final.suffix.lower() not in (
+                    ".html",
+                    ".htm",
                 ):
                     raise SourceUnavailable(
                         f"{source_name} returned HTML page instead of file content",
@@ -379,11 +383,17 @@ def stream_http_download(
                 content_length = _content_length(resp.headers)
                 if resp.status_code == 206:
                     total = remote_size or (
-                        downloaded + content_length if content_length is not None else None
+                        downloaded + content_length
+                        if content_length is not None
+                        else None
                     )
                 else:
                     total = content_length or remote_size
-                    if total is not None and part.exists() and part.stat().st_size > total:
+                    if (
+                        total is not None
+                        and part.exists()
+                        and part.stat().st_size > total
+                    ):
                         part.unlink(missing_ok=True)
 
                 with open(part, mode) as fh:
@@ -450,9 +460,9 @@ def _recorded_file_matches(entry: StateGameEntry, target_dir: Path) -> bool:
                 sha1.update(chunk)
             if entry.crc32:
                 crc32 = zlib.crc32(chunk, crc32)
-    return (not entry.sha1 or sha1 is not None and sha1.hexdigest() == entry.sha1.lower()) and (
-        not entry.crc32 or f"{crc32 & 0xFFFFFFFF:08x}" == entry.crc32.lower()
-    )
+    return (
+        not entry.sha1 or sha1 is not None and sha1.hexdigest() == entry.sha1.lower()
+    ) and (not entry.crc32 or f"{crc32 & 0xFFFFFFFF:08x}" == entry.crc32.lower())
 
 
 def _acquired_filename(state: State, game_title: str, target_dir: Path) -> str | None:
@@ -581,7 +591,10 @@ def _verify_downloaded(
             if result.matched:
                 return ("verified", None)
             return ("failed", result.reason or "hash mismatch")
-        return ("unverified", f"archive verification unsupported for {downloaded.suffix}")
+        return (
+            "unverified",
+            f"archive verification unsupported for {downloaded.suffix}",
+        )
     result = verify_file(downloaded, rom)
     if result.matched:
         return ("verified", None)
@@ -641,86 +654,150 @@ def download_game(
     if skipped is not None:
         return skipped
 
-    last_reason: str | None = None
-    for attempt_num in range(1, MAX_ATTEMPTS_PER_SOURCE + 1):
-        try:
-            downloaded = source.download(candidate, target_dir, event_bus=event_bus)
-        except DownloadCancelled as exc:
-            reason = str(exc)
-            record_attempt(f"cancelled: {reason}")
-            update_status(
-                "cancelled",
-                source=source.name,
-                provider=source.name,
-                phase="terminal",
-                outcome="cancelled",
-                verification="not_applicable",
-            )
-            if event_bus is not None:
-                event_bus.publish(GameCancelledEvent(game_title, reason, item_id))
-            return DownloadResult(
-                status="cancelled", source=source.name, reason=reason
-            )
-        except SourceUnavailable as exc:
-            last_reason = str(exc)
-            _log.warning(
-                "download attempt %s/%s failed for %s via %s: %s",
-                attempt_num,
-                MAX_ATTEMPTS_PER_SOURCE,
-                game_title,
-                source.name,
-                exc,
-            )
-            record_attempt(f"download_failed: {exc}")
-            if not exc.retryable:
-                break
-            if attempt_num < MAX_ATTEMPTS_PER_SOURCE:
-                time.sleep(min(2 ** (attempt_num - 1), 5))
-            continue
-        except Exception as exc:
-            last_reason = f"unexpected: {exc}"
-            _log.exception("unexpected download error for %s", game_title)
-            record_attempt(last_reason)
-            continue
+    source_bus = EventBus() if event_bus is not None else None
+    subscription = None
+    if source_bus is not None and event_bus is not None:
 
-        verified = True
-        verify_reason: str | None = None
-        verification_status = "verified"
-        if not verification_available:
-            verification_status = "unverified"
-            verify_reason = "DAT not available; download is unverified"
-        elif game is None:
-            verification_status = "unverified"
-            verify_reason = "DAT entry not found; download is unverified"
-        else:
-            rom = _rom_for_verification(game, downloaded.name)
-            if rom is None or not (rom.sha1 or rom.crc32 or rom.md5):
-                verification_status = "unverified"
-                verify_reason = "DAT hash not available; download is unverified"
-            else:
-                verification_status, verify_reason = _verify_downloaded(
-                    downloaded,
-                    rom,
-                    extract_archives=extract_archives,
-                )
-                verified = verification_status != "failed"
-
-        if not verified:
-            last_reason = verify_reason or "hash mismatch"
-            _log.warning(
-                "verify failed for %s attempt %s: %s",
-                game_title,
-                attempt_num,
-                last_reason,
+        def forward(event: ProgressEvent) -> None:
+            event_bus.publish(
+                replace(event, game=game_title, item_id=item_id)
+                if isinstance(event, GameBytesEvent)
+                else event
             )
-            record_attempt(f"verify_failed: {last_reason}")
+
+        subscription = source_bus.subscribe(forward)
+
+    try:
+        last_reason: str | None = None
+        for attempt_num in range(1, MAX_ATTEMPTS_PER_SOURCE + 1):
             try:
-                downloaded.unlink()
-            except OSError:
-                pass
-            continue
+                downloaded = source.download(
+                    candidate, target_dir, event_bus=source_bus
+                )
+            except DownloadCancelled as exc:
+                reason = str(exc)
+                record_attempt(f"cancelled: {reason}")
+                update_status(
+                    "cancelled",
+                    source=source.name,
+                    provider=source.name,
+                    phase="terminal",
+                    outcome="cancelled",
+                    verification="not_applicable",
+                )
+                if event_bus is not None:
+                    event_bus.publish(GameCancelledEvent(game_title, reason, item_id))
+                return DownloadResult(
+                    status="cancelled", source=source.name, reason=reason
+                )
+            except SourceUnavailable as exc:
+                last_reason = str(exc)
+                _log.warning(
+                    "download attempt %s/%s failed for %s via %s: %s",
+                    attempt_num,
+                    MAX_ATTEMPTS_PER_SOURCE,
+                    game_title,
+                    source.name,
+                    exc,
+                )
+                record_attempt(f"download_failed: {exc}")
+                if not exc.retryable:
+                    break
+                if attempt_num < MAX_ATTEMPTS_PER_SOURCE:
+                    time.sleep(min(2 ** (attempt_num - 1), 5))
+                continue
+            except Exception as exc:
+                last_reason = f"unexpected: {exc}"
+                _log.exception("unexpected download error for %s", game_title)
+                record_attempt(last_reason)
+                continue
 
-        if verification_status == "unverified":
+            verified = True
+            verify_reason: str | None = None
+            verification_status = "verified"
+            if not verification_available:
+                verification_status = "unverified"
+                verify_reason = "DAT not available; download is unverified"
+            elif game is None:
+                verification_status = "unverified"
+                verify_reason = "DAT entry not found; download is unverified"
+            else:
+                rom = _rom_for_verification(game, downloaded.name)
+                if rom is None or not (rom.sha1 or rom.crc32 or rom.md5):
+                    verification_status = "unverified"
+                    verify_reason = "DAT hash not available; download is unverified"
+                else:
+                    verification_status, verify_reason = _verify_downloaded(
+                        downloaded,
+                        rom,
+                        extract_archives=extract_archives,
+                    )
+                    verified = verification_status != "failed"
+
+            if not verified:
+                last_reason = verify_reason or "hash mismatch"
+                _log.warning(
+                    "verify failed for %s attempt %s: %s",
+                    game_title,
+                    attempt_num,
+                    last_reason,
+                )
+                record_attempt(f"verify_failed: {last_reason}")
+                try:
+                    downloaded.unlink()
+                except OSError:
+                    pass
+                continue
+
+            if verification_status == "unverified":
+                final_filename = downloaded.name
+                if extract_archives and is_archive(downloaded):
+                    try:
+                        extracted = extract_archive(downloaded, target_dir)
+                    except ExtractionError as exc:
+                        last_reason = f"extract_failed: {exc}"
+                        record_attempt(last_reason)
+                        continue
+                    try:
+                        downloaded.unlink()
+                    except OSError:
+                        pass
+                    if len(extracted) == 1:
+                        final_filename = extracted[0].name
+                    else:
+                        final_filename = ",".join(p.name for p in extracted)
+                final_filename = sanitize_filename(final_filename)
+                record_attempt(f"unverified: {verify_reason or 'not verified'}")
+                update_status(
+                    "unverified",
+                    source=source.name,
+                    provider=source.name,
+                    filename=final_filename,
+                    sha1=candidate.expected_sha1,
+                    crc32=candidate.expected_crc32,
+                    size_bytes=candidate.expected_size,
+                    completed_bytes=candidate.expected_size or 0,
+                    final_path=str(target_dir / final_filename),
+                    phase="terminal",
+                    outcome="acquired",
+                    verification="unverified",
+                )
+                if event_bus is not None:
+                    event_bus.publish(
+                        GameUnverifiedEvent(
+                            game=game_title,
+                            source=source.name,
+                            reason=verify_reason,
+                            item_id=item_id,
+                        )
+                    )
+                return DownloadResult(
+                    status="unverified",
+                    filename=final_filename,
+                    source=source.name,
+                    reason=verify_reason,
+                )
+
             final_filename = downloaded.name
             if extract_archives and is_archive(downloaded):
                 try:
@@ -737,94 +814,51 @@ def download_game(
                     final_filename = extracted[0].name
                 else:
                     final_filename = ",".join(p.name for p in extracted)
-            final_filename = sanitize_filename(final_filename)
-            record_attempt(f"unverified: {verify_reason or 'not verified'}")
+
+            sanitized = sanitize_filename(final_filename)
+            record_attempt("success")
             update_status(
-                "unverified",
+                "acquired",
                 source=source.name,
                 provider=source.name,
-                filename=final_filename,
+                filename=sanitized,
                 sha1=candidate.expected_sha1,
                 crc32=candidate.expected_crc32,
                 size_bytes=candidate.expected_size,
                 completed_bytes=candidate.expected_size or 0,
-                final_path=str(target_dir / final_filename),
+                final_path=str(target_dir / sanitized),
                 phase="terminal",
                 outcome="acquired",
-                verification="unverified",
+                verification="verified",
             )
             if event_bus is not None:
                 event_bus.publish(
-                    GameUnverifiedEvent(
+                    GameDoneEvent(
                         game=game_title,
                         source=source.name,
-                        reason=verify_reason,
+                        size=candidate.expected_size or 0,
+                        sha1=candidate.expected_sha1,
                         item_id=item_id,
                     )
                 )
             return DownloadResult(
-                status="unverified",
-                filename=final_filename,
-                source=source.name,
-                reason=verify_reason,
+                status="acquired", filename=sanitized, source=source.name
             )
 
-        final_filename = downloaded.name
-        if extract_archives and is_archive(downloaded):
-            try:
-                extracted = extract_archive(downloaded, target_dir)
-            except ExtractionError as exc:
-                last_reason = f"extract_failed: {exc}"
-                record_attempt(last_reason)
-                continue
-            try:
-                downloaded.unlink()
-            except OSError:
-                pass
-            if len(extracted) == 1:
-                final_filename = extracted[0].name
-            else:
-                final_filename = ",".join(p.name for p in extracted)
-
-        sanitized = sanitize_filename(final_filename)
-        record_attempt("success")
         update_status(
-            "acquired",
+            "failed",
             source=source.name,
             provider=source.name,
-            filename=sanitized,
-            sha1=candidate.expected_sha1,
-            crc32=candidate.expected_crc32,
-            size_bytes=candidate.expected_size,
-            completed_bytes=candidate.expected_size or 0,
-            final_path=str(target_dir / sanitized),
             phase="terminal",
-            outcome="acquired",
-            verification="verified",
+            outcome="failed",
+            verification="not_applicable",
         )
-        if event_bus is not None:
-            event_bus.publish(
-                GameDoneEvent(
-                    game=game_title,
-                    source=source.name,
-                    size=candidate.expected_size or 0,
-                    sha1=candidate.expected_sha1,
-                    item_id=item_id,
-                )
-            )
-        return DownloadResult(status="acquired", filename=sanitized, source=source.name)
-
-    update_status(
-        "failed",
-        source=source.name,
-        provider=source.name,
-        phase="terminal",
-        outcome="failed",
-        verification="not_applicable",
-    )
-    final_reason = last_reason or "exhausted attempts"
-    return DownloadResult(
-        status="failed",
-        source=source.name,
-        reason=final_reason,
-    )
+        final_reason = last_reason or "exhausted attempts"
+        return DownloadResult(
+            status="failed",
+            source=source.name,
+            reason=final_reason,
+        )
+    finally:
+        if source_bus is not None and subscription is not None:
+            source_bus.unsubscribe(subscription)

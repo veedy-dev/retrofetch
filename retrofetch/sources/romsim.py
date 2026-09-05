@@ -214,7 +214,7 @@ class RomsimSource(SwitchArchiveSource):
     def _buffdrive(
         self, host_page: str, game_page: str, expected_title: str
     ) -> DownloadCandidate:
-        if not re.fullmatch(r"/\d+/?", urlsplit(host_page).path):
+        if not re.fullmatch(r"/[A-Za-z0-9]+/?", urlsplit(host_page).path):
             raise SourceUnavailable("Buffdrive requires a single-file page")
         tree = HTMLParser(self._get(host_page))
         title = tree.css_first("title")

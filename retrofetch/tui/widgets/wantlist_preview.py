@@ -20,11 +20,10 @@ from rich.text import Text
 from textual.reactive import reactive  # pyright: ignore[reportMissingImports]
 from textual.widgets import Static  # pyright: ignore[reportMissingImports]
 
-
 PreviewState = Literal["IDLE", "LOADING", "READY", "FAILED"]
 
 
-_HINTS = "[g] select games  [d] download  [,] settings  [s] state  [?] help  [q] quit"
+_HINTS = "[Enter/g] browse games  [d] queue  [F6] downloads"
 
 _IDLE_BODY = (
     "Select a console from the sidebar.\n"
@@ -97,12 +96,10 @@ class WantlistPreview(Static):
         else:
             listing = "  (no games found)"
 
-        acquired = self._counts.get("acquired", 0)
-        failed = self._counts.get("failed", 0)
-        pending = self._counts.get("pending", 0)
-        counts_line = f"state: acquired={acquired}  failed={failed}  pending={pending}"
+        queued = self._counts.get("queued", 0)
+        counts_line = f"Pending queue: {queued} games (this session)"
 
-        lines = [header, "", listing, "", counts_line, ""]
+        lines = [header, counts_line, "", listing, ""]
         if total_pages > 1:
             lines.append(f"Page {self._page + 1}/{total_pages}    <- prev    -> next")
             lines.append("")
@@ -131,11 +128,13 @@ class WantlistPreview(Static):
         state_counts: dict[str, int],
     ) -> None:
         self.loading = False
+        if console != self._current_console:
+            self._page = 0
         self.state = "READY"
         self._current_console = console
         self._titles = list(titles)
         self._counts = dict(state_counts)
-        self._page = 0
+        self._page = min(self._page, self._total_pages() - 1)
         self._render_current_page()
 
     def show_failed(self, console: str, reason: str) -> None:

@@ -3,34 +3,38 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
 
-from textual.app import App
-from textual.widgets import Input, Label, OptionList
+from textual.events import Mount
+from textual.widgets import Input, ListView, OptionList
 
 from retrofetch.config import Config, ConsoleOverride
 from retrofetch.sources.bios import BiosFile
+from retrofetch.tui.app import RetrofetchApp
 from retrofetch.tui.screens.bios import BiosScreen
 from retrofetch.tui.screens.download_confirm import DownloadConfirmScreen
-from retrofetch.tui.screens.download_progress import DownloadProgressScreen
 from retrofetch.tui.screens.home import HomeScreen
 from retrofetch.wantlist_cache import is_recently_empty, mark_empty
 
 
-class _TuiApp(App[None]):
+class _TuiApp(RetrofetchApp):
+    CSS_PATH = "../retrofetch/tui/styles.tcss"
+
     def __init__(self, screen) -> None:
-        super().__init__()
+        overrides = {}
+        if isinstance(screen, DownloadConfirmScreen) and screen.override is not None:
+            overrides[screen.shortname] = screen.override
+        super().__init__(
+            config=Config(roms_root=Path("ROMs"), bios_root=Path("BIOS")),
+            config_path=Path("config.yml"),
+            consoles_yml={"consoles": []},
+            overrides=overrides,
+        )
         self.screen_to_push = screen
-        self.config = Config(roms_root=Path("ROMs"), bios_root=Path("BIOS"))
-        self.consoles_yml: dict[str, Any] = {"consoles": []}
-        self.overrides: dict[str, ConsoleOverride] = {}
 
-    async def on_mount(self) -> None:
-        await self.push_screen(self.screen_to_push)
-
-
-def _fail_fetch(**_kwargs) -> None:
-    raise AssertionError("unexpected fetch")
+    def on_mount(self, event: Mount | None = None) -> None:
+        if event is not None:
+            event.prevent_default()
+        self.push_screen(self.screen_to_push)
 
 
 def test_home_availability_accepts_minerva_only_source() -> None:
@@ -73,6 +77,8 @@ def test_console_search_shortcut_filters_without_inserting_slash() -> None:
 
     async def run() -> None:
         async with app.run_test() as pilot:
+            console_list = screen.query_one(ListView)
+            console_list.index = 1
             await pilot.press("/")
             await pilot.press(*list("Nintendo"))
             await pilot.pause(0.3)
@@ -83,45 +89,14 @@ def test_console_search_shortcut_filters_without_inserting_slash() -> None:
                 for _entry, item in screen._all_items
                 if item.display
             ] == ["Nintendo Game Boy", "Nintendo Entertainment System"]
-
-    asyncio.run(run())
-
-
-def test_download_confirm_has_no_tui_dry_run_and_starts_real(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "retrofetch.tui.screens.download_confirm.get_or_fetch_wantlist",
-        _fail_fetch,
-        raising=False,
-    )
-    screen = DownloadConfirmScreen(
-        console_entry={"shortname": "nes", "class": "A"},
-        override=ConsoleOverride(include=["B"]),
-    )
-    app = _TuiApp(screen)
-
-    async def run() -> None:
-        async with app.run_test() as pilot:
-            for _ in range(50):
-                if screen._loaded:
-                    break
-                await pilot.pause(0.05)
-            assert screen._wantlist == ["B"]
-            assert not screen.query("#dry-run-toggle")
+            assert console_list.highlighted_child is screen._all_items[0][1]
             await pilot.press("enter")
-            await pilot.pause()
-            assert isinstance(app.screen, DownloadProgressScreen)
-            assert app.screen.dry_run is False
+            assert console_list.has_focus
 
     asyncio.run(run())
 
 
-def test_download_confirm_removes_game_from_current_queue(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "retrofetch.tui.screens.download_confirm.get_or_fetch_wantlist",
-        _fail_fetch,
-        raising=False,
-    )
-    monkeypatch.setattr(DownloadProgressScreen, "on_mount", lambda self: None)
+def test_download_confirm_removes_game_from_shared_queue() -> None:
     override = ConsoleOverride(include=["A", "B", "C"])
     screen = DownloadConfirmScreen(
         console_entry={"shortname": "nes", "class": "A"},
@@ -143,22 +118,18 @@ def test_download_confirm_removes_game_from_current_queue(monkeypatch) -> None:
             await pilot.pause()
             assert screen._wantlist == ["C"]
             assert options.option_count == 1
-            assert override.include == ["A", "B", "C"]
-
-            await pilot.press("enter")
+            assert app.overrides["nes"].include == ["C"]
+            reopened = DownloadConfirmScreen(
+                console_entry=screen.console_entry, override=override
+            )
+            await app.push_screen(reopened)
             await pilot.pause()
-            assert isinstance(app.screen, DownloadProgressScreen)
-            assert app.screen.wantlist == ["C"]
+            assert reopened._wantlist == ["C"]
 
     asyncio.run(run())
 
 
-def test_download_confirm_without_selection_prompts_without_fetch(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "retrofetch.tui.screens.download_confirm.get_or_fetch_wantlist",
-        _fail_fetch,
-        raising=False,
-    )
+def test_empty_queue_cannot_start() -> None:
     screen = DownloadConfirmScreen(
         console_entry={"shortname": "nes", "class": "A"},
         override=ConsoleOverride(),
@@ -166,13 +137,10 @@ def test_download_confirm_without_selection_prompts_without_fetch(monkeypatch) -
     app = _TuiApp(screen)
 
     async def run() -> None:
-        async with app.run_test():
-            assert screen._loaded
-            assert screen._wantlist == []
-            assert (
-                str(screen.query_one("#summary-line", Label).render())
-                == "No games selected. Press Esc, then press g to select games."
-            )
+        async with app.run_test() as pilot:
+            await pilot.press("enter")
+            assert app.screen is screen
+            assert app.download_session is None
 
     asyncio.run(run())
 

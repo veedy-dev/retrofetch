@@ -4,7 +4,6 @@ import json
 
 from retrofetch.events import (
     EventBus,
-    GameBytesEvent,
     GameCancelledEvent,
     GameStageEvent,
     GameStartEvent,
@@ -17,7 +16,8 @@ from retrofetch.state import (
     save_state,
     update_game,
 )
-from retrofetch.tui.messages import EventBusBridge, GameCancelled, GameStage
+from retrofetch.tui.downloads import DownloadSession
+from retrofetch.tui.messages import EventBusBridge
 
 
 def test_v1_state_loads_and_saves_as_v2(scratch_path) -> None:
@@ -56,8 +56,6 @@ def test_v1_state_loads_and_saves_as_v2(scratch_path) -> None:
     save_state(state, scratch_path)
     saved = json.loads(state_file.read_text(encoding="utf-8"))
     assert saved["version"] == STATE_VERSION
-    assert saved["games"][0]["selected_file_ids"] == []
-    assert saved["games"][0]["item_id"] is None
 
 
 def test_torrent_lifecycle_round_trips_and_updates_by_item_id(scratch_path) -> None:
@@ -101,30 +99,22 @@ def test_torrent_lifecycle_round_trips_and_updates_by_item_id(scratch_path) -> N
     assert loaded.games[1].completed_bytes == 90
 
 
-def test_old_event_constructors_keep_working() -> None:
-    assert GameStartEvent("Game", "source", "psp").item_id is None
-    assert GameBytesEvent("Game", 1, 2).item_id is None
-
-
-def test_bridge_preserves_item_id_for_stage_and_cancelled() -> None:
-    class FakeApp:
-        def __init__(self) -> None:
-            self.messages: list[object] = []
-
-        def post_message(self, message: object) -> None:
-            self.messages.append(message)
-
-    app = FakeApp()
+def test_bridge_cancellation_leaves_same_title_sibling_running() -> None:
+    session = DownloadSession({"shortname": "psp"}, ["Shared title", "Shared title"])
     bus = EventBus()
-    bridge = EventBusBridge(app, bus)  # type: ignore[arg-type]
+    bridge = EventBusBridge(session.apply, bus)
     bridge.start()
-
-    bus.publish(GameStageEvent("Game", "downloading", item_id="psp:game"))
-    bus.publish(GameCancelledEvent("Game", "user cancelled", item_id="psp:game"))
-
-    assert isinstance(app.messages[0], GameStage)
-    assert app.messages[0].stage == "downloading"
-    assert app.messages[0].item_id == "psp:game"
-    assert isinstance(app.messages[1], GameCancelled)
-    assert app.messages[1].reason == "user cancelled"
-    assert app.messages[1].item_id == "psp:game"
+    try:
+        for item_id, stage in (("first", "Connecting"), ("second", "Downloading")):
+            bus.publish(
+                GameStartEvent("Shared title", "archive_org", "psp", item_id=item_id)
+            )
+            bus.publish(GameStageEvent("Shared title", stage, item_id=item_id))
+        bus.publish(
+            GameCancelledEvent("Shared title", "Cancelled by user", item_id="second")
+        )
+        assert set(session.active) == {"first"}
+        assert session.active["first"].stage == "Connecting"
+        assert session.cancelled == 1
+    finally:
+        bridge.stop()

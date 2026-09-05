@@ -1,14 +1,20 @@
-/* retrofetch TUI styles - dark theme, ASCII-safe (no emoji, no box-drawing).
- * Colors come from Textual's built-in theme variables so they adapt if a user
- * switches between dark/light variants. Only structural rules here.
- */
-
+/* Theme-native surfaces, one selection accent, semantic failure colors. */
 Screen {
     background: $surface;
 }
 
+.download-running Header {
+    background: $primary-darken-3;
+}
+
+.download-attention Header {
+    background: $error-darken-3;
+}
+
 #sidebar {
-    width: 32;
+    width: 30;
+    max-width: 40%;
+    min-width: 20;
     border-right: vkey $primary;
     background: $surface-darken-1;
 }
@@ -20,31 +26,16 @@ Screen {
 
 Input#filter {
     dock: top;
-    border: round $primary;
-    background: $surface;
     margin: 0;
+    background: $surface;
 }
 
-/* Simplified availability coloring. A console is "available" iff:
- *   class is A/B/C AND it has at least one ranking-source slug populated
- *   (romsfun_slug, romsretro_slug, archive_org_identifier, vimm_slug,
- *   coolrom_slug).
- * Anything else (class D/E/F, or Class A/B/C with no provider) is
- * unavailable - shown dim + italic so the user knows not to expect games.
- */
-.class-a { color: $success; }
-.class-b { color: $success; }
-.class-c { color: $success; }
-.class-available   { color: $success; }
+.class-available { color: $success; }
 .class-unavailable { color: $text-muted; text-style: italic; }
+.status-acquired { color: $success; }
+.status-unverified, .status-pending { color: $text-muted; }
+.status-failed { color: $error; }
 
-/* Status colors for downstream screens (state browser, download progress, etc.). */
-.status-acquired  { color: $success; }
-.status-unverified { color: $warning; }
-.status-failed    { color: $error; }
-.status-pending   { color: $text-muted; }
-
-/* Main content panel. */
 #main-panel {
     background: $surface;
     padding: 1 2;
@@ -56,102 +47,169 @@ Input#filter {
     background: $surface;
 }
 
-/* Ensure list rows have some breathing room and a highlight on focus. */
+WantlistPreview#main-panel {
+    overflow-y: auto;
+}
+
 .console-row {
     padding: 0 1;
 }
+
 ListView > ListItem.--highlight {
-    background: $accent 50%;
+    background: $primary 30%;
 }
 
-/* Download flow screens — Confirm, Progress, and Cancel modal.
- * IDs and classes are referenced by:
- *   download_confirm.py    — #dl-title, #summary-line, #dry-run-toggle, #wantlist-preview
- *   download_progress.py   — #dl-title, #summary-line, #progress-overall, #progress-overall-bar,
- *                            #progress-active, #progress-completed, .dl-active-row,
- *                            .dl-status-row, .dl-section-title
- *   cancel_confirm.py      — CancelConfirmScreen, #cancel-confirm-modal,
- *                            #cancel-confirm-question, #cancel-confirm-actions
- */
-
-#dl-title {
-    text-style: bold;
-    color: $primary;
-    margin-bottom: 1;
+ListView:focus > ListItem.--highlight {
+    background: $primary;
 }
 
-#summary-line {
+ListView > ListItem.--highlight Label {
     color: $text;
+}
+
+#browser-title, #dl-title, #st-title {
+    height: auto;
+    width: 1fr;
+    text-style: bold;
     margin-bottom: 1;
 }
 
-#dry-run-toggle {
+#browser-context, #progress-context, #st-summary {
+    height: auto;
+    width: 1fr;
+    color: $text-muted;
     margin-bottom: 1;
+}
+
+#status-line, #summary-line {
+    height: auto;
+    width: 1fr;
+    margin-bottom: 1;
+}
+
+#wantlist-table, #state-table {
+    height: 1fr;
+    min-height: 5;
+    background: $surface-darken-1;
 }
 
 #wantlist-preview {
     height: 1fr;
-    border: round $primary;
+    border: none;
     padding: 0 1;
     background: $surface-darken-1;
 }
 
 #progress-overall {
     height: auto;
-    padding: 0 1;
-    margin-bottom: 1;
-    border: round $accent;
+    margin: 1 0;
 }
 
 #progress-overall-bar {
     width: 1fr;
 }
 
-#progress-active {
+#progress-overall-bar Bar {
+    width: 1fr;
+}
+
+#progress-overall-bar Bar > .bar--bar,
+#progress-overall-bar Bar > .bar--complete {
+    background: $surface-lighten-3;
+}
+
+#progress-overall-bar Bar > .bar--complete {
+    color: $primary;
+}
+
+#progress-active, #progress-completed, .dl-active-row,
+.dl-active-title, .dl-active-metrics, .dl-status-row,
+#progress-empty, #progress-detail-text {
     height: auto;
-    max-height: 8;
-    padding: 0 1;
+    width: 1fr;
+}
+
+.dl-active-row, .dl-status-row {
     margin-bottom: 1;
 }
 
-#progress-completed {
-    height: 1fr;
-    padding: 0 1;
-    border-top: solid $surface;
-    margin-top: 1;
+.dl-active-title {
+    text-style: bold;
 }
 
-.dl-active-row {
-    color: $warning;
-}
-
-.dl-status-row {
-    padding: 0 1;
+.dl-active-metrics, #progress-empty, #progress-detail-text {
+    color: $text-muted;
 }
 
 .dl-section-title {
     color: $text-muted;
     text-style: bold;
+    margin: 1 0;
+}
+
+#progress-details {
+    margin: 1 0 0 0;
+    border: none;
+    padding: 0;
+    background: $surface;
+}
+
+#history-details-pane {
+    height: auto;
+    max-height: 10;
     margin-top: 1;
 }
 
-CancelConfirmScreen {
-    align: center middle;
+#history-details, #game-detail {
+    height: auto;
+    width: 1fr;
 }
 
-CancelConfirmScreen #cancel-confirm-modal {
-    width: 50;
-    height: 9;
-    border: round $error;
+#game-detail {
+    color: $text-muted;
+    margin-top: 1;
+}
+
+CancelConfirmScreen, HelpScreen {
+    align: center middle;
+    background: $background 60%;
+}
+
+#cancel-confirm-modal {
+    width: 60;
+    max-width: 95%;
+    height: auto;
+    border: solid $warning;
     background: $surface;
     padding: 1 2;
 }
 
 #cancel-confirm-question {
-    text-align: center;
+    height: auto;
+    width: 1fr;
     margin-bottom: 1;
 }
 
-#cancel-confirm-actions {
-    text-align: center;
+#help-panel {
+    width: 80;
+    max-width: 95%;
+    height: 85%;
+    border: solid $primary;
+    background: $surface;
+    padding: 1 2;
+}
+
+#help-title {
+    text-style: bold;
+}
+
+#help-scroll {
+    height: 1fr;
+    margin: 1 0;
+}
+
+#help-footer, #cancel-confirm-actions {
+    height: auto;
+    width: 1fr;
+    color: $text-muted;
 }

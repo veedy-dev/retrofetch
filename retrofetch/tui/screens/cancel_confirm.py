@@ -1,4 +1,5 @@
 """Cancel confirm modal: prompts user before stopping a running download run."""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
@@ -21,8 +22,12 @@ class CancelConfirmScreen(ModalScreen[bool]):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="cancel-confirm-modal"):
-            yield Label(self._prompt, id="cancel-confirm-question")
-            yield Label("[y] Yes  [n] No  [esc] No", id="cancel-confirm-actions")
+            yield Label(self._prompt, id="cancel-confirm-question", markup=False)
+            yield Label(
+                "Y Confirm   N Keep running   Esc Back",
+                id="cancel-confirm-actions",
+                markup=False,
+            )
 
     def action_confirm(self) -> None:
         self.dismiss(True)

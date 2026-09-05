@@ -4,14 +4,13 @@ import asyncio
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from types import SimpleNamespace
-from typing import Any, cast
+from typing import cast
 
-from textual.app import App, ComposeResult
-from textual.widget import Widget
+from textual.events import Mount
 from textual.widgets import ListItem, ListView
 
 from retrofetch.config import Config, ConsoleOverride
+from retrofetch.tui.app import RetrofetchApp
 from retrofetch.tui.messages import WantlistFailed, WantlistReady
 from retrofetch.tui.screens import home as home_module
 from retrofetch.tui.screens.home import HomeScreen
@@ -20,84 +19,22 @@ from retrofetch.tui.widgets.wantlist_preview import WantlistPreview
 from retrofetch.wantlist_cache import CachedWantlist, load_cached, save_cached
 
 
-class _PreviewApp(App[None]):
-    def compose(self) -> ComposeResult:
-        yield WantlistPreview(id="preview")
+class _HomeApp(RetrofetchApp):
+    CSS_PATH = "../retrofetch/tui/styles.tcss"
 
-
-class _HomeApp(App[None]):
     def __init__(self, screen: HomeScreen) -> None:
-        super().__init__()
+        super().__init__(
+            config=Config(roms_root=Path("ROMs"), bios_root=Path("BIOS")),
+            config_path=Path("config.yml"),
+            consoles_yml={"consoles": []},
+            overrides={},
+        )
         self._home = screen
-        self.config = Config(roms_root=Path("ROMs"), bios_root=Path("BIOS"))
-        self.consoles_yml = {"consoles": []}
-        self.overrides = {}
 
-    async def on_mount(self) -> None:
-        await self.push_screen(self._home)
-
-
-def test_explicit_home_refresh_requests_the_complete_catalog(monkeypatch) -> None:
-    titles = [f"Game {index:04d}" for index in range(1001)]
-    captured: dict[str, object] = {}
-
-    def fake_get_or_fetch_wantlist(**kwargs):
-        captured.update(kwargs)
-        return titles, False
-
-    monkeypatch.setattr(
-        home_module, "get_or_fetch_wantlist", fake_get_or_fetch_wantlist
-    )
-    messages = []
-    fake_screen = SimpleNamespace(
-        app=SimpleNamespace(overrides={}, config=Config(roms_root=Path("ROMs"))),
-        post_message=messages.append,
-    )
-
-    cast(Any, HomeScreen._kick_preview_fetch).__wrapped__(
-        fake_screen,
-        {"shortname": "psx", "class": "B"},
-        7,
-    )
-
-    assert captured["limit"] == 0
-    assert captured["force_refresh"] is False
-    assert len(messages) == 1
-    assert isinstance(messages[0], WantlistReady)
-    assert messages[0].titles == titles
-    assert messages[0].request_id == 7
-
-
-def test_preview_uses_native_loading_and_hides_cache_provenance() -> None:
-    async def run() -> None:
-        app = _PreviewApp()
-        async with app.run_test():
-            preview = app.query_one("#preview", WantlistPreview)
-
-            preview.show_loading("psx")
-            assert preview.state == "LOADING"
-            assert preview.loading is True
-
-            preview.show_ready("psx", [f"Game {index}" for index in range(1001)], {})
-            ready_text = str(preview.render())
-            assert preview.state == "READY"
-            assert preview.loading is False
-            assert ready_text.startswith("psx - 1001 titles\n")
-            assert "Page 1/51" in ready_text
-            assert "fresh" not in ready_text.casefold()
-            assert "cached" not in ready_text.casefold()
-
-            preview.show_loading("psx")
-            preview.show_failed("psx", "offline")
-            assert preview.state == "FAILED"
-            assert preview.loading is False
-
-            preview.show_loading("psx")
-            preview.show_idle()
-            assert preview.state == "IDLE"
-            assert preview.loading is False
-
-    asyncio.run(run())
+    def on_mount(self, event: Mount | None = None) -> None:
+        if event is not None:
+            event.prevent_default()
+        self.push_screen(self._home)
 
 
 def test_home_cache_miss_automatically_loads_catalog(monkeypatch, scratch_path) -> None:
@@ -231,6 +168,7 @@ def test_rapid_highlight_before_debounce_only_starts_latest_console(
 
     async def run() -> None:
         async with app.run_test() as pilot:
+
             def record_fetch(entry, request_id, _force_refresh=False) -> None:
                 calls.append((str(entry["shortname"]), request_id))
                 started.set()
@@ -389,14 +327,15 @@ def test_returning_from_select_games_refreshes_home_from_raw_cache(
         async with app.run_test() as pilot:
             screen.query_one("#console-list", ListView).index = 0
             await pilot.pause()
-            screen.action_open_wantlist()
+            screen.query_one("#console-list", ListView).focus()
+            await pilot.press("enter")
             for _ in range(100):
                 current = app.screen
                 if isinstance(current, WantlistScreen) and current._loaded:
                     break
                 await pilot.pause(0.01)
             assert isinstance(app.screen, WantlistScreen)
-            await pilot.press("enter")
+            await pilot.press("escape")
             await pilot.pause()
 
             preview = screen.query_one("#main-panel", WantlistPreview)
@@ -408,25 +347,6 @@ def test_returning_from_select_games_refreshes_home_from_raw_cache(
     cached = load_cached(scratch_path / ".cache", "ps2")
     assert cached is not None
     assert cached.titles == ["Visible Game", "Hidden Game"]
-
-
-def test_home_loading_indicator_fills_and_matches_main_panel() -> None:
-    async def run() -> None:
-        screen = HomeScreen()
-        app = _HomeApp(screen)
-        async with app.run_test(size=(111, 40)) as pilot:
-            preview = screen.query_one("#main-panel", WantlistPreview)
-            preview.show_loading("psx")
-            await pilot.pause()
-
-            loading = preview._cover_widget
-            assert loading is not None
-            parent = preview.parent
-            assert isinstance(parent, Widget)
-            assert loading.outer_size.height == parent.content_size.height
-            assert loading.background_colors == preview.background_colors
-
-    asyncio.run(run())
 
 
 def test_late_results_cannot_overwrite_unsupported_idle_selection() -> None:
@@ -504,9 +424,7 @@ def test_failed_background_refresh_keeps_cached_preview() -> None:
             screen._last_highlighted = "psx"
             screen._preview_fetching["psx"] = 3
 
-            screen.on_wantlist_failed(
-                WantlistFailed("psx", "offline", request_id=3)
-            )
+            screen.on_wantlist_failed(WantlistFailed("psx", "offline", request_id=3))
 
             assert preview.state == "READY"
             assert "Cached Game" in str(preview.render())

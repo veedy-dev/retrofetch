@@ -129,8 +129,11 @@ def test_exact_search_base_only_and_buzzheavier_token_redirect() -> None:
     )
 
 
-def test_legacy_buzzheavier_falls_back_to_buffdrive_without_payload_fetch() -> None:
-    page = "https://buffdrive.com/358"
+@pytest.mark.parametrize("file_id", ["358", "3qv"])
+def test_legacy_buzzheavier_falls_back_to_buffdrive_without_payload_fetch(
+    file_id: str,
+) -> None:
+    page = f"https://buffdrive.com/{file_id}"
     endpoint = page + "?pt=fixture-token"
     direct = "https://fs8.buffdrive.xyz/fixture/Moon-Garden.rar"
     source = FixtureRomsim(
@@ -139,13 +142,93 @@ def test_legacy_buzzheavier_falls_back_to_buffdrive_without_payload_fetch() -> N
                 "Moon Garden Switch NSP", kind="thumb"
             ),
             "https://romsim.net/demo/": detail("https://bzzhr.to/f/legacy=", page),
-            page: "<title>Moon-Garden-BASE-NSP-Romsim.com.rar - BUFFDRIVE</title><button onclick=\"window.location = 'https://buffdrive.com/358?pt=fixture-token'; return false;\">Download</button>",
+            page: (
+                "<title>Moon-Garden-BASE-NSP-Romsim.com.rar - BUFFDRIVE</title>"
+                f"<button onclick=\"window.location = '{endpoint}'; "
+                'return false;">Download</button>'
+            ),
             endpoint: redirect(302, "Location", direct),
         }
     )
     candidate = source.find_url_for_game("Moon Garden")
     assert candidate is not None and candidate.url == direct
     assert candidate.filename == "Moon-Garden-BASE-NSP-Romsim.com.rar"
+
+
+@pytest.mark.parametrize(
+    "page, endpoint, direct, status",
+    [
+        (
+            "https://buffdrive.com/f/3qv",
+            "",
+            "",
+            302,
+        ),
+        (
+            "https://buffdrive.com/3qv%2fother",
+            "",
+            "",
+            302,
+        ),
+        (
+            "https://buffdrive.com/3qv",
+            "https://buffdrive.com/other?pt=test",
+            "",
+            302,
+        ),
+        (
+            "https://buffdrive.com/3qv",
+            "https://buffdrive.com/3qv?token=test",
+            "",
+            302,
+        ),
+        (
+            "https://buffdrive.com/3qv",
+            "http://buffdrive.com/3qv?pt=test",
+            "",
+            302,
+        ),
+        (
+            "https://buffdrive.com/3qv",
+            "https://buffdrive.com.evil.example/3qv?pt=test",
+            "",
+            302,
+        ),
+        (
+            "https://buffdrive.com/3qv",
+            "https://buffdrive.com/3qv?pt=test",
+            "http://fs8.buffdrive.xyz/file.rar",
+            302,
+        ),
+        (
+            "https://buffdrive.com/3qv",
+            "https://buffdrive.com/3qv?pt=test",
+            "https://buffdrive.xyz.evil.example/file.rar",
+            302,
+        ),
+        (
+            "https://buffdrive.com/3qv",
+            "https://buffdrive.com/3qv?pt=test",
+            "https://fs8.buffdrive.xyz/file.rar",
+            301,
+        ),
+    ],
+)
+def test_buffdrive_alphanumeric_identifier_retains_security_boundaries(
+    page: str, endpoint: str, direct: str, status: int
+) -> None:
+    source = FixtureRomsim(
+        {
+            page: (
+                "<title>Moon-Garden-BASE.rar - BUFFDRIVE</title>"
+                f"<button onclick=\"window.location = '{endpoint}'; "
+                'return false;">Download</button>'
+            ),
+            endpoint: redirect(status, "Location", direct),
+        }
+    )
+    with pytest.raises(SourceUnavailable):
+        source._buffdrive(page, "https://romsim.net/demo/", "Moon Garden")
 
 
 @pytest.mark.parametrize(

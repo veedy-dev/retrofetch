@@ -1,17 +1,28 @@
-"""Download confirm screen: validates selected wantlist, then pushes Progress."""
+"""Review the shared pending queue and start an app-owned download batch."""
+
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
+from rich.text import Text
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Vertical  # pyright: ignore[reportMissingImports]
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import Footer, Header, Label, OptionList  # pyright: ignore[reportMissingImports]
+from textual.widgets import (  # pyright: ignore[reportMissingImports]
+    Footer,
+    Header,
+    Label,
+    OptionList,
+)
 
 from retrofetch.config import ConsoleOverride
 from retrofetch.ranker import resolve_download_set
+from retrofetch.tui.messages import QueueChanged
 from retrofetch.tui.screens.download_progress import DownloadProgressScreen
+
+if TYPE_CHECKING:
+    from retrofetch.tui.app import RetrofetchApp
 
 
 class DownloadConfirmScreen(Screen[None]):
@@ -19,7 +30,7 @@ class DownloadConfirmScreen(Screen[None]):
         Binding("enter", "start", "Start", show=True, priority=True),
         Binding("x", "remove", "Remove", show=True),
         Binding("delete", "remove", "Remove", show=False),
-        Binding("c", "cancel", "Cancel", show=True),
+        Binding("g", "choose_games", "Choose games", show=True),
         Binding("escape", "back", "Back", show=True),
     ]
 
@@ -40,92 +51,87 @@ class DownloadConfirmScreen(Screen[None]):
         yield Header(show_clock=False)
         with Vertical(id="main-panel"):
             yield Label(
-                f"Download: {self.shortname}. Enter=start, x/delete=remove, c=cancel, esc=back.",
+                f"Pending queue: {self.shortname}",
                 id="dl-title",
+                markup=False,
             )
             yield Label("", id="summary-line")
             yield OptionList(id="wantlist-preview", markup=False)
         yield Footer()
 
     def on_mount(self) -> None:
-        override = self.override
-        if override is None or not override.include:
-            self._loaded = True
-            self.query_one("#summary-line", Label).update(
-                "No games selected. Press Esc, then press g to select games."
-            )
-            return
+        self._refresh_queue()
+        self.query_one("#wantlist-preview", OptionList).focus()
 
-        limit = (
-            override.limit
-            if override.limit
-            else self.app.config.default_limit  # pyright: ignore[reportAttributeAccessIssue]
-        )
-        self._wantlist = resolve_download_set(
-            list(override.include),
-            override,
-            limit,
+    def _refresh_queue(self) -> None:
+        self.override = cast("RetrofetchApp", self.app).overrides.get(self.shortname)
+        override = self.override
+        self._wantlist = (
+            resolve_download_set(list(override.include), override, 0)
+            if override and override.include
+            else []
         )
         self._loaded = True
-        if not self._wantlist:
-            self.query_one("#summary-line", Label).update(
-                "No games selected. Press Esc, then press g to select games."
-            )
-            return
-        self.query_one("#summary-line", Label).update(
-            f"Queued {len(self._wantlist)} selected games; source availability is checked at start. Use arrows and x/delete to remove."
-        )
         preview = self.query_one("#wantlist-preview", OptionList)
-        for title in self._wantlist:
-            display = title if len(title) <= 80 else title[:77] + "..."
-            preview.add_option(f"- {display}")
-        preview.highlighted = 0
-        preview.focus()
+        index = preview.highlighted or 0
+        preview.clear_options()
+        preview.add_options([Text(title) for title in self._wantlist])
+        if self._wantlist:
+            preview.highlighted = min(index, len(self._wantlist) - 1)
+        summary = (
+            f"{len(self._wantlist)} queued. Enter starts; x removes. Source availability is checked at start."
+            if self._wantlist
+            else "Your queue is empty. Press g to choose games."
+        )
+        self.query_one("#summary-line", Label).update(Text(summary))
 
-    def _has_selection(self) -> bool:
-        return self.override is not None and bool(self.override.include)
+    def on_queue_changed(self, message: QueueChanged) -> None:
+        if message.console == self.shortname:
+            self._refresh_queue()
+
+    def on_screen_resume(self) -> None:
+        if self._loaded:
+            self._refresh_queue()
 
     def action_start(self) -> None:
-        if not self._has_selection():
-            self.query_one("#summary-line", Label).update(
-                "No games selected. Press Esc, then press g to select games."
-            )
+        app = cast("RetrofetchApp", self.app)
+        self._refresh_queue()
+        if not self._wantlist:
             return
-        if not self._loaded or not self._wantlist:
-            self.query_one("#summary-line", Label).update(
-                "Download list is empty or not ready. Press Esc to choose games."
+        if app.start_download(self.console_entry, list(self._wantlist), dry_run=False):
+            app.switch_screen(DownloadProgressScreen())
+        else:
+            app.show_toast(
+                "A download batch is still running. Your selections are saved; showing its progress."
             )
-            return
-        self.app.config.dry_run = False  # pyright: ignore[reportAttributeAccessIssue]
-        self.app.switch_screen(
-            DownloadProgressScreen(
-                console_entry=self.console_entry,
-                wantlist=self._wantlist,
-                dry_run=False,
-            )
-        )
+            app.action_downloads()
 
     def action_remove(self) -> None:
-        if not self._loaded or not self._wantlist:
-            return
+        app = cast("RetrofetchApp", self.app)
         preview = self.query_one("#wantlist-preview", OptionList)
         index = preview.highlighted
-        if index is None:
+        if index is None or index >= len(self._wantlist):
             return
-        title = self._wantlist.pop(index)
-        preview.remove_option_at_index(index)
-        if self._wantlist:
-            noun = "game" if len(self._wantlist) == 1 else "games"
-            self.query_one("#summary-line", Label).update(
-                f'Removed "{title}" from this download. {len(self._wantlist)} {noun} remain.'
+        title = self._wantlist[index]
+        override = app.overrides.get(self.shortname)
+        if override is not None:
+            app.update_selection(
+                self.shortname,
+                [name for name in override.include if name != title],
+                list(override.exclude),
             )
-        else:
-            self.query_one("#summary-line", Label).update(
-                "Download list is empty. Press Esc to choose games."
-            )
+        self._refresh_queue()
 
-    def action_cancel(self) -> None:
-        self.dismiss(None)
+    def action_choose_games(self) -> None:
+        from retrofetch.tui.screens.wantlist import WantlistScreen
+
+        app = cast("RetrofetchApp", self.app)
+        app.push_screen(
+            WantlistScreen(
+                console_entry=self.console_entry,
+                override=app.overrides.get(self.shortname),
+            )
+        )
 
     def action_back(self) -> None:
         self.dismiss(None)

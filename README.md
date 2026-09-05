@@ -74,7 +74,7 @@ When a torrent download needs qBittorrent, Retrofetch opens the official downloa
 3. Review the download list and remove anything you no longer want.
 4. Start the download and follow its progress in the app.
 
-Retrofetch keeps active downloads and completed history when you close and reopen it. If a provider needs qBittorrent, the app explains what is needed and guides you through setup.
+Downloads continue when you leave the progress screen, while Retrofetch remains open. Press `F6` to return to them. Quitting asks to stop active downloads safely; saved download history remains available after reopening. If a provider needs qBittorrent, the app explains what is needed and guides you through setup.
 
 ## Features
 
@@ -82,26 +82,37 @@ Retrofetch keeps active downloads and completed history when you close and reope
 - Search and selection without opening several websites.
 - A download list you can review before starting.
 - Clear progress, speed, remaining time, seeds, and peers.
-- Downloads that can continue after restarting Retrofetch.
+- Background downloads while you browse games, with completion notifications.
 - File verification when matching verification data is available.
 
 ![Retrofetch download progress](docs/assets/screenshot-download.png)
+
+Progress screen shown with locally generated demonstration data.
 
 ## Basic controls
 
 | Key | Action |
 |---|---|
 | Arrow keys | Move through lists |
-| `Enter` | Open or confirm |
-| `/` | Search |
-| `g` | Choose games |
-| `d` | Review and start downloads |
-| `,` | Open settings |
-| `Esc` | Go back or cancel |
-| `?` | Open help |
-| `q` | Quit |
+| `Enter` / `g` | Browse the highlighted console |
+| `/` | Search consoles or games |
+| `Space` | Add or remove a game from the queue |
+| `Ctrl+A` / `Ctrl+U` | Queue or remove all matching search results |
+| `s` | Show queued games in the browser; open History from Home |
+| `x` | Exclude or restore a game in the browser; remove it in the queue |
+| `Enter` | Review the queue from game results; start from the queue |
+| `d` | Review the highlighted console’s queue from Home |
+| `F6` | Open current downloads |
+| `Esc` | Go back without stopping downloads |
+| `c` | Ask to cancel remaining downloads from the progress screen |
+| `v` / `h` | Show progress details or open download History |
+| `,` | Open settings from Home |
+| `?` | Open contextual keyboard help |
+| `q` / `Ctrl+Q` / `Ctrl+C` | Quit, with confirmation for active downloads |
 
-The available controls are always shown at the bottom of the app.
+Available controls appear at the bottom of each screen. In search, `Enter` focuses results and `Esc` returns to results before going back.
+
+Successfully downloaded and already-present files leave the pending queue automatically. Failed or cancelled games stay queued for retry. Verification status remains in progress Details and History: **Not checked** means no matching DAT verification was performed, not a failed download or verified success.
 
 ## Switch archive providers
 
@@ -121,7 +132,7 @@ Archives are kept unless extraction is explicitly enabled. Downloads remain **un
 - Some games may disappear when a provider removes a file or becomes unavailable.
 - Large arcade and bulk archive collections are not enabled yet because they need separate handling.
 - Torrent speed depends on the people sharing that file, not only your internet speed.
-- Retrofetch resets game selections when reopened, but keeps active and completed downloads.
+- Game selections are session-only. Reopening starts a fresh queue and retains saved download history.
 - Files are marked verified only when matching verification data is available.
 
 ## Android handheld setup

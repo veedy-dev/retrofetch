@@ -1,10 +1,10 @@
-"""Home screen: 178-console sidebar + cache-first wantlist preview panel.
+"""Home screen: console sidebar and cache-first catalog preview.
 
 The main panel mirrors the highlighted console. Cache hits render immediately,
 then refresh once per session; cold catalogs load after a short debounce.
 
 Keybindings:
-- ``Enter`` on a class A/B/C row -> ``ConsoleSelected`` (existing).
+- Enter on an available console opens its game browser.
 - Any highlight (arrow keys, page up/down) -> cached or debounced live preview.
 - ``Ctrl+R`` -> invalidate cache for the highlighted console and re-fetch.
 
@@ -15,19 +15,28 @@ Workers all carry explicit ``group=`` names per Metis K.6:
 from __future__ import annotations
 
 # pyright: reportAttributeAccessIssue=false
-
 from typing import Any
 
+from textual import (
+    work,  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
+)
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
-from textual.containers import Horizontal, Vertical  # pyright: ignore[reportMissingImports]
-from textual.message import Message  # pyright: ignore[reportMissingImports]
+from textual.containers import (  # pyright: ignore[reportMissingImports]
+    Horizontal,
+    Vertical,
+)
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import Footer, Header, Input, Label, ListItem, ListView  # pyright: ignore[reportMissingImports]
-from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
+from textual.widgets import (  # pyright: ignore[reportMissingImports]
+    Footer,
+    Header,
+    Input,
+    Label,
+    ListItem,
+    ListView,
+)
 
-from retrofetch.state import load_state
-from retrofetch.tui.messages import WantlistFailed, WantlistReady
+from retrofetch.tui.messages import QueueChanged, WantlistFailed, WantlistReady
 from retrofetch.tui.widgets.wantlist_preview import WantlistPreview
 from retrofetch.wantlist_cache import (
     get_or_fetch_wantlist,
@@ -35,16 +44,6 @@ from retrofetch.wantlist_cache import (
     load_cached,
     project_wantlist_titles,
 )
-
-
-class ConsoleSelected(Message):
-    """Bubbled when the user selects a Class A/B/C console from the sidebar."""
-
-    def __init__(self, shortname: str, display_name: str, klass: str) -> None:
-        self.shortname = shortname
-        self.display_name = display_name
-        self.klass = klass
-        super().__init__()
 
 
 class HomeScreen(Screen[None]):
@@ -57,10 +56,10 @@ class HomeScreen(Screen[None]):
         ),
         Binding("question_mark", "help", "Help", show=True, key_display="?"),
         Binding("tab", "focus_next", "Next", show=False),
-        Binding("g", "open_wantlist", "Select Games", show=True),
-        Binding("d", "open_download", "Download", show=True),
+        Binding("g", "open_wantlist", "Browse games", show=True),
+        Binding("d", "open_download", "Queue", show=True),
         Binding("b", "open_bios", "BIOS", show=True),
-        Binding("s", "open_state", "State", show=True),
+        Binding("s", "open_state", "History", show=True),
         Binding("comma", "open_settings", "Settings", show=True, key_display=","),
         Binding("C", "open_coverage", "Coverage", show=True),
         Binding("r", "retry_fetch", "Refresh", show=True),
@@ -70,6 +69,7 @@ class HomeScreen(Screen[None]):
         # movement inside its text field, but the ListView forwards to us.
         Binding("left", "preview_prev_page", "Prev page", show=True, key_display="<-"),
         Binding("right", "preview_next_page", "Next page", show=True, key_display="->"),
+        Binding("escape", "leave_filter", "Results", show=False),
     ]
 
     # Debounce input and cold preview fetches so rapid navigation stays cheap.
@@ -113,8 +113,15 @@ class HomeScreen(Screen[None]):
 
     @classmethod
     def _is_available(cls, entry: dict[str, Any]) -> bool:
-        """Return whether this console has a configured browse provider."""
-        return cls._has_slug(entry)
+        """Return whether a supported console has a browse adapter."""
+        if cls._has_slug(entry):
+            return True
+        if str(entry.get("class", "")) not in ("A", "B", "C"):
+            return False
+        from retrofetch.sources.romsim import RomsimSource
+
+        # Switch archives need no slug; reuse their network-free enablement.
+        return RomsimSource(entry).enabled
 
     def on_mount(self) -> None:
         """Populate the ListView from self.app.consoles_yml (loaded by cli.py)."""
@@ -128,7 +135,7 @@ class HomeScreen(Screen[None]):
             klass = str(entry.get("class", "?"))
             available = self._is_available(entry)
             badge = f"[{klass}]" if klass else "[?]"
-            label = Label(f"{badge} {display_name}")
+            label = Label(f"{badge} {display_name}", markup=False)
             css_class = "class-available" if available else "class-unavailable"
             classes = ["console-row", css_class]
             item = ListItem(label, classes=" ".join(classes))
@@ -144,10 +151,9 @@ class HomeScreen(Screen[None]):
         # Preview starts in IDLE state (WantlistPreview.on_mount handles it).
         # Use the header's sub_title slot to show a live coverage stat - that
         # fills the empty top-right corner with something useful.
-        try:
-            self.app.sub_title = f"{available_count}/{total_count} consoles available"
-        except Exception:
-            pass
+        self.app.set_catalog_sub_title(
+            f"{available_count}/{total_count} consoles available"
+        )
 
     # ------------------------------------------------------------------
     # Filter debounce (unchanged)
@@ -170,6 +176,42 @@ class HomeScreen(Screen[None]):
             shortname = getattr(item, "_rf_shortname", "").casefold()
             matches = (not query) or (query in display_name) or (query in shortname)
             item.display = matches
+        list_view = self.query_one("#console-list", ListView)
+        highlighted = list_view.highlighted_child
+        if highlighted is None or not highlighted.display:
+            list_view.index = next(
+                (
+                    index
+                    for index, (_, item) in enumerate(self._all_items)
+                    if item.display
+                ),
+                None,
+            )
+            if list_view.index is None:
+                self._last_highlighted = None
+                self.query_one("#main-panel", WantlistPreview).show_idle()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "filter":
+            self._apply_filter(event.value.strip().casefold())
+            self.query_one("#console-list", ListView).focus()
+
+    def action_leave_filter(self) -> None:
+        self.query_one("#console-list", ListView).focus()
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        return not (
+            isinstance(self.focused, Input)
+            and action not in {"focus_filter", "leave_filter", "focus_next"}
+        )
+
+    def on_queue_changed(self, message: QueueChanged) -> None:
+        if message.console == self._last_highlighted:
+            self._show_cached_preview(message.console)
+
+    def on_screen_resume(self) -> None:
+        if self._last_highlighted:
+            self._show_cached_preview(self._last_highlighted)
 
     # ------------------------------------------------------------------
     # Cache-first preview
@@ -181,21 +223,9 @@ class HomeScreen(Screen[None]):
                 return entry
         return None
 
-    def _compute_state_counts(self, shortname: str) -> dict[str, int]:
-        try:
-            state = load_state(shortname, self.app.config.roms_root)
-        except Exception:
-            return {"acquired": 0, "unverified": 0, "failed": 0, "pending": 0}
-        counts: dict[str, int] = {
-            "acquired": 0,
-            "unverified": 0,
-            "failed": 0,
-            "pending": 0,
-        }
-        for game in state.games:
-            status = getattr(game, "status", "pending")
-            counts[status] = counts.get(status, 0) + 1
-        return counts
+    def _queue_counts(self, shortname: str) -> dict[str, int]:
+        override = self.app.overrides.get(shortname)
+        return {"queued": len(override.include) if override else 0}
 
     def _show_cached_preview(self, shortname: str) -> bool:
         hit = load_cached(self.app.config.cache_dir, shortname)
@@ -204,7 +234,7 @@ class HomeScreen(Screen[None]):
         override = self.app.overrides.get(shortname)
         titles = project_wantlist_titles(list(hit.titles), override, 0)
         self.query_one("#main-panel", WantlistPreview).show_ready(
-            shortname, titles, self._compute_state_counts(shortname)
+            shortname, titles, self._queue_counts(shortname)
         )
         return True
 
@@ -310,7 +340,7 @@ class HomeScreen(Screen[None]):
         del self._preview_fetching[message.console]
         if message.console != self._last_highlighted:
             return
-        counts = self._compute_state_counts(message.console)
+        counts = self._queue_counts(message.console)
         preview = self.query_one("#main-panel", WantlistPreview)
         # Pass the FULL title list - WantlistPreview handles pagination
         # internally (20 per page via PAGE_SIZE).
@@ -333,11 +363,7 @@ class HomeScreen(Screen[None]):
         preview = self.query_one("#main-panel", WantlistPreview)
         if preview.state == "READY":
             return
-        try:
-            self.app.show_toast(f"Fetch failed: {message.reason}", severity="warning")
-        except Exception:
-            # shutdown race: toast container may already be gone
-            pass
+        self.app.show_toast(f"Fetch failed: {message.reason}", severity="warning")
         preview.show_failed(message.console, message.reason)
 
     # ------------------------------------------------------------------
@@ -382,20 +408,14 @@ class HomeScreen(Screen[None]):
         self._start_preview_fetch(entry, request_id)
 
     # ------------------------------------------------------------------
-    # Existing Enter handler (unchanged)
+    # Console navigation
     # ------------------------------------------------------------------
     def on_list_view_selected(self, event: ListView.Selected) -> None:
-        """Enter on an item - post ConsoleSelected ONLY for class A/B/C."""
-        item = event.item
-        klass = getattr(item, "_rf_klass", "?")
-        if not getattr(item, "_rf_available", False):
-            return
-        shortname = getattr(item, "_rf_shortname", "?")
-        display_name = getattr(item, "_rf_display_name", "?")
-        self.post_message(ConsoleSelected(shortname, display_name, klass))
+        if event.item.display and getattr(event.item, "_rf_available", False):
+            self.action_open_wantlist()
 
     # ------------------------------------------------------------------
-    # Existing action handlers (unchanged)
+    # Screen actions
     # ------------------------------------------------------------------
     def action_focus_filter(self) -> None:
         self.query_one("#filter", Input).focus()
@@ -419,7 +439,7 @@ class HomeScreen(Screen[None]):
     def action_open_wantlist(self) -> None:
         list_view = self.query_one("#console-list", ListView)
         item = list_view.highlighted_child
-        if item is None:
+        if item is None or not item.display:
             return
         if not getattr(item, "_rf_available", False):
             return
@@ -445,7 +465,7 @@ class HomeScreen(Screen[None]):
     def action_open_download(self) -> None:
         list_view = self.query_one("#console-list", ListView)
         item = list_view.highlighted_child
-        if item is None:
+        if item is None or not item.display:
             return
         if not getattr(item, "_rf_available", False):
             return

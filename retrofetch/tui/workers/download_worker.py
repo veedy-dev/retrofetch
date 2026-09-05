@@ -1,30 +1,16 @@
-"""Threaded download worker for the TUI.
+"""App-owned background run with a physical cleanup acknowledgement."""
 
-Runs orchestrator.run_console on a background thread. Forwards ProgressEvents
-from the EventBus to Textual Messages via EventBusBridge, and posts
-DownloadComplete / DownloadCrashed messages at the end of the run.
-
-Thread-safety rules (Metis K.6, K.7):
-- The enclosing screen applies `@work(thread=True, exclusive=True, group="download")`
-  when invoking `run()` — we don't decorate methods here because @work lives on
-  App/Screen methods, not arbitrary classes.
-- No direct widget access from inside `run()`. Only `bus.publish` and
-  `self._app.post_message` are safe from the worker thread.
-- Exceptions inside `run()` are caught and posted as DownloadCrashed rather
-  than propagated (Textual would swallow them silently).
-- A shared `threading.Event` lets the main thread signal cancellation; the
-  orchestrator already honors `stop_event` per-iteration (T10).
-"""
 from __future__ import annotations
 
 import threading
+from collections.abc import Callable
 from typing import Any
 
-from textual.worker import get_current_worker  # pyright: ignore[reportMissingImports]
+from textual.message import Message
 
 from retrofetch.config import Config
 from retrofetch.events import EventBus
-from retrofetch.orchestrator import RunReport, run_console
+from retrofetch.orchestrator import run_console
 from retrofetch.tui.messages import (
     DownloadComplete,
     DownloadCrashed,
@@ -48,25 +34,15 @@ class TorrentSetupGate:
         while not self._event.wait(0.1):
             if stop_event is not None and stop_event.is_set():
                 return False
-        return self.accepted and not (
-            stop_event is not None and stop_event.is_set()
-        )
+        return self.accepted and not (stop_event is not None and stop_event.is_set())
 
 
 class DownloadWorker:
-    """Owns the lifecycle of a download run for one console.
+    """One run; receive must be thread-safe and target the owning app."""
 
-    Usage from a Screen:
-
-        self.worker = DownloadWorker(self.app)
-        stop_event = self.worker.start(console_entry=..., wantlist=..., config=..., ...)
-        self.run_worker(self.worker.run, thread=True, exclusive=True, group="download")
-        # later, to cancel:
-        stop_event.set()
-    """
-
-    def __init__(self, app) -> None:
-        self._app = app
+    def __init__(self, receive: Callable[[Message], object]) -> None:
+        self._receive = receive
+        self.finished = threading.Event()
         self._bridge: EventBusBridge | None = None
         self._stop_event: threading.Event | None = None
         self._bus: EventBus | None = None
@@ -89,7 +65,7 @@ class DownloadWorker:
     ) -> threading.Event:
         """Wire bridge + EventBus on the main thread."""
         bus = EventBus()
-        self._bridge = EventBusBridge(self._app, bus)
+        self._bridge = EventBusBridge(self._receive, bus)
         self._bridge.start()
         self._stop_event = threading.Event()
         self._bus = bus
@@ -102,21 +78,16 @@ class DownloadWorker:
         return self._stop_event
 
     def run(self) -> None:
-        """Blocking method called on the worker thread."""
-        if (
-            self._console_entry is None
-            or self._config is None
-            or self._consoles_yml is None
-            or self._bus is None
-        ):
-            self._app.post_message(DownloadCrashed("worker not initialized: call start() first"))
-            return
-
-        report: RunReport | None = None
+        """Publish the terminal result only after all run resources are closed."""
+        result: Message
         try:
-            current = get_current_worker()
-            if current is not None and current.is_cancelled and self._stop_event is not None:
-                self._stop_event.set()
+            if (
+                self._console_entry is None
+                or self._config is None
+                or self._consoles_yml is None
+                or self._bus is None
+            ):
+                raise RuntimeError("worker not initialized: call start() first")
             report = run_console(
                 console_entry=self._console_entry,
                 wantlist=self._wantlist,
@@ -128,22 +99,17 @@ class DownloadWorker:
                 dry_run=self._dry_run,
                 torrent_setup_callback=self._request_torrent_setup,
             )
+            result = DownloadComplete(report)
         except Exception as exc:
-            try:
-                self._app.post_message(DownloadCrashed(str(exc)))
-            finally:
-                self._cleanup()
-            return
-
-        try:
-            if report is not None:
-                self._app.post_message(DownloadComplete(report))
+            result = DownloadCrashed(str(exc))
         finally:
             self._cleanup()
+            self.finished.set()
+        self._receive(result)
 
     def _request_torrent_setup(self) -> bool:
         gate = TorrentSetupGate()
-        self._app.post_message(TorrentSetupRequired(gate))
+        self._receive(TorrentSetupRequired(gate))
         return gate.wait(self._stop_event)
 
     def _cleanup(self) -> None:

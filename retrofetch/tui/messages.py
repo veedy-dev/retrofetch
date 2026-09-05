@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from textual.app import App  # pyright: ignore[reportMissingImports]
-from textual.message import Message  # pyright: ignore[reportMissingImports]
+from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+from textual.message import Message  # pyright: ignore[reportMissingImports]
 
 from retrofetch.coverage import CoverageReport
-from retrofetch.orchestrator import RunReport
 from retrofetch.events import (
     CloudflareBlockEvent,
     DatLoadDoneEvent,
@@ -26,6 +27,7 @@ from retrofetch.events import (
     SourceDeadEvent,
     SubscriptionHandle,
 )
+from retrofetch.orchestrator import RunReport
 
 
 class GameStart(Message):
@@ -199,10 +201,28 @@ class ExtractionDone(Message):
         super().__init__()
 
 
+if TYPE_CHECKING:
+    from retrofetch.tui.downloads import DownloadSession
+    from retrofetch.tui.workers.download_worker import TorrentSetupGate
+
+
+class QueueChanged(Message):
+    def __init__(self, console: str) -> None:
+        self.console = console
+        super().__init__()
+
+
+class DownloadUpdate(Message):
+    def __init__(self, session: DownloadSession, message: Message) -> None:
+        self.session = session
+        self.message = message
+        super().__init__()
+
+
 class EventBusBridge:
     """Translates EventBus ProgressEvents into Textual Messages.
 
-    Thread-safe by construction: uses ``App.post_message()`` exclusively.
+    The receiver must be thread-safe (normally ``App.post_message``).
     """
 
     _TRANSLATIONS: list[tuple[type[ProgressEvent], type[Message]]] = [
@@ -223,8 +243,8 @@ class EventBusBridge:
         (ExtractionDoneEvent, ExtractionDone),
     ]
 
-    def __init__(self, app: App, bus: EventBus) -> None:
-        self._app = app
+    def __init__(self, receive: Callable[[Message], object], bus: EventBus) -> None:
+        self._receive = receive
         self._bus = bus
         self._handle: SubscriptionHandle | None = None
 
@@ -246,18 +266,11 @@ class EventBusBridge:
                     for name in event_cls.__dataclass_fields__
                 }
                 try:
-                    self._app.post_message(msg_cls(**kwargs))
+                    self._receive(msg_cls(**kwargs))
                 except Exception:
                     # subscriber isolation: App may be tearing down when a background event arrives
                     pass
                 return
-
-
-def wire_event_bus(app: App, bus: EventBus) -> EventBusBridge:
-    """Create and start an EventBusBridge."""
-    bridge = EventBusBridge(app, bus)
-    bridge.start()
-    return bridge
 
 
 class DownloadComplete(Message):
@@ -273,7 +286,7 @@ class DownloadCrashed(Message):
 
 
 class TorrentSetupRequired(Message):
-    def __init__(self, request: object) -> None:
+    def __init__(self, request: TorrentSetupGate) -> None:
         self.request = request
         super().__init__()
 

@@ -1,32 +1,30 @@
-"""Wantlist curation screen - session-only DataTable multi-select.
-
-Pushed from HomeScreen when the user presses 'w' on a selected Class A/B/C console.
-Displays ranked titles with include/exclude state, paginated to keep the table
-responsive for large catalogs.
-
-Selections update the running TUI only. Reopening Retrofetch starts with a clean
-wantlist while download progress/history remains persisted separately.
-"""
+"""Browse a complete catalog and edit the shared session-only queue."""
 
 from __future__ import annotations
 
 # pyright: reportAttributeAccessIssue=false
-
 from typing import Any
 
 from rich.text import Text
-from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
+from textual import (
+    work,  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
+)
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Vertical  # pyright: ignore[reportMissingImports]
-from textual.coordinate import Coordinate  # pyright: ignore[reportMissingImports]
+from textual.coordinate import Coordinate
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import DataTable, Footer, Header, Input, Label  # pyright: ignore[reportMissingImports]
+from textual.widgets import (  # pyright: ignore[reportMissingImports]
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Label,
+)
 
 from retrofetch.config import ConsoleOverride
-from retrofetch.tui.messages import WantlistFailed, WantlistReady
+from retrofetch.tui.messages import QueueChanged, WantlistFailed, WantlistReady
 from retrofetch.wantlist_cache import get_or_fetch_wantlist
-
 
 _SPINNER_FRAMES = ("|", "/", "-", "\\")
 _SPINNER_INTERVAL_S = 0.12
@@ -34,12 +32,15 @@ _SPINNER_INTERVAL_S = 0.12
 
 class WantlistScreen(Screen[None]):
     BINDINGS = [
-        Binding("space", "toggle_include", "Include", show=True),
-        Binding("x", "toggle_exclude", "Exclude", show=True),
-        Binding("enter", "enter", "Apply", show=True, priority=True),
+        Binding("escape", "cancel", "Back", show=True, priority=True),
+        Binding("space", "toggle_include", "Queue", show=True),
+        Binding("enter", "enter", "Review queue", show=True, priority=True),
         Binding("slash", "focus_filter", "Search", show=True, key_display="/"),
+        Binding("s", "queued_only", "Queued only", show=True),
+        Binding("x", "toggle_exclude", "Exclude", show=True),
+        Binding("ctrl+a", "select_filtered", "Queue results", show=True),
+        Binding("ctrl+u", "clear_filtered", "Clear results", show=True),
         Binding("r", "refresh", "Refresh", show=True),
-        Binding("escape", "cancel", "Cancel", show=True),
         Binding("pageup", "page_prev", "Prev page", show=True),
         Binding("pagedown", "page_next", "Next page", show=True),
     ]
@@ -56,7 +57,7 @@ class WantlistScreen(Screen[None]):
         self.console_entry = console_entry
         self.shortname = str(console_entry.get("shortname", "?"))
         self.override = override or ConsoleOverride()
-        # Working copies so esc can discard unsaved changes
+        # Refresh from the shared session selection before every mutation.
         self._include: set[str] = set(self.override.include)
         self._exclude: set[str] = set(self.override.exclude)
         self._wantlist: list[str] = []
@@ -64,32 +65,91 @@ class WantlistScreen(Screen[None]):
         self._filter_query = ""
         self._page = 0
         self._status = ""
-        self._primary_source: str = "-"
+        self._queued_only = False
         self._loaded = False
         self._loading = False
         self._spinner_timer = None
         self._spinner_index: int = 0
+        self._session_status_key: tuple[int, int] | None = None
+        self._table_width = 0
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
         with Vertical(id="main-panel"):
             yield Label(
-                f"Select Games: {self.shortname}  (space=include, x=exclude, /=search, enter=apply, r=refresh, esc=cancel)"
+                f"Browse games: {self.shortname}", id="browser-title", markup=False
+            )
+            yield Label(
+                "Space queues a game. Selections stay for this session; Esc goes back.",
+                id="browser-context",
             )
             yield Input(placeholder="search titles...", id="wantlist-filter")
             yield Label("", id="status-line")
             yield DataTable(id="wantlist-table")
+            yield Label("", id="game-detail", markup=False)
         yield Footer()
 
     def on_mount(self) -> None:
         table: DataTable = self.query_one("#wantlist-table", DataTable)
-        table.add_columns("#", "sel", "Title", "Source", "Included", "Excluded")
+        self._set_columns(table)
         table.cursor_type = "row"
         table.focus()
-        klass = str(self.console_entry.get("class", "?"))
-        ranking_sources = self.app.config.ranking_sources_by_class.get(klass, [])  # pyright: ignore[reportAttributeAccessIssue]
-        self._primary_source = ranking_sources[0] if ranking_sources else "-"
+        self._sync_selection()
         self._begin_load()
+        self.set_interval(0.25, self._refresh_download_status)
+
+    def _refresh_download_status(self) -> None:
+        if not self._loaded or not self.is_current:
+            return
+        session = self.app.download_session
+        key = (id(session), session.status_revision if session is not None else 0)
+        if key == self._session_status_key:
+            return
+        self._session_status_key = key
+        table = self.query_one("#wantlist-table", DataTable)
+        start = self._page * self._PAGE_SIZE
+        for row, title in enumerate(
+            self._filtered_wantlist[start : start + self._PAGE_SIZE]
+        ):
+            table.update_cell_at(
+                Coordinate(row, 2), self._cell_text(self._title_status(title), 16)
+            )
+
+    @staticmethod
+    def _cell_text(value: str, width: int) -> Text:
+        text = Text(value)
+        if text.cell_len > width:
+            text.truncate(max(0, width - 3), overflow="crop")
+            text.append("...")
+        return text
+
+    def _set_columns(self, table: DataTable) -> int:
+        self._table_width = table.content_size.width
+        # Reserve all cell padding and the scrollbar before assigning title space.
+        title_width = max(
+            5, self._table_width - table.styles.scrollbar_size_vertical - 27
+        )
+        table.add_column("Queue", width=5)
+        table.add_column("Title", width=title_width)
+        table.add_column("Status", width=16)
+        return title_width
+
+    def on_resize(self) -> None:
+        if self._loaded:
+            self.call_after_refresh(self._resize_table)
+
+    def _resize_table(self) -> None:
+        if (
+            self.query_one("#wantlist-table", DataTable).content_size.width
+            != self._table_width
+        ):
+            self._render_page()
+
+    def on_data_table_row_highlighted(self) -> None:
+        self._update_game_detail()
+
+    def _update_game_detail(self) -> None:
+        self.query_one("#game-detail", Label).update(Text(self._current_title() or ""))
 
     def _begin_load(self) -> None:
         if self._loading:
@@ -170,53 +230,57 @@ class WantlistScreen(Screen[None]):
         self._render_page()
 
     def _render_page(self) -> None:
-        table: DataTable = self.query_one("#wantlist-table", DataTable)
-        table.clear()
-        start = self._page * self._PAGE_SIZE
-        end = start + self._PAGE_SIZE
-        page_rows = self._filtered_wantlist[start:end]
-        for offset, title in enumerate(page_rows):
-            inc = Text("[x]" if title in self._include else "[ ]")
-            table.add_row(
-                str(start + offset + 1),
-                inc,
-                title,
-                self._primary_source,
-                "yes" if title in self._include else "",
-                "yes" if title in self._exclude else "",
-            )
-        # Reset the viewport to the top on each page render so rows are never
-        # stranded mid-scroll.
-        try:
-            if page_rows:
-                table.cursor_coordinate = Coordinate(0, 0)
-                table.scroll_home(animate=False)
-        except Exception:
-            # Textual API variant: scroll_home might differ
-            pass
-        self._refresh_status_line()
-
-    def _update_current_row_cells(self, title: str) -> None:
-        table: DataTable = self.query_one("#wantlist-table", DataTable)
+        table = self.query_one("#wantlist-table", DataTable)
         row = table.cursor_row
-        inc_text = Text("[x]" if title in self._include else "[ ]")
-        included = "yes" if title in self._include else ""
-        excluded = "yes" if title in self._exclude else ""
-        try:
-            table.update_cell_at(Coordinate(row, 1), inc_text)
-            table.update_cell_at(Coordinate(row, 4), included)
-            table.update_cell_at(Coordinate(row, 5), excluded)
-        except Exception:
-            self._render_page()
-            return
+        self._sync_selection()
+        self._apply_title_filter(reset_page=False)
+        table.clear(columns=True)
+        title_width = self._set_columns(table)
+        start = self._page * self._PAGE_SIZE
+        for title in self._filtered_wantlist[start : start + self._PAGE_SIZE]:
+            table.add_row(
+                Text("[x]" if title in self._include else "[ ]"),
+                self._cell_text(title, title_width),
+                self._cell_text(self._title_status(title), 16),
+            )
+        if table.row_count:
+            table.move_cursor(row=min(row, table.row_count - 1))
         self._refresh_status_line()
+        self._update_game_detail()
+
+    def _title_status(self, title: str) -> str:
+        status = "Excluded" if title in self._exclude else ""
+        session = self.app.download_session
+        if session is not None and session.shortname == self.shortname:
+            activity = session.title_status.get(title, "")
+            if activity:
+                status = activity
+        return status
+
+    def _sync_selection(self) -> None:
+        self.override = self.app.overrides.get(self.shortname) or ConsoleOverride()
+        self._include = set(self.override.include)
+        self._exclude = set(self.override.exclude)
+
+    def _save_selection(self) -> None:
+        self.app.update_selection(
+            self.shortname, sorted(self._include), sorted(self._exclude)
+        )
+        self._render_page()
+
+    def on_queue_changed(self, message: QueueChanged) -> None:
+        if message.console == self.shortname and self._loaded:
+            self._render_page()
+
+    def on_screen_resume(self) -> None:
+        if self._loaded:
+            self._render_page()
 
     def _refresh_status_line(self) -> None:
         total = len(self._filtered_wantlist)
         raw_total = len(self._wantlist)
         total_pages = max(1, (total + self._PAGE_SIZE - 1) // self._PAGE_SIZE)
-        if total == 0 and self._status:
-            # Preserve an error/failure status when the list is empty
+        if total == 0 and self._status.startswith("error:"):
             return
         search_note = (
             f" matched from {raw_total}"
@@ -224,16 +288,16 @@ class WantlistScreen(Screen[None]):
             else ""
         )
         status = (
-            f"{total} titles{search_note}  |  "
+            f"{total} {'queued matches' if self._queued_only else 'titles'}{search_note}  |  "
             f"page {self._page + 1}/{total_pages}  |  "
-            f"included: {len(self._include)}  excluded: {len(self._exclude)}"
+            f"queued: {len(self._include)}  excluded: {len(self._exclude)}"
         )
         self._set_status(status)
 
     def _set_status(self, msg: str) -> None:
         self._status = msg
         try:
-            self.query_one("#status-line", Label).update(msg)
+            self.query_one("#status-line", Label).update(Text(msg))
         except Exception:
             # defensive: status Label may be unmounted during teardown
             pass
@@ -249,14 +313,17 @@ class WantlistScreen(Screen[None]):
 
     def _apply_title_filter(self, *, reset_page: bool) -> None:
         query = self._filter_query.casefold().strip()
-        if not query:
-            self._filtered_wantlist = list(self._wantlist)
-        else:
-            self._filtered_wantlist = [
-                title for title in self._wantlist if query in title.casefold()
-            ]
+        self._filtered_wantlist = [
+            title
+            for title in self._wantlist
+            if (not query or query in title.casefold())
+            and (not self._queued_only or title in self._include)
+        ]
         if reset_page:
             self._page = 0
+        self._page = min(
+            self._page, max(0, (len(self._filtered_wantlist) - 1) // self._PAGE_SIZE)
+        )
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id != "wantlist-filter":
@@ -273,23 +340,49 @@ class WantlistScreen(Screen[None]):
         title = self._current_title()
         if title is None:
             return
+        self._sync_selection()
         if title in self._include:
             self._include.discard(title)
         else:
             self._include.add(title)
             self._exclude.discard(title)
-        self._update_current_row_cells(title)
+        self._save_selection()
 
     def action_toggle_exclude(self) -> None:
         title = self._current_title()
         if title is None:
             return
+        self._sync_selection()
         if title in self._exclude:
             self._exclude.discard(title)
         else:
             self._exclude.add(title)
             self._include.discard(title)
-        self._update_current_row_cells(title)
+        self._save_selection()
+
+    def action_queued_only(self) -> None:
+        self._queued_only = not self._queued_only
+        self._page = 0
+        self._render_page()
+
+    def action_select_filtered(self) -> None:
+        self._sync_selection()
+        self._apply_title_filter(reset_page=False)
+        self._include.update(self._filtered_wantlist)
+        self._exclude.difference_update(self._filtered_wantlist)
+        self._save_selection()
+
+    def action_clear_filtered(self) -> None:
+        self._sync_selection()
+        self._apply_title_filter(reset_page=False)
+        self._include.difference_update(self._filtered_wantlist)
+        self._save_selection()
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        return not (
+            isinstance(self.focused, Input)
+            and action not in {"enter", "cancel", "focus_filter"}
+        )
 
     def action_page_prev(self) -> None:
         if self._page > 0:
@@ -323,11 +416,20 @@ class WantlistScreen(Screen[None]):
         self._begin_load()
 
     def action_cancel(self) -> None:
-        self.dismiss(None)
+        if isinstance(self.focused, Input):
+            self.query_one("#wantlist-table", DataTable).focus()
+        else:
+            self.dismiss(None)
 
     def action_enter(self) -> None:
-        self.override = self.override.model_copy(
-            update={"include": sorted(self._include), "exclude": sorted(self._exclude)}
+        if isinstance(self.focused, Input):
+            self.query_one("#wantlist-table", DataTable).focus()
+            return
+        from retrofetch.tui.screens.download_confirm import DownloadConfirmScreen
+
+        self.app.push_screen(
+            DownloadConfirmScreen(
+                console_entry=self.console_entry,
+                override=self.app.overrides.get(self.shortname),
+            )
         )
-        self.app.overrides[self.shortname] = self.override
-        self.dismiss(None)
