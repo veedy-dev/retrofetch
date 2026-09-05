@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from typer.testing import CliRunner
 
 from retrofetch.config import Config
-from retrofetch.sources.bios import BiosFile, BiosSource
 from retrofetch.sources import SourceUnavailable
+from retrofetch.sources.bios import BiosFile, BiosSource
 
 
 def test_config_has_bios_root_default() -> None:

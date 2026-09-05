@@ -50,4 +50,4 @@ def stop_event() -> threading.Event:
     return install_signal_handlers().stop_event
 
 
-from typing import Any  # noqa: E402
+from typing import Any

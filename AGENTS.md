@@ -25,7 +25,7 @@ python -m venv .venv
 . .venv/bin/activate
 # Windows PowerShell instead:
 # .\.venv\Scripts\Activate.ps1
-python -m pip install -e . pytest ruff pyright
+python -m pip install -e . pytest ruff==0.16.6 pyright
 ```
 
 ```sh

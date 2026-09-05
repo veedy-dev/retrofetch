@@ -12,9 +12,10 @@ import subprocess
 import sys
 import threading
 import time
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any
 
 import httpx
 
@@ -22,15 +23,15 @@ from retrofetch.config import Config
 from retrofetch.downloader import finalize_staged_candidate, validate_candidate_file
 from retrofetch.events import EventBus, GameBytesEvent, GameStageEvent
 from retrofetch.qbittorrent import (
+    MAX_METADATA_BYTES,
     QBITTORRENT_INSTALLER_SHA256,
     QBITTORRENT_INSTALLER_URL,
     QBITTORRENT_LINUX_APPIMAGES,
     QBITTORRENT_PACKAGE_ID,
     QBITTORRENT_PUBLISHER,
     QBITTORRENT_VERSION,
-    MAX_METADATA_BYTES,
-    ManagedProcess,
     ExclusiveFileLock,
+    ManagedProcess,
     QbittorrentClient,
     QbittorrentError,
     QbittorrentProtocolError,
@@ -42,8 +43,8 @@ from retrofetch.qbittorrent import (
     winget_install_command,
     winget_show_command,
 )
-from retrofetch.sources import DownloadCancelled, DownloadCandidate, SourceUnavailable
 from retrofetch.sanitize import sanitize_filename
+from retrofetch.sources import DownloadCancelled, DownloadCandidate, SourceUnavailable
 from retrofetch.state import State, save_state, update_game
 
 _INFOHASH_RE = re.compile(r"^[0-9a-f]{40}$")
@@ -155,20 +156,22 @@ def install_qbittorrent_official() -> Path:
     temporary = installer.with_suffix(".download")
     digest = hashlib.sha256()
     try:
-        with httpx.Client(timeout=60, follow_redirects=True, trust_env=False) as client:
-            with client.stream("GET", QBITTORRENT_INSTALLER_URL) as response:
-                response.raise_for_status()
-                total = 0
-                with temporary.open("wb") as handle:
-                    for chunk in response.iter_bytes():
-                        total += len(chunk)
-                        if total > _INSTALLER_MAX_BYTES:
-                            raise SourceUnavailable(
-                                "qBittorrent installer exceeded the expected size",
-                                retryable=False,
-                            )
-                        digest.update(chunk)
-                        handle.write(chunk)
+        with (
+            httpx.Client(timeout=60, follow_redirects=True, trust_env=False) as client,
+            client.stream("GET", QBITTORRENT_INSTALLER_URL) as response,
+        ):
+            response.raise_for_status()
+            total = 0
+            with temporary.open("wb") as handle:
+                for chunk in response.iter_bytes():
+                    total += len(chunk)
+                    if total > _INSTALLER_MAX_BYTES:
+                        raise SourceUnavailable(
+                            "qBittorrent installer exceeded the expected size",
+                            retryable=False,
+                        )
+                    digest.update(chunk)
+                    handle.write(chunk)
     except SourceUnavailable:
         temporary.unlink(missing_ok=True)
         raise

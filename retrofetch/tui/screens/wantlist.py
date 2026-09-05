@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 # pyright: reportAttributeAccessIssue=false
-from typing import Any
+import logging
+from typing import Any, ClassVar
 
 from rich.text import Text
 from textual import (
@@ -13,6 +14,7 @@ from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Vertical  # pyright: ignore[reportMissingImports]
 from textual.coordinate import Coordinate
+from textual.css.query import NoMatches
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
 from textual.widgets import (  # pyright: ignore[reportMissingImports]
     DataTable,
@@ -26,12 +28,14 @@ from retrofetch.config import ConsoleOverride
 from retrofetch.tui.messages import QueueChanged, WantlistFailed, WantlistReady
 from retrofetch.wantlist_cache import get_or_fetch_wantlist
 
+logger = logging.getLogger(__name__)
+
 _SPINNER_FRAMES = ("|", "/", "-", "\\")
 _SPINNER_INTERVAL_S = 0.12
 
 
 class WantlistScreen(Screen[None]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("escape", "cancel", "Back", show=True, priority=True),
         Binding("space", "toggle_include", "Queue", show=True),
         Binding("enter", "enter", "Review queue", show=True, priority=True),
@@ -167,15 +171,12 @@ class WantlistScreen(Screen[None]):
                 self._spinner_timer = self.set_interval(
                     _SPINNER_INTERVAL_S, self._tick_spinner
                 )
-            except Exception:
+            except RuntimeError:
                 self._spinner_timer = None
 
     def _stop_loading_spinner(self) -> None:
         if self._spinner_timer is not None:
-            try:
-                self._spinner_timer.stop()
-            except Exception:
-                pass
+            self._spinner_timer.stop()
             self._spinner_timer = None
 
     def _tick_spinner(self) -> None:
@@ -202,6 +203,8 @@ class WantlistScreen(Screen[None]):
                 limit=0,
             )
         except Exception as exc:
+            # Isolate catalog adapters; raw tracebacks may contain credentials.
+            logger.exception("Catalog load failed: %s", type(exc).__name__, exc_info=False)
             self.post_message(WantlistFailed(self.shortname, str(exc)))
             return
         self.post_message(WantlistReady(self.shortname, titles, from_cache))
@@ -298,9 +301,9 @@ class WantlistScreen(Screen[None]):
         self._status = msg
         try:
             self.query_one("#status-line", Label).update(Text(msg))
-        except Exception:
-            # defensive: status Label may be unmounted during teardown
-            pass
+        except NoMatches:
+            # The status label may already be unmounted during teardown.
+            return
 
     def _current_title(self) -> str | None:
         table: DataTable = self.query_one("#wantlist-table", DataTable)
@@ -406,8 +409,8 @@ class WantlistScreen(Screen[None]):
         try:
             cache_dir = self.app.config.cache_dir  # pyright: ignore[reportAttributeAccessIssue]
             invalidate(cache_dir, self.shortname)
-        except Exception:
-            pass
+        except (OSError, RuntimeError) as exc:
+            logger.warning("Cache invalidation failed: %s", type(exc).__name__)
         self._wantlist = []
         self._filtered_wantlist = []
         self._loaded = False

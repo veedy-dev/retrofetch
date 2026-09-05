@@ -1,3 +1,4 @@
+import logging
 import sys
 import time
 from pathlib import Path
@@ -8,6 +9,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from retrofetch.config import Config
 from retrofetch.wantlist_cache import get_or_fetch_wantlist
+
+logger = logging.getLogger(__name__)
 
 SOURCE_KEYS = (
     "minerva_path",
@@ -42,6 +45,10 @@ def main() -> int:
             else:
                 status = "empty"
         except Exception as exc:
+            # Provider exception text and tracebacks may contain credentials or URLs.
+            logger.exception(
+                "Catalog sweep failed (%s)", type(exc).__name__, exc_info=False
+            )
             count = 0
             status = "error:" + str(exc).replace(",", ";").replace("\n", " ")[:120]
             cached = False

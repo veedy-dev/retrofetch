@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 import shutil
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Annotated, Any
 
 import typer
 from rich.console import Console
@@ -62,13 +63,15 @@ def _version_callback(value: bool) -> None:
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    version: bool = typer.Option(
-        False,
-        "--version",
-        callback=_version_callback,
-        is_eager=True,
-        help="Show version",
-    ),
+    version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            callback=_version_callback,
+            is_eager=True,
+            help="Show version",
+        ),
+    ] = False,
 ) -> None:
     if ctx.invoked_subcommand is None and not version:
         typer.echo(ctx.get_help())
@@ -153,7 +156,9 @@ def _verbose_formatter(cons: Console) -> Callable[[ProgressEvent], None]:
 
 @app.command()
 def init(
-    force: bool = typer.Option(False, "--force", help="Overwrite existing files"),
+    force: Annotated[
+        bool, typer.Option("--force", help="Overwrite existing files")
+    ] = False,
 ) -> None:
     """Create config.yml, overrides.yml, .env.example, and bootstrap dats/ layout."""
 
@@ -188,29 +193,37 @@ def init(
 
 @app.command()
 def download(
-    console_name: Optional[str] = typer.Option(
-        None,
-        "--console",
-        help="Single console shortname (e.g. virtualboy). Omit to process all.",
-    ),
-    limit: Optional[int] = typer.Option(
-        None, "--limit", help="Max games per console (overrides config.default_limit)"
-    ),
-    dry_run: bool = typer.Option(
-        False, "--dry-run", help="Print game list without downloading"
-    ),
-    no_torrent: bool = typer.Option(
-        False, "--no-torrent", help="Skip qBittorrent/torrent sources for this run"
-    ),
-    verbose: bool = typer.Option(
-        False,
-        "--verbose",
-        "-v",
-        help="Print per-game event lines during download (uses event bus).",
-    ),
-    config_path: Path = typer.Option(
-        Path("config.yml"), "--config", help="Path to config.yml"
-    ),
+    console_name: Annotated[
+        str | None,
+        typer.Option(
+            "--console",
+            help="Single console shortname (e.g. virtualboy). Omit to process all.",
+        ),
+    ] = None,
+    limit: Annotated[
+        int | None,
+        typer.Option(
+            "--limit", help="Max games per console (overrides config.default_limit)"
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Print game list without downloading")
+    ] = False,
+    no_torrent: Annotated[
+        bool,
+        typer.Option("--no-torrent", help="Skip qBittorrent/torrent sources for this run"),
+    ] = False,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            "-v",
+            help="Print per-game event lines during download (uses event bus).",
+        ),
+    ] = False,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Path to config.yml")
+    ] = Path("config.yml"),
 ) -> None:
     """Download ROMs for one or all consoles."""
 
@@ -320,15 +333,17 @@ def download(
 
 @app.command()
 def bios(
-    console_name: str = typer.Option(
-        ..., "--console", help="Console shortname (e.g. psx, ps2, saturn)"
-    ),
-    limit: Optional[int] = typer.Option(
-        None,
-        "--limit",
-        help="Limit BIOS files for a small probe run; default downloads all listed files.",
-    ),
-    config_path: Path = typer.Option(Path("config.yml"), "--config"),
+    console_name: Annotated[
+        str, typer.Option("--console", help="Console shortname (e.g. psx, ps2, saturn)")
+    ],
+    limit: Annotated[
+        int | None,
+        typer.Option(
+            "--limit",
+            help="Limit BIOS files for a small probe run; default downloads all listed files.",
+        ),
+    ] = None,
+    config_path: Annotated[Path, typer.Option("--config")] = Path("config.yml"),
 ) -> None:
     """Opt-in BIOS download to BIOS/{console}."""
 
@@ -362,10 +377,10 @@ def bios(
 
 @app.command()
 def verify(
-    console_name: Optional[str] = typer.Option(
-        None, "--console", help="Single console shortname"
-    ),
-    config_path: Path = typer.Option(Path("config.yml"), "--config"),
+    console_name: Annotated[
+        str | None, typer.Option("--console", help="Single console shortname")
+    ] = None,
+    config_path: Annotated[Path, typer.Option("--config")] = Path("config.yml"),
 ) -> None:
     """Rescan existing ROM files and update state with verification results."""
 
@@ -433,8 +448,8 @@ def verify(
 
 @app.command()
 def report(
-    config_path: Path = typer.Option(Path("config.yml"), "--config"),
-    output: Path = typer.Option(Path("coverage.md"), "--output"),
+    config_path: Annotated[Path, typer.Option("--config")] = Path("config.yml"),
+    output: Annotated[Path, typer.Option("--output")] = Path("coverage.md"),
 ) -> None:
     """Generate the coverage.md report from state files."""
 
@@ -448,9 +463,9 @@ def report(
 
 @app.command()
 def tui(
-    config_path: Path = typer.Option(
-        Path("config.yml"), "--config", help="Path to config.yml"
-    ),
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Path to config.yml")
+    ] = Path("config.yml"),
 ) -> None:
     """Launch the interactive TUI command center."""
     import os

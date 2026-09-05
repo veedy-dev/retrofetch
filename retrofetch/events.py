@@ -11,9 +11,12 @@ Example:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import logging
 import threading
-from typing import Callable
+from collections.abc import Callable
+from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -166,6 +169,11 @@ class EventBus:
         for _sid, callback in snapshot:
             try:
                 callback(event)
-            except Exception:
+            except Exception as exc:
                 # best-effort delivery: one faulty subscriber must not block others
-                pass
+                # Exception details may contain provider credentials.
+                logger.exception(
+                    "Event subscriber failed (%s); continuing delivery",
+                    type(exc).__name__,
+                    exc_info=False,
+                )

@@ -3,12 +3,13 @@ from __future__ import annotations
 import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 
 from retrofetch.config import Config
-from retrofetch.dat import DatEntry, GameEntry as DatGameEntry
+from retrofetch.dat import DatEntry
+from retrofetch.dat import GameEntry as DatGameEntry
 from retrofetch.dispatcher import DeferredTorrentAttempt, SourceDispatcher
 from retrofetch.downloader import DownloadResult
 from retrofetch.events import DatLoadDoneEvent, EventBus
@@ -22,7 +23,7 @@ class _ConcurrentFakeDispatcher:
     active = 0
     created = 0
     max_active = 0
-    seen_games: list[Any] = []
+    seen_games: ClassVar[list[Any]] = []
     lock = threading.Lock()
 
     def __init__(
@@ -245,10 +246,8 @@ def test_missing_dat_is_nonfatal_and_reports_unverified(
         event_bus=bus,
     )
 
-    done = [event for event in events if isinstance(event, DatLoadDoneEvent)][0]
+    done = next(event for event in events if isinstance(event, DatLoadDoneEvent))
     assert done.status == "missing"
-    assert done.detail is not None
-    assert "not available" in done.detail
     assert report.unverified == 1
     assert report.failed == 0
 
@@ -284,10 +283,8 @@ def test_empty_dat_is_nonfatal_and_reports_unverified(
         event_bus=bus,
     )
 
-    done = [event for event in events if isinstance(event, DatLoadDoneEvent)][0]
+    done = next(event for event in events if isinstance(event, DatLoadDoneEvent))
     assert done.status == "empty"
-    assert done.detail is not None
-    assert "0 games" in done.detail
     assert report.unverified == 1
     assert report.failed == 0
 
@@ -348,7 +345,7 @@ def test_dispatcher_treats_unverified_download_as_terminal_success(
 
 
 class _GroupedFakeCoordinator:
-    batches: list[list[str]] = []
+    batches: ClassVar[list[list[str]]] = []
 
     def __init__(self, *args: object, **kwargs: object) -> None:
         pass

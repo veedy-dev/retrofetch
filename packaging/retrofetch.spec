@@ -30,6 +30,7 @@ a = Analysis(
     hiddenimports=(
         collect_submodules("retrofetch.sources")
         + collect_submodules("selectolax")
+        + ["internetarchive"]
         + curl_hidden
     ),
     hookspath=[],

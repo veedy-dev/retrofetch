@@ -1,16 +1,26 @@
 from __future__ import annotations
 
+import logging
 import sys
 import webbrowser
 from pathlib import Path
+from typing import ClassVar
 
-from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
+from textual import (
+    work,  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
+)
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Vertical  # pyright: ignore[reportMissingImports]
 from textual.message import Message  # pyright: ignore[reportMissingImports]
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import Footer, Header, Label, OptionList, Static  # pyright: ignore[reportMissingImports]
+from textual.widgets import (  # pyright: ignore[reportMissingImports]
+    Footer,
+    Header,
+    Label,
+    OptionList,
+    Static,
+)
 
 from retrofetch.qbittorrent import (
     QBITTORRENT_DOWNLOAD_URL,
@@ -22,21 +32,29 @@ from retrofetch.qbittorrent import (
     discover_qbittorrent,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def install_qbittorrent_winget() -> object:
-    from retrofetch.torrent import install_qbittorrent_winget as install  # pyright: ignore[reportMissingImports]
+    from retrofetch.torrent import (
+        install_qbittorrent_winget as install,  # pyright: ignore[reportMissingImports]
+    )
 
     return install()
 
 
 def install_qbittorrent_official() -> object:
-    from retrofetch.torrent import install_qbittorrent_official as install  # pyright: ignore[reportMissingImports]
+    from retrofetch.torrent import (
+        install_qbittorrent_official as install,  # pyright: ignore[reportMissingImports]
+    )
 
     return install()
 
 
 def install_qbittorrent_appimage() -> object:
-    from retrofetch.torrent import install_qbittorrent_appimage as install  # pyright: ignore[reportMissingImports]
+    from retrofetch.torrent import (
+        install_qbittorrent_appimage as install,  # pyright: ignore[reportMissingImports]
+    )
 
     return install()
 
@@ -49,6 +67,7 @@ def open_qbittorrent_downloads() -> bool:
     return webbrowser.open(QBITTORRENT_DOWNLOAD_URL)
 
 
+
 class TorrentInstallResult(Message):
     def __init__(self, success: bool, error: str | None = None) -> None:
         self.success = success
@@ -57,7 +76,7 @@ class TorrentInstallResult(Message):
 
 
 class TorrentSetupScreen(Screen[bool]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("enter", "select", "Select", show=True, priority=True),
         Binding("escape", "not_now", "Not now", show=True),
         Binding("q", "not_now", "Not now", show=False, priority=True),
@@ -127,7 +146,7 @@ class TorrentSetupScreen(Screen[bool]):
             yield Static(details, id="torrent-setup-details", markup=False)
             yield Static(disclosure, id="torrent-setup-disclosure", markup=False)
             yield OptionList(*options, id="torrent-setup-options", markup=False)
-            yield Label("No installation started.", id="torrent-setup-status")
+            yield Label("No installation started.", id="torrent-setup-status", markup=False)
         yield Footer()
 
     def on_mount(self) -> None:
@@ -185,6 +204,10 @@ class TorrentSetupScreen(Screen[bool]):
                     "qBittorrent 5.2.x was not found. Install it, then try again."
                 )
         except Exception as exc:
+            # Installer backends must not crash the UI or expose raw tracebacks.
+            logger.exception(
+                "Torrent installation failed: %s", type(exc).__name__, exc_info=False
+            )
             self.post_message(TorrentInstallResult(False, str(exc)))
             return
         self.post_message(TorrentInstallResult(True))

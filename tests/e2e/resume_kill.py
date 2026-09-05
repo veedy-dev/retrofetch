@@ -62,6 +62,7 @@ def parent() -> int:
         capture_output=True,
         text=True,
         timeout=900,
+        check=False,
     )
     log(f"rerun stdout: {rerun.stdout.strip()}")
     final_size = DEST.stat().st_size if DEST.exists() else 0

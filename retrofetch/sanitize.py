@@ -32,8 +32,7 @@ def _split_extension(name: str) -> tuple[str, str]:
 
 def _truncate_with_region(title: str, region: str, ext: str, limit: int) -> str:
     max_title = limit - len(region) - len(ext)
-    if max_title < 1:
-        max_title = 1
+    max_title = max(max_title, 1)
     truncated = title[:max_title].rstrip(". ")
     if not truncated:
         truncated = "_"

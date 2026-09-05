@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Vertical, VerticalScroll
@@ -59,7 +61,7 @@ History: r refreshes; arrows show the selected file details."""
 
 
 class HelpScreen(ModalScreen[None]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("escape", "close", "Close", show=True),
         Binding("question_mark", "close", "Close", show=True, key_display="?"),
     ]

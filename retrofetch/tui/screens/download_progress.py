@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import (  # pyright: ignore[reportMissingImports]
@@ -30,7 +32,7 @@ from retrofetch.tui.screens.state import StateScreen
 
 
 class DownloadProgressScreen(Screen[None]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("escape", "back", "Back", show=True),
         Binding("c", "request_cancel", "Cancel", show=True),
         Binding("v", "details", "Details", show=True),

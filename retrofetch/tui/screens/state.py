@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from rich.text import Text
 from textual import work
@@ -19,7 +19,7 @@ from retrofetch.tui.downloads import format_bytes
 
 
 class StateScreen(Screen[None]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("r", "refresh", "Refresh", show=True),
         Binding("escape", "back", "Back", show=True),
     ]

@@ -2,12 +2,25 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import ClassVar
 
+from ruamel.yaml.error import YAMLError
 from textual.app import ComposeResult
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
-from textual.containers import CenterMiddle, Horizontal, Vertical  # pyright: ignore[reportMissingImports]
+from textual.containers import (  # pyright: ignore[reportMissingImports]
+    CenterMiddle,
+    Horizontal,
+    Vertical,
+)
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import Button, Footer, Header, Input, Label, Static  # pyright: ignore[reportMissingImports]
+from textual.widgets import (  # pyright: ignore[reportMissingImports]
+    Button,
+    Footer,
+    Header,
+    Input,
+    Label,
+    Static,
+)
 
 from retrofetch import _resources
 from retrofetch.config import Config, _yaml_rt, save_config
@@ -47,7 +60,7 @@ def select_directory(*, initial_dir: str, title: str) -> str | None:
 
 
 class SetupScreen(Screen[bool]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("ctrl+s", "save", "Save", show=True),
         Binding("escape", "cancel", "Cancel", show=True),
         Binding("question_mark", "help", "Help", show=True, key_display="?"),
@@ -152,65 +165,64 @@ class SetupScreen(Screen[bool]):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
-        with CenterMiddle(id="setup-stage"):
-            with Vertical(id="setup-card"):
-                yield Static("Welcome to Retrofetch", id="setup-title")
+        with CenterMiddle(id="setup-stage"), Vertical(id="setup-card"):
+            yield Static("Welcome to Retrofetch", id="setup-title")
+            yield Static(
+                "Choose where your library should be stored.",
+                id="setup-intro",
+            )
+            yield Static(
+                "Advanced options can be changed later in Settings.",
+                id="setup-advanced",
+            )
+            with Vertical(classes="setup-field"):
+                yield Label("Games folder", classes="setup-field-title")
                 yield Static(
-                    "Choose where your library should be stored.",
-                    id="setup-intro",
+                    "Downloaded games will be saved here.", classes="setup-hint"
                 )
-                yield Static(
-                    "Advanced options can be changed later in Settings.",
-                    id="setup-advanced",
-                )
-                with Vertical(classes="setup-field"):
-                    yield Label("Games folder", classes="setup-field-title")
-                    yield Static(
-                        "Downloaded games will be saved here.", classes="setup-hint"
-                    )
-                    with Horizontal(classes="setup-path-row"):
-                        yield Input(
-                            value=str(self.defaults.roms_root), id="setup-roms-root"
-                        )
-                        yield Button(
-                            "Browse...",
-                            id="setup-browse-roms",
-                            classes="setup-browse setup-secondary",
-                            tooltip="Browse and manage game folders",
-                            flat=True,
-                        )
-                yield Static("", id="setup-divider")
-                with Vertical(classes="setup-field"):
-                    yield Label("BIOS folder", classes="setup-field-title")
-                    yield Static(
-                        "Optional BIOS files will be saved here.",
-                        classes="setup-hint",
-                    )
-                    with Horizontal(classes="setup-path-row"):
-                        yield Input(
-                            value=str(self.defaults.bios_root), id="setup-bios-root"
-                        )
-                        yield Button(
-                            "Browse...",
-                            id="setup-browse-bios",
-                            classes="setup-browse setup-secondary",
-                            tooltip="Browse and manage BIOS folders",
-                            flat=True,
-                        )
-                yield Static(
-                    "Browse opens your system folder picker.", id="setup-picker-help"
-                )
-                yield Label("", id="setup-status")
-                with Horizontal(id="setup-actions"):
-                    yield Button(
-                        "Save & Continue", variant="primary", id="setup-save"
+                with Horizontal(classes="setup-path-row"):
+                    yield Input(
+                        value=str(self.defaults.roms_root), id="setup-roms-root"
                     )
                     yield Button(
-                        "Cancel",
-                        id="setup-cancel",
-                        classes="setup-secondary",
+                        "Browse...",
+                        id="setup-browse-roms",
+                        classes="setup-browse setup-secondary",
+                        tooltip="Browse and manage game folders",
                         flat=True,
                     )
+            yield Static("", id="setup-divider")
+            with Vertical(classes="setup-field"):
+                yield Label("BIOS folder", classes="setup-field-title")
+                yield Static(
+                    "Optional BIOS files will be saved here.",
+                    classes="setup-hint",
+                )
+                with Horizontal(classes="setup-path-row"):
+                    yield Input(
+                        value=str(self.defaults.bios_root), id="setup-bios-root"
+                    )
+                    yield Button(
+                        "Browse...",
+                        id="setup-browse-bios",
+                        classes="setup-browse setup-secondary",
+                        tooltip="Browse and manage BIOS folders",
+                        flat=True,
+                    )
+            yield Static(
+                "Browse opens your system folder picker.", id="setup-picker-help"
+            )
+            yield Label("", id="setup-status", markup=False)
+            with Horizontal(id="setup-actions"):
+                yield Button(
+                    "Save & Continue", variant="primary", id="setup-save"
+                )
+                yield Button(
+                    "Cancel",
+                    id="setup-cancel",
+                    classes="setup-secondary",
+                    flat=True,
+                )
         yield Footer()
 
     def _set_status(self, msg: str) -> None:
@@ -229,7 +241,7 @@ class SetupScreen(Screen[bool]):
         example_path = _resources.find_data_file("config.yml.example")
         try:
             data = _yaml_rt.load(example_path.read_text(encoding="utf-8"))
-        except Exception as exc:
+        except (OSError, ValueError, YAMLError) as exc:
             self._set_status(f"could not load template: {exc}")
             return
 
@@ -250,12 +262,11 @@ class SetupScreen(Screen[bool]):
         data["default_limit"] = self.defaults.default_limit
         data["max_concurrent_downloads"] = self.defaults.max_concurrent_downloads
         # Replace region_priority list in-place so ruamel retains comments/anchors.
-        try:
-            rp = data["region_priority"]
+        rp = data.get("region_priority")
+        if isinstance(rp, list):
             rp.clear()
-            for r in self.defaults.region_priority:
-                rp.append(r)
-        except Exception:
+            rp.extend(self.defaults.region_priority)
+        else:
             data["region_priority"] = list(self.defaults.region_priority)
 
         try:
@@ -263,7 +274,7 @@ class SetupScreen(Screen[bool]):
             roms_path.mkdir(parents=True, exist_ok=True)
             bios_path.mkdir(parents=True, exist_ok=True)
             save_config(self.config_path, data)
-        except Exception as exc:
+        except (OSError, ValueError, YAMLError) as exc:
             self._set_status(f"save failed: {exc}")
             return
 

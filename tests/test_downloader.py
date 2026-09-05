@@ -11,7 +11,8 @@ from typing import Any, cast
 
 import pytest
 
-from retrofetch.dat import GameEntry as DatGameEntry, Rom
+from retrofetch.dat import GameEntry as DatGameEntry
+from retrofetch.dat import Rom
 from retrofetch.dispatcher import SourceDispatcher
 from retrofetch.downloader import (
     download_game,
@@ -19,10 +20,14 @@ from retrofetch.downloader import (
     skip_if_acquired,
     stream_http_download,
 )
-from retrofetch.events import EventBus, GameFailedEvent, GameSkippedEvent, GameStartEvent
+from retrofetch.events import (
+    EventBus,
+    GameFailedEvent,
+    GameSkippedEvent,
+    GameStartEvent,
+)
 from retrofetch.sources import DownloadCandidate, SourceUnavailable
 from retrofetch.state import GameEntry, State
-
 
 PAYLOAD = (b"0123456789abcdef" * 65536)[: 1024 * 1024]
 

@@ -17,7 +17,7 @@ from retrofetch.downloader import stream_http_download
 from retrofetch.events import EventBus
 from retrofetch.sources import DownloadCandidate, SourceUnavailable
 
-_log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 _SOURCE_NAME = "minerva_http"
 _BASE_URL = "https://minerva-archive.org/browse/"
@@ -147,7 +147,11 @@ class MinervaHttpSource:
             return str(node.text(separator=" ", strip=True))
         except TypeError:
             return str(node.text()).strip()
-        except Exception:
+        except Exception as exc:
+            # Parser errors may contain source content; log only their type.
+            logger.exception(
+                "minerva node text unavailable: %s", type(exc).__name__, exc_info=False
+            )
             return ""
 
     @classmethod
@@ -175,7 +179,11 @@ class MinervaHttpSource:
         if parent is not None:
             try:
                 span = parent.css_first("span")
-            except Exception:
+            except Exception as exc:
+                # Avoid exposing source content through exception text or chains.
+                logger.exception(
+                    "minerva size context unavailable: %s", type(exc).__name__, exc_info=False
+                )
                 span = None
             if span is not None:
                 return cls._node_text(span)
@@ -292,7 +300,7 @@ class MinervaHttpSource:
                 files = self._list_catalog_files(url)
             except SourceUnavailable as exc:
                 failures.append(exc)
-                _log.warning("minerva collection unavailable (%s): %s", root, exc)
+                logger.warning("minerva collection unavailable (%s): %s", root, exc)
                 continue
 
             successful_roots += 1

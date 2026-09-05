@@ -7,17 +7,16 @@ import retrofetch.torrent as torrent_module
 from retrofetch.config import Config
 from retrofetch.state import State
 from retrofetch.torrent import PreparedTorrent, TorrentBatchItem, TorrentCoordinator
-from tests.test_minerva_torrent import _FixtureSource, _entry, _torrent
+from tests.test_minerva_torrent import _entry, _FixtureSource, _torrent
 from tests.test_torrent import (
     INFOHASH,
     INTERNAL,
     PAYLOAD,
     _BatchClient,
-    _FakeClient,
     _candidate,
     _candidate_two,
+    _FakeClient,
 )
-
 
 TORRENT_BYTES = b"candidate-carried-torrent-metadata"
 

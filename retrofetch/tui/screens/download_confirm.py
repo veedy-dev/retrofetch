@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from rich.text import Text
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 
 class DownloadConfirmScreen(Screen[None]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("enter", "start", "Start", show=True, priority=True),
         Binding("x", "remove", "Remove", show=True),
         Binding("delete", "remove", "Remove", show=False),

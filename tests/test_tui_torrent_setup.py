@@ -15,7 +15,7 @@ from retrofetch.qbittorrent import (
     QBITTORRENT_PUBLISHER,
     QBITTORRENT_VERSION,
 )
-import retrofetch.tui.screens.torrent_setup as torrent_setup
+from retrofetch.tui.screens import torrent_setup
 from retrofetch.tui.screens.torrent_setup import TorrentSetupScreen
 
 

@@ -2,13 +2,21 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import ClassVar
 
+from textual import (
+    work,  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
+)
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Vertical  # pyright: ignore[reportMissingImports]
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import DataTable, Footer, Header, Label  # pyright: ignore[reportMissingImports]
-from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
+from textual.widgets import (  # pyright: ignore[reportMissingImports]
+    DataTable,
+    Footer,
+    Header,
+    Label,
+)
 
 from retrofetch import _resources
 from retrofetch.coverage import CoverageReport, compute_coverage
@@ -17,7 +25,7 @@ from retrofetch.tui.messages import CoverageReady
 
 
 class CoverageScreen(Screen[None]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("e", "export", "Export", show=True),
         Binding("escape", "back", "Back", show=True),
     ]

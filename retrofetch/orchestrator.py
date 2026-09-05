@@ -6,29 +6,31 @@ import re
 import shutil
 import threading
 from collections import defaultdict
+from collections.abc import Callable
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from retrofetch import _resources
 from retrofetch.config import Config
-from retrofetch.dat import DatEntry, GameEntry as DatGameEntry, parse_dat
+from retrofetch.dat import DatEntry, parse_dat
+from retrofetch.dat import GameEntry as DatGameEntry
 from retrofetch.dat_fetch import find_dat_for_console
 from retrofetch.dispatcher import DeferredTorrentAttempt, SourceDispatcher
 from retrofetch.events import (
     DatLoadDoneEvent,
     DatLoadStartEvent,
     EventBus,
-    GameDoneEvent,
     GameCancelledEvent,
+    GameDoneEvent,
     GameStartEvent,
 )
-from retrofetch.state import load_state, save_state, update_game
 from retrofetch.sources import DownloadCancelled, SourceUnavailable
+from retrofetch.state import load_state, save_state, update_game
 from retrofetch.torrent import PreparedTorrent, TorrentBatchItem, TorrentCoordinator
 
-_log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 _DISC_PATTERN = re.compile(r"\s*\((?:Disc|Disk)\s*\d+[^)]*\)", re.IGNORECASE)
 
@@ -146,7 +148,10 @@ def run_console(
                     "downloads are unverified."
                 )
         except Exception as exc:
-            _log.warning("failed to parse DAT for %s: %s", short, exc)
+            # Raw exception text and chained tracebacks may contain credentials.
+            logger.exception(
+                "failed to parse DAT for %s: %s", short, type(exc).__name__, exc_info=False
+            )
             dat = None
             dat_status = "corrupt"
             dat_detail = f"DAT for {short} could not be parsed; downloads are unverified."
@@ -202,7 +207,7 @@ def run_console(
 
     def item_id_for(title: str) -> str:
         return hashlib.sha1(
-            f"{short}\0{title}".encode("utf-8"), usedforsecurity=False
+            f"{short}\0{title}".encode(), usedforsecurity=False
         ).hexdigest()
 
     def record_result(status: str, title: str) -> None:
@@ -280,8 +285,10 @@ def run_console(
                         )
                     continue
                 status = result.status
-            except Exception:
-                _log.exception("download worker failed for %s", variant)
+            except Exception as exc:
+                logger.exception(
+                    "download worker failed for %s: %s", variant, type(exc).__name__, exc_info=False
+                )
                 status = "failed"
             record_result(status, variant)
             if not dry_run:
@@ -315,8 +322,11 @@ def run_console(
                         item = futures.pop(future, None)
                         try:
                             future.result()
-                        except Exception:
-                            _log.exception("download worker failed for %s", item)
+                        except Exception as exc:
+                            logger.exception(
+                                "download worker failed for %s: %s",
+                                item, type(exc).__name__, exc_info=False,
+                            )
                         if stop_event is not None and stop_event.is_set():
                             continue
                         try:
@@ -376,7 +386,9 @@ def run_console(
                             work.attempt.item_id: exc for work in same_hash
                         }
                     except Exception as exc:
-                        _log.exception("grouped torrent transfer failed")
+                        logger.exception(
+                            "grouped torrent transfer failed: %s", type(exc).__name__, exc_info=False
+                        )
                         failure = SourceUnavailable(
                             f"grouped torrent transfer failed: {exc}",
                             retryable=False,
@@ -416,10 +428,12 @@ def run_console(
                         state_lock=state_lock,
                     )
                     status = result.status
-                except Exception:
-                    _log.exception(
-                        "download worker failed while finalizing %s",
+                except Exception as exc:
+                    logger.exception(
+                        "download worker failed while finalizing %s: %s",
                         work.game_title,
+                        type(exc).__name__,
+                        exc_info=False,
                     )
                     status = "failed"
                 record_result(status, work.game_title)
@@ -467,6 +481,8 @@ def run_console(
         if torrent_coordinator is not None:
             try:
                 torrent_coordinator.close()
-            except Exception:
-                _log.exception("failed to close qBittorrent coordinator")
+            except Exception as exc:
+                logger.exception(
+                    "failed to close qBittorrent coordinator: %s", type(exc).__name__, exc_info=False
+                )
     return report

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 from collections.abc import Callable
 from typing import Any
@@ -17,6 +18,8 @@ from retrofetch.tui.messages import (
     EventBusBridge,
     TorrentSetupRequired,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class TorrentSetupGate:
@@ -101,6 +104,10 @@ class DownloadWorker:
             )
             result = DownloadComplete(report)
         except Exception as exc:
+            # Provider exception details may contain credentials; keep them out of logs.
+            logger.exception(
+                "Background download failed (%s)", type(exc).__name__, exc_info=False
+            )
             result = DownloadCrashed(str(exc))
         finally:
             self._cleanup()

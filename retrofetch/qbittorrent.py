@@ -12,15 +12,16 @@ import subprocess
 import sys
 import threading
 import time
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
-from typing import Any, Mapping, Sequence
+from typing import Any
 from urllib.parse import unquote, urlsplit, urlunsplit
 
 import httpx
+from typing_extensions import Self
 
 from retrofetch.config import user_config_dir
-
 
 QBITTORRENT_PACKAGE_ID = "qBittorrent.qBittorrent"
 QBITTORRENT_VERSION = "5.2.3"
@@ -306,7 +307,7 @@ class QbittorrentClient:
             trust_env=False,
         )
 
-    def __enter__(self) -> QbittorrentClient:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_: object) -> None:
@@ -697,7 +698,7 @@ class ExclusiveFileLock:
         self.path = path
         self._file: Any = None
 
-    def __enter__(self) -> ExclusiveFileLock:
+    def __enter__(self) -> Self:
         self.acquire()
         return self
 

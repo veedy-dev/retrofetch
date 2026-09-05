@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import posixpath
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, quote, urljoin, urlsplit
@@ -163,7 +163,7 @@ def _safe_path(raw: str) -> str:
 
 def _text(value: object, label: str) -> str:
     if not isinstance(value, bytes):
-        raise ValueError(f"invalid {label}")
+        raise TypeError(f"invalid {label}")
     try:
         return value.decode("utf-8")
     except UnicodeDecodeError as exc:
@@ -214,7 +214,7 @@ def _parse_torrent_metadata(data: bytes) -> _TorrentMetadata:
         total_size = 0
         for index, raw_file in enumerate(raw_files):
             if not isinstance(raw_file, dict):
-                raise ValueError("invalid torrent file")
+                raise TypeError("invalid torrent file")
             size = raw_file.get(b"length")
             raw_path = raw_file.get(b"path")
             if not isinstance(size, int) or size < 0 or not isinstance(raw_path, list):
@@ -291,32 +291,34 @@ class MinervaTorrentSource:
 
     def _fetch_torrent_bytes(self, url: str) -> bytes:
         try:
-            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
-                with client.stream("GET", url) as response:
-                    if response.status_code == 404:
-                        raise SourceUnavailable(
-                            f"Minerva collection torrent not found: {url}",
-                            retryable=False,
-                        )
-                    if response.status_code != 200:
-                        raise SourceUnavailable(
-                            f"Minerva torrent returned HTTP {response.status_code}"
-                        )
-                    raw_length = response.headers.get("content-length")
-                    if raw_length and int(raw_length) > _MAX_TORRENT_BYTES:
+            with (
+                httpx.Client(timeout=self.timeout, follow_redirects=True) as client,
+                client.stream("GET", url) as response,
+            ):
+                if response.status_code == 404:
+                    raise SourceUnavailable(
+                        f"Minerva collection torrent not found: {url}",
+                        retryable=False,
+                    )
+                if response.status_code != 200:
+                    raise SourceUnavailable(
+                        f"Minerva torrent returned HTTP {response.status_code}"
+                    )
+                raw_length = response.headers.get("content-length")
+                if raw_length and int(raw_length) > _MAX_TORRENT_BYTES:
+                    raise SourceUnavailable(
+                        f"Minerva torrent metadata exceeds {_MAX_TORRENT_BYTES} bytes",
+                        retryable=False,
+                    )
+                data = bytearray()
+                for chunk in response.iter_bytes():
+                    data.extend(chunk)
+                    if len(data) > _MAX_TORRENT_BYTES:
                         raise SourceUnavailable(
                             f"Minerva torrent metadata exceeds {_MAX_TORRENT_BYTES} bytes",
                             retryable=False,
                         )
-                    data = bytearray()
-                    for chunk in response.iter_bytes():
-                        data.extend(chunk)
-                        if len(data) > _MAX_TORRENT_BYTES:
-                            raise SourceUnavailable(
-                                f"Minerva torrent metadata exceeds {_MAX_TORRENT_BYTES} bytes",
-                                retryable=False,
-                            )
-                    return bytes(data)
+                return bytes(data)
         except SourceUnavailable:
             raise
         except (httpx.HTTPError, ValueError) as exc:

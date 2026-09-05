@@ -2,13 +2,18 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import threading
 from dataclasses import dataclass
 from pathlib import Path
-import threading
 from typing import Any
 
 from retrofetch.dat import GameEntry
-from retrofetch.downloader import DownloadResult, Source, download_game, skip_if_acquired
+from retrofetch.downloader import (
+    DownloadResult,
+    Source,
+    download_game,
+    skip_if_acquired,
+)
 from retrofetch.events import (
     CloudflareBlockEvent,
     EventBus,
@@ -232,7 +237,7 @@ class SourceDispatcher:
         check_acquired: bool = True,
     ) -> DownloadResult | DeferredTorrentAttempt:
         item_id = hashlib.sha1(
-            f"{console}\0{game_title}".encode("utf-8"), usedforsecurity=False
+            f"{console}\0{game_title}".encode(), usedforsecurity=False
         ).hexdigest()
         if check_acquired:
             if state_lock is None:
@@ -331,11 +336,14 @@ class SourceDispatcher:
                 state_lock=state_lock,
                 item_id=item_id,
             )
-            if event_bus is not None and result.reason:
-                if "cloudflare" in result.reason.lower():
-                    event_bus.publish(
-                        CloudflareBlockEvent(source=source_name, status=0)
-                    )
+            if (
+                event_bus is not None
+                and result.reason
+                and "cloudflare" in result.reason.lower()
+            ):
+                event_bus.publish(
+                    CloudflareBlockEvent(source=source_name, status=0)
+                )
             if result.status in ("acquired", "skipped", "unverified", "cancelled"):
                 result.reason = ";".join(attempts + [f"{source_name}:{result.status}"])
                 return result

@@ -9,10 +9,10 @@ from __future__ import annotations
 import asyncio as _asyncio
 import threading
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from textual.app import App  # pyright: ignore[reportMissingImports]
-from textual.binding import Binding
+from textual.binding import Binding, BindingType
 
 from retrofetch.config import (
     Config,
@@ -40,7 +40,7 @@ class RetrofetchApp(App[int]):
     TITLE = "Retrofetch"
     SUB_TITLE = "retro library manager"
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("q", "quit", "Quit"),
         Binding("ctrl+c", "quit", "Quit", show=False, priority=True),
         Binding("f6", "downloads", "Downloads", priority=True),

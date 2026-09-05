@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from retrofetch.config import Config, ConsoleOverride
 from retrofetch.sources import SourceAdapter
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 _SOURCE_FACTORIES: dict[str, Callable[[dict[str, object]], SourceAdapter]] = {
     "archive_org": lambda entry: __import__(
@@ -67,24 +67,26 @@ def get_wantlist(
     for source_name in source_order:
         factory = _SOURCE_FACTORIES.get(source_name)
         if factory is None:
-            log.warning("ranker: unknown source %s for class %s", source_name, class_key)
+            logger.warning("ranker: unknown source %s for class %s", source_name, class_key)
             continue
         try:
             source = factory(source_entry)
             fetched = source.list_popular(limit=limit, region_priority=region_priority)
         except Exception as exc:
-            log.warning(
+            # Provider errors may contain credentials; omit raw text and tracebacks.
+            logger.exception(
                 "ranker: %s list_popular failed for %s: %s",
                 source_name,
                 console_entry.get("shortname"),
-                exc,
+                type(exc).__name__,
+                exc_info=False,
             )
             continue
         if fetched or (
             source_name in {"minerva_http", "minerva_torrent"} and has_minerva_path
         ):
             titles = list(fetched)
-            log.info(
+            logger.info(
                 "ranker: %s supplied %d titles for %s",
                 source_name,
                 len(titles),
@@ -130,7 +132,7 @@ def resolve_download_set(
                 continue
             seen.add(key)
             if key not in catalog_keys:
-                log.warning("ranker: included title not found in catalog: %s", title)
+                logger.warning("ranker: included title not found in catalog: %s", title)
             result.append(title)
         return result
 

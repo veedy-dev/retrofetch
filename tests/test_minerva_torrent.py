@@ -5,8 +5,7 @@ import hashlib
 import pytest
 
 from retrofetch.catalog import CatalogEntry, CatalogFile
-from retrofetch.sources import SourceUnavailable
-from retrofetch.sources import minerva_torrent
+from retrofetch.sources import SourceUnavailable, minerva_torrent
 from retrofetch.sources.minerva_torrent import MinervaTorrentSource
 
 

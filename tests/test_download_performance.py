@@ -10,7 +10,6 @@ from retrofetch.qbittorrent import (
     prepare_managed_profile,
 )
 
-
 API_KEY = "qbt_" + "A" * 28
 INFOHASH = "a" * 40
 

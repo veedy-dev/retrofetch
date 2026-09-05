@@ -2,18 +2,30 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import ClassVar
 
+from ruamel.yaml.error import YAMLError
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
-from textual.containers import Vertical, VerticalScroll  # pyright: ignore[reportMissingImports]
+from textual.containers import (  # pyright: ignore[reportMissingImports]
+    Vertical,
+    VerticalScroll,
+)
+from textual.css.query import NoMatches
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import Footer, Header, Input, Label, TextArea  # pyright: ignore[reportMissingImports]
+from textual.widgets import (  # pyright: ignore[reportMissingImports]
+    Footer,
+    Header,
+    Input,
+    Label,
+    TextArea,
+)
 
 from retrofetch.config import _yaml_rt, save_overrides
 
 
 class OverridesEditorScreen(Screen[None]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("ctrl+s", "save", "Save", show=True),
         Binding("escape", "cancel", "Cancel", show=True),
     ]
@@ -32,7 +44,7 @@ class OverridesEditorScreen(Screen[None]):
                 f"Overrides [{self.shortname}] @ {self.overrides_path}. ctrl+s=save, esc=cancel.",
                 id="ov-title",
             )
-            yield Label("", id="ov-status")
+            yield Label("", id="ov-status", markup=False)
             with VerticalScroll(id="ov-form"):
                 yield Label("include (one title per line)")
                 yield TextArea("", id="ov-include")
@@ -75,7 +87,9 @@ class OverridesEditorScreen(Screen[None]):
             return
         region_priority = [r.strip() for r in regions_text.split(",") if r.strip()]
 
-        from ruamel.yaml.comments import CommentedMap  # pyright: ignore[reportMissingImports]
+        from ruamel.yaml.comments import (
+            CommentedMap,  # pyright: ignore[reportMissingImports]
+        )
         if self._raw is None:
             self._raw = CommentedMap()
         consoles = self._raw.get("consoles")
@@ -100,7 +114,7 @@ class OverridesEditorScreen(Screen[None]):
         try:
             save_overrides(self.overrides_path, self._raw)
             self._set_status(f"saved {self.overrides_path}")
-        except Exception as exc:
+        except (OSError, ValueError, YAMLError) as exc:
             self._set_status(f"save failed: {exc}")
 
     def action_cancel(self) -> None:
@@ -109,6 +123,6 @@ class OverridesEditorScreen(Screen[None]):
     def _set_status(self, msg: str) -> None:
         try:
             self.query_one("#ov-status", Label).update(msg)
-        except Exception:
-            # defensive: status Label may be unmounted during teardown
-            pass
+        except NoMatches:
+            # The status label may already be unmounted during teardown.
+            return

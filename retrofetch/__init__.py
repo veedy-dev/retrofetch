@@ -1,3 +1,3 @@
 """retrofetch: Automated ROM collection filler."""
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"

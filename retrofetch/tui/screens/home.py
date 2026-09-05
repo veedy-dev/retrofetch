@@ -15,7 +15,8 @@ Workers all carry explicit ``group=`` names per Metis K.6:
 from __future__ import annotations
 
 # pyright: reportAttributeAccessIssue=false
-from typing import Any
+import logging
+from typing import Any, ClassVar
 
 from textual import (
     work,  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
@@ -26,6 +27,7 @@ from textual.containers import (  # pyright: ignore[reportMissingImports]
     Horizontal,
     Vertical,
 )
+from textual.css.query import NoMatches
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
 from textual.widgets import (  # pyright: ignore[reportMissingImports]
     Footer,
@@ -45,11 +47,13 @@ from retrofetch.wantlist_cache import (
     project_wantlist_titles,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class HomeScreen(Screen[None]):
     CSS_PATH = "../styles.tcss"
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("q", "quit", "Quit", show=True),
         Binding(
             "slash", "focus_filter", "Search", show=True, key_display="/", priority=True
@@ -318,6 +322,8 @@ class HomeScreen(Screen[None]):
                 force_refresh=force_refresh,
             )
         except Exception as exc:
+            # Isolate catalog adapters; raw tracebacks may contain credentials.
+            logger.exception("Catalog preview failed: %s", type(exc).__name__, exc_info=False)
             self.post_message(WantlistFailed(shortname, str(exc), request_id))
             return
         if force_refresh and not titles:
@@ -372,14 +378,14 @@ class HomeScreen(Screen[None]):
     def action_preview_next_page(self) -> None:
         try:
             preview = self.query_one("#main-panel", WantlistPreview)
-        except Exception:
+        except NoMatches:
             return
         preview.next_page()
 
     def action_preview_prev_page(self) -> None:
         try:
             preview = self.query_one("#main-panel", WantlistPreview)
-        except Exception:
+        except NoMatches:
             return
         preview.prev_page()
 
@@ -395,9 +401,9 @@ class HomeScreen(Screen[None]):
         cache_dir = self.app.config.cache_dir
         try:
             invalidate(cache_dir, shortname)
-        except Exception:
-            # best-effort: invalidate failure should not block retry
-            pass
+        except (OSError, RuntimeError) as exc:
+            # A cache permission failure must not block retry.
+            logger.warning("Cache invalidation failed: %s", type(exc).__name__)
         preview = self.query_one("#main-panel", WantlistPreview)
         preview.show_loading(shortname)
         self._preview_generation += 1

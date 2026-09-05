@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from textual.message import Message  # pyright: ignore[reportMissingImports]
 
@@ -225,7 +225,7 @@ class EventBusBridge:
     The receiver must be thread-safe (normally ``App.post_message``).
     """
 
-    _TRANSLATIONS: list[tuple[type[ProgressEvent], type[Message]]] = [
+    _TRANSLATIONS: ClassVar[list[tuple[type[ProgressEvent], type[Message]]]] = [
         (GameStartEvent, GameStart),
         (GameBytesEvent, GameBytes),
         (GameStageEvent, GameStage),
@@ -265,11 +265,8 @@ class EventBusBridge:
                     name: getattr(event, name)
                     for name in event_cls.__dataclass_fields__
                 }
-                try:
-                    self._receive(msg_cls(**kwargs))
-                except Exception:
-                    # subscriber isolation: App may be tearing down when a background event arrives
-                    pass
+                # EventBus isolates receiver failures, including app teardown.
+                self._receive(msg_cls(**kwargs))
                 return
 
 

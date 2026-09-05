@@ -3,15 +3,25 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import ClassVar
 
+from ruamel.yaml.error import YAMLError
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
-from textual.containers import Vertical, VerticalScroll  # pyright: ignore[reportMissingImports]
+from textual.containers import (  # pyright: ignore[reportMissingImports]
+    Vertical,
+    VerticalScroll,
+)
+from textual.css.query import NoMatches
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import Footer, Header, Input, Label  # pyright: ignore[reportMissingImports]
+from textual.widgets import (  # pyright: ignore[reportMissingImports]
+    Footer,
+    Header,
+    Input,
+    Label,
+)
 
 from retrofetch.config import Config, _yaml_rt, save_config
-
 
 _EDITABLE_SCALARS = [
     ("roms_root", "Game download folder", "path"),
@@ -28,7 +38,7 @@ _EDITABLE_SCALARS = [
 
 
 class ConfigEditorScreen(Screen[bool]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("ctrl+s", "save", "Save", show=True),
         Binding("escape", "cancel", "Cancel", show=True),
     ]
@@ -44,7 +54,7 @@ class ConfigEditorScreen(Screen[bool]):
         yield Header(show_clock=False)
         with Vertical(id="main-panel"):
             yield Label("Settings. Ctrl+S=save and apply, Esc=cancel.", id="cfg-title")
-            yield Label("", id="cfg-status")
+            yield Label("", id="cfg-status", markup=False)
             with VerticalScroll(id="cfg-form"):
                 for field, label, _kind in _EDITABLE_SCALARS:
                     yield Label(label)
@@ -134,10 +144,11 @@ class ConfigEditorScreen(Screen[bool]):
             validated.cache_dir.mkdir(parents=True, exist_ok=True)
             validated.log_file.parent.mkdir(parents=True, exist_ok=True)
             save_config(self.config_path, candidate)
+        except (OSError, ValueError, YAMLError) as exc:
+            self._set_status(f"save failed: {exc}")
+        else:
             self.app.config = validated  # pyright: ignore[reportAttributeAccessIssue]
             self.dismiss(True)
-        except Exception as exc:
-            self._set_status(f"save failed: {exc}")
 
     def action_cancel(self) -> None:
         self.dismiss(False)
@@ -146,5 +157,5 @@ class ConfigEditorScreen(Screen[bool]):
         try:
             marker = "* " if self._dirty and message else ""
             self.query_one("#cfg-status", Label).update(marker + message)
-        except Exception:
-            pass
+        except NoMatches:
+            return

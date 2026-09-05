@@ -11,13 +11,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from retrofetch.config import Config, ConsoleOverride
-from retrofetch.catalog import CATALOG_SCHEMA_VERSION
-
 # NOTE: ``get_wantlist`` is looked up indirectly via the ranker module each call
 # (see ``get_or_fetch_wantlist``) so monkey-patches at ``retrofetch.ranker.get_wantlist``
 # keep flowing through, which matters for the existing wave1-4 pilot harness.
 from retrofetch import ranker as _ranker
+from retrofetch.catalog import CATALOG_SCHEMA_VERSION
+from retrofetch.config import Config, ConsoleOverride
 
 log = logging.getLogger(__name__)
 

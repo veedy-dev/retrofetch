@@ -118,3 +118,31 @@ def test_bridge_cancellation_leaves_same_title_sibling_running() -> None:
         assert session.cancelled == 1
     finally:
         bridge.stop()
+
+
+def test_subscriber_and_bridge_failures_do_not_leak_secrets_or_block_delivery(caplog):
+    secret = "synthetic-private-provider-token"
+
+    def fail_subscriber(event):
+        raise RuntimeError(secret)
+
+    def fail_receiver(message):
+        raise LookupError(secret)
+
+    bus = EventBus()
+    bus.subscribe(fail_subscriber)
+    broken_bridge = EventBusBridge(fail_receiver, bus)
+    session = DownloadSession({"shortname": "psp"}, ["Game"])
+    healthy_bridge = EventBusBridge(session.apply, bus)
+    broken_bridge.start()
+    healthy_bridge.start()
+    try:
+        bus.publish(GameStartEvent("Game", "fixture", "psp", item_id="game"))
+        bus.publish(GameStageEvent("Game", "Downloading", item_id="game"))
+        assert session.active["game"].stage == "Downloading"
+        assert "RuntimeError" in caplog.text
+        assert "LookupError" in caplog.text
+        assert secret not in caplog.text
+    finally:
+        broken_bridge.stop()
+        healthy_bridge.stop()

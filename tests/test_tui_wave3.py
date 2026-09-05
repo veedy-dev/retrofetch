@@ -4,8 +4,10 @@ import asyncio
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+from textual.coordinate import Coordinate
 from textual.events import Mount
-from textual.widgets import Input, ListView, OptionList
+from textual.widgets import DataTable, Input, Label, ListItem, ListView, OptionList
 
 from retrofetch.config import Config, ConsoleOverride
 from retrofetch.sources.bios import BiosFile
@@ -13,6 +15,8 @@ from retrofetch.tui.app import RetrofetchApp
 from retrofetch.tui.screens.bios import BiosScreen
 from retrofetch.tui.screens.download_confirm import DownloadConfirmScreen
 from retrofetch.tui.screens.home import HomeScreen
+from retrofetch.tui.screens.wantlist import WantlistScreen
+from retrofetch.tui.widgets.wantlist_preview import WantlistPreview
 from retrofetch.wantlist_cache import is_recently_empty, mark_empty
 
 
@@ -84,12 +88,14 @@ def test_console_search_shortcut_filters_without_inserting_slash() -> None:
             await pilot.pause(0.3)
 
             assert screen.query_one("#filter", Input).value == "Nintendo"
-            assert [
-                getattr(item, "_rf_display_name")
-                for _entry, item in screen._all_items
-                if item.display
-            ] == ["Nintendo Game Boy", "Nintendo Entertainment System"]
-            assert console_list.highlighted_child is screen._all_items[0][1]
+            visible_items = [
+                item for item in console_list.query(ListItem) if item.display
+            ]
+            assert [str(item.query_one(Label).content) for item in visible_items] == [
+                "[E] Nintendo Game Boy",
+                "[E] Nintendo Entertainment System",
+            ]
+            assert console_list.highlighted_child is visible_items[0]
             await pilot.press("enter")
             assert console_list.has_focus
 
@@ -189,5 +195,100 @@ def test_bios_screen_lists_and_downloads(monkeypatch, scratch_path) -> None:
             assert (
                 scratch_path / "BIOS" / "psx" / "scph5501.bin"
             ).read_bytes() == b"bios"
+
+    asyncio.run(run())
+
+
+def test_bios_download_failure_allows_manual_retry(monkeypatch, scratch_path, caplog):
+    attempts = 0
+    secret = "synthetic-private-bios-token"
+
+    def list_files(self, console):
+        return SimpleNamespace(
+            files=[BiosFile(console, "fixture.bin", "https://example.test/fixture", 1, "fixture")]
+        )
+
+    def download(self, console, root):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise RuntimeError(secret)
+        return [root / console / "fixture.bin"]
+
+    monkeypatch.setattr("retrofetch.tui.screens.bios.BiosSource.list_files", list_files)
+    monkeypatch.setattr("retrofetch.tui.screens.bios.BiosSource.download", download)
+    screen = BiosScreen(console_entry={"shortname": "fixture", "class": "B"})
+    app = _TuiApp(screen)
+    app.config = Config(roms_root=scratch_path / "ROMs", bios_root=scratch_path / "BIOS")
+
+    async def run():
+        async with app.run_test() as pilot:
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            await pilot.press("enter")
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            assert attempts == 1
+            assert "RuntimeError" in caplog.text
+            assert secret not in caplog.text
+            await pilot.press("enter")
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            assert attempts == 2
+            assert str(app.config.bios_root / "fixture") in str(
+                screen.query_one("#bios-summary", Label).content
+            )
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("view", ["home", "wantlist"])
+def test_refresh_reports_symlink_loop_and_recovers(monkeypatch, scratch_path, view):
+    loop = scratch_path / "cache-loop"
+    try:
+        loop.symlink_to(loop, target_is_directory=True)
+    except OSError as exc:
+        pytest.skip(f"symlink creation unavailable: {type(exc).__name__}")
+    monkeypatch.setattr(
+        "retrofetch.ranker.get_wantlist", lambda *args, **kwargs: ["Fixture game"]
+    )
+    entry = {"shortname": "fixture", "class": "A", "minerva_path": "fixture"}
+    screen = (
+        HomeScreen()
+        if view == "home"
+        else WantlistScreen(console_entry=entry, override=None)
+    )
+    app = _TuiApp(screen)
+    app.consoles_yml = {"consoles": [entry]}
+    cache_dir = scratch_path / "cache"
+    app.config = Config(roms_root=scratch_path / "ROMs", cache_dir=cache_dir)
+    refresh_key = "ctrl+r" if view == "home" else "r"
+
+    async def run():
+        async with app.run_test() as pilot:
+            if view == "home":
+                screen.query_one(ListView).focus()
+                screen.query_one(ListView).index = 0
+            await pilot.pause(0.4)
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            app.config.cache_dir = loop
+            await pilot.press(refresh_key)
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            if view == "home":
+                assert screen.query_one(WantlistPreview).state == "FAILED"
+            else:
+                assert str(loop) in str(screen.query_one("#status-line", Label).content)
+                assert screen.query_one(DataTable).row_count == 0
+            app.config.cache_dir = cache_dir
+            await pilot.press(refresh_key)
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            if view == "home":
+                assert screen.query_one(WantlistPreview).state == "READY"
+            else:
+                table = screen.query_one(DataTable)
+                assert str(table.get_cell_at(Coordinate(0, 1))) == "Fixture game"
 
     asyncio.run(run())

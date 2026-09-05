@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
 from textual.containers import Vertical  # pyright: ignore[reportMissingImports]
@@ -10,7 +12,7 @@ from textual.widgets import Label  # pyright: ignore[reportMissingImports]
 
 
 class CancelConfirmScreen(ModalScreen[bool]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("y", "confirm", "Yes", show=True),
         Binding("n", "decline", "No", show=True),
         Binding("escape", "decline", "No", show=True),

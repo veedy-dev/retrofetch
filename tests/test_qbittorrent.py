@@ -12,7 +12,6 @@ import pytest
 
 import retrofetch.qbittorrent as qb
 
-
 API_KEY = "qbt_" + "A" * 28
 HASH = "a" * 40
 HASH_2 = "b" * 40
@@ -103,9 +102,8 @@ def test_process_launch_time_is_strict() -> None:
         httpx.MockTransport(
             lambda _: httpx.Response(200, json={"launch_time": "yesterday"})
         )
-    ) as client:
-        with pytest.raises(qb.QbittorrentProtocolError, match="process identity"):
-            client.process_launch_time()
+    ) as client, pytest.raises(qb.QbittorrentProtocolError, match="process identity"):
+        client.process_launch_time()
 
 
 def test_readiness_rejects_unsupported_versions() -> None:
@@ -306,9 +304,11 @@ def test_metadata_fetch_and_add_share_qbittorrents_decoded_cache_key(
         "https://example.test/Collection One.torrent",
         "https://example.test/Collection One.torrent",
     ]
-    with _client(httpx.MockTransport(handle)) as client:
-        with pytest.raises(ValueError, match="one non-empty"):
-            client.fetch_metadata("https://example.test/a%0Ab.torrent")
+    with (
+        _client(httpx.MockTransport(handle)) as client,
+        pytest.raises(ValueError, match="one non-empty"),
+    ):
+        client.fetch_metadata("https://example.test/a%0Ab.torrent")
 
 
 def test_managed_paths_profile_and_commands_are_pinned(tmp_path: Path) -> None:

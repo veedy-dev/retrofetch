@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import hashlib
 import http.server
+import logging
 import os
-from pathlib import Path
 import socket
 import tempfile
 import threading
 import time
+from pathlib import Path
 
 import pytest
 
@@ -17,8 +18,8 @@ from retrofetch.qbittorrent import (
     QbittorrentClient,
     discover_qbittorrent,
     generate_api_key,
-    start_managed,
     managed_paths,
+    start_managed,
 )
 from retrofetch.sources import DownloadCancelled, DownloadCandidate
 from retrofetch.state import State
@@ -28,6 +29,8 @@ from retrofetch.torrent import (
     TorrentCoordinator,
     TorrentTransferSource,
 )
+
+logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.skipif(
     os.name != "nt" or os.environ.get("RETROFETCH_RUN_QB_E2E") != "1",
@@ -101,7 +104,7 @@ def test_real_exact_file_cancel_resume_and_finalize() -> None:
     infohash = hashlib.sha1(_bencode(info)).hexdigest()
 
     class Handler(http.server.BaseHTTPRequestHandler):
-        def do_GET(self) -> None:  # noqa: N802 - stdlib callback name
+        def do_GET(self) -> None:
             self.send_response(200)
             self.send_header("Content-Type", "application/x-bittorrent")
             self.send_header("Content-Length", str(len(torrent_bytes)))
@@ -284,8 +287,13 @@ def test_real_exact_file_cancel_resume_and_finalize() -> None:
             for managed in (leech, seed):
                 try:
                     managed.client.delete(infohash)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    # Client exception text and tracebacks may contain API credentials.
+                    logger.exception(
+                        "Could not delete fixture torrent during cleanup (%s)",
+                        type(exc).__name__,
+                        exc_info=False,
+                    )
                 managed.shutdown(timeout=5)
             server.shutdown()
             server.server_close()

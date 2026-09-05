@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import posixpath
+from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
@@ -16,7 +16,6 @@ from retrofetch.sources.minerva_torrent import (
     _parse_torrent_metadata,
     _safe_path,
 )
-
 
 
 def _load_consoles() -> list[dict[str, Any]]:

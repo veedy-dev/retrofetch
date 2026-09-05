@@ -1,19 +1,31 @@
 """BIOS opt-in download screen."""
 from __future__ import annotations
 
+import logging
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
-from textual import work  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
+from textual import (
+    work,  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
+)
 from textual.app import ComposeResult  # pyright: ignore[reportMissingImports]
 from textual.binding import Binding  # pyright: ignore[reportMissingImports]
-from textual.containers import ScrollableContainer, Vertical  # pyright: ignore[reportMissingImports]
+from textual.containers import (  # pyright: ignore[reportMissingImports]
+    ScrollableContainer,
+    Vertical,
+)
 from textual.message import Message  # pyright: ignore[reportMissingImports]
 from textual.screen import Screen  # pyright: ignore[reportMissingImports]
-from textual.widgets import Footer, Header, Label  # pyright: ignore[reportMissingImports]
+from textual.widgets import (  # pyright: ignore[reportMissingImports]
+    Footer,
+    Header,
+    Label,
+)
 
 from retrofetch.sources import SourceUnavailable
 from retrofetch.sources.bios import BiosFile, BiosSource
+
+logger = logging.getLogger(__name__)
 
 
 class BiosReady(Message):
@@ -38,7 +50,7 @@ class BiosDone(Message):
 
 
 class BiosScreen(Screen[None]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("enter", "download", "Download", show=True),
         Binding("escape", "back", "Back", show=True),
     ]
@@ -60,7 +72,7 @@ class BiosScreen(Screen[None]):
                 f"BIOS: {self.shortname}. Enter=download to BIOS/{self.shortname}/, Esc=back.",
                 id="bios-title",
             )
-            yield Label("Loading BIOS sources...", id="bios-summary")
+            yield Label("Loading BIOS sources...", id="bios-summary", markup=False)
             yield ScrollableContainer(id="bios-files")
         yield Footer()
 
@@ -75,6 +87,8 @@ class BiosScreen(Screen[None]):
             self.post_message(BiosFailed(self.shortname, str(exc)))
             return
         except Exception as exc:
+            # Isolate provider failures without logging credential-bearing tracebacks.
+            logger.exception("BIOS catalog failed: %s", type(exc).__name__, exc_info=False)
             self.post_message(BiosFailed(self.shortname, f"unexpected: {exc}"))
             return
         self.post_message(BiosReady(self.shortname, list(catalog.files)))
@@ -98,8 +112,10 @@ class BiosScreen(Screen[None]):
     def on_bios_failed(self, message: BiosFailed) -> None:
         if message.console != self.shortname:
             return
-        self._files = []
-        self._loaded = False
+        if not self._downloading:
+            self._files = []
+            self._loaded = False
+        self._downloading = False
         self.query_one("#bios-summary", Label).update(f"BIOS unavailable: {message.reason}")
 
     def action_download(self) -> None:
@@ -127,6 +143,8 @@ class BiosScreen(Screen[None]):
                 cast(Any, cast(Any, self.app).config).bios_root,
             )
         except Exception as exc:
+            # Keep downloads isolated from the UI; raw tracebacks may contain secrets.
+            logger.exception("BIOS download failed: %s", type(exc).__name__, exc_info=False)
             self.post_message(BiosFailed(self.shortname, f"download failed: {exc}"))
             return
         self.post_message(BiosDone(self.shortname, paths))

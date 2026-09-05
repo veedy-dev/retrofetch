@@ -33,7 +33,7 @@ from retrofetch.sources import DownloadCancelled, DownloadCandidate, SourceUnava
 from retrofetch.state import GameAttempt, State, update_game
 from retrofetch.state import GameEntry as StateGameEntry
 
-_log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 MAX_ATTEMPTS_PER_SOURCE = 3
 USER_AGENT = "retrofetch/2.0 (+https://github.com/veedy-dev/retrofetch)"
@@ -692,7 +692,7 @@ def download_game(
                 )
             except SourceUnavailable as exc:
                 last_reason = str(exc)
-                _log.warning(
+                logger.warning(
                     "download attempt %s/%s failed for %s via %s: %s",
                     attempt_num,
                     MAX_ATTEMPTS_PER_SOURCE,
@@ -708,7 +708,13 @@ def download_game(
                 continue
             except Exception as exc:
                 last_reason = f"unexpected: {exc}"
-                _log.exception("unexpected download error for %s", game_title)
+                # Keep credential-bearing exception text and chains out of logs.
+                logger.exception(
+                    "unexpected download error for %s: %s",
+                    game_title,
+                    type(exc).__name__,
+                    exc_info=False,
+                )
                 record_attempt(last_reason)
                 continue
 
@@ -736,7 +742,7 @@ def download_game(
 
             if not verified:
                 last_reason = verify_reason or "hash mismatch"
-                _log.warning(
+                logger.warning(
                     "verify failed for %s attempt %s: %s",
                     game_title,
                     attempt_num,

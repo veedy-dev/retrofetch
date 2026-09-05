@@ -25,12 +25,7 @@ def test_minerva_catalog_and_torrent_are_enabled_by_default() -> None:
 def test_extract_archives_can_be_enabled(scratch_path) -> None:
     config_file = scratch_path / "config.yml"
     config_file.write_text(
-        "\n".join(
-            [
-                'roms_root: "ROMs"',
-                "extract_archives: true",
-            ]
-        ),
+        'roms_root: "ROMs"\nextract_archives: true',
         encoding="utf-8",
     )
 
